@@ -1,0 +1,33 @@
+app:
+  android:
+    flavorDimensions: "flavor-type"
+
+flavors:
+  development:
+    app:
+      name: "Pitchside Dev"
+    android:
+      applicationId: "com.example.arana360.dev"
+    ios:
+      bundleId: "com.example.arana360.dev"
+
+  production:
+    app:
+      name: "Pitchside"
+    android:
+      applicationId: "com.example.arana360"
+    ios:
+      bundleId: "com.example.arana360"
+
+ide: vscode
+
+instructions:
+  # Native flavors only. One lib/main.dart; API URL comes from config.*.json.
+  # Do not run flutter:flavors, flutter:app, or icon processors.
+  - ios:xcconfig
+  - ios:buildTargets
+  - ios:schema
+  - ios:plist
+  - android:androidManifest
+  - android:buildGradle
+  - android:flavorizrGradle
