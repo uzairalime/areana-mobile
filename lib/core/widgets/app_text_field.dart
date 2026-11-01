@@ -8,7 +8,7 @@ class AppTextField extends StatelessWidget {
     super.key,
     required this.label,
     required this.controller,
-    required this.icon,
+    this.icon,
     required this.hint,
     this.obscureText = false,
     this.onToggleObscure,
@@ -20,7 +20,7 @@ class AppTextField extends StatelessWidget {
 
   final String label;
   final TextEditingController controller;
-  final IconData icon;
+  final IconData? icon;
   final String hint;
   final bool obscureText;
   final VoidCallback? onToggleObscure;
