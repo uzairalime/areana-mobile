@@ -9,7 +9,6 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/widgets/app_loading_handler.dart';
 import '../cubit/games_cubit.dart';
 import '../cubit/games_state.dart';
-import '../model/game_post.dart';
 import '../widgets/create_game_sheet.dart';
 import '../widgets/game_post_card.dart';
 

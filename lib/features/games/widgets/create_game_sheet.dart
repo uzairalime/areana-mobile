@@ -186,7 +186,7 @@ class _CreateGameSheetBodyState extends State<_CreateGameSheetBody> {
                         Navigator.of(context).pop(
                           CreateGameResult(
                             bookingId: _bookingId,
-                            playersNeeded: playersNeeded!,
+                            playersNeeded: playersNeeded,
                             squadSize: squad,
                             level: _levelController.text.trim().isEmpty
                                 ? null
