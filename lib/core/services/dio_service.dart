@@ -20,7 +20,11 @@ class DioService {
         },
       ),
     );
-    dio.interceptors.add(AppInterceptor());
+    final interceptor = AppInterceptor();
+    dio.interceptors.add(interceptor);
+    // The interceptor needs the Dio instance to retry a request after
+    // a successful refresh. Attach after creation to avoid a cycle.
+    interceptor.dio = dio;
     if (kDebugMode) {
       dio.interceptors.add(
         LogInterceptor(

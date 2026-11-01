@@ -107,6 +107,91 @@ After every `await` in a cubit, return if `isClosed` before `emit`.
 
 Use `AppLoading` from `lib/core/enums/app_loading.dart` on every API state: `initial`, `loading`, `error`, `success`. Do not declare a second status enum. Emit `AppLoading.loading` before the call, then `AppLoading.success` or `AppLoading.error`. Wrap every form submit screen with `AppFormListener`. It shows `AppLoader` with title and `Please wait...` while loading, and `showAppErrorDialog` when the request fails. Keep field errors on the fields. Do not render the submit error under the button. Use `AppLoadingHandler` only for a screen that loads its whole body.
 
+## Project rules added Nov 1, 2026 (do / don't)
+
+These rules sit on top of the MVVM rules above and apply to every change
+in this app, including the Areana API rewrite. Do not weaken them to make
+a single screen easier.
+
+### Theme — do not change it
+
+- The theme stays exactly as already in the app: `AppTheme.light` in
+  `lib/core/theme/app_theme.dart`, with `AppColors`, `AppSizes`, and
+  `AppIcons` in `lib/core/consts/`.
+- Do not introduce a second theme, a dark theme, a new color system, or
+  a new font system unless the user explicitly asks for one.
+- New UI must use the existing theme (`context.theme`, `colorScheme`,
+  `textTheme`, `AppColors`, `AppSizes`). Do not hardcode colors, radii,
+  or text styles that the theme already defines.
+
+### Common widgets — one folder only
+
+- `lib/core/widgets/` **is** the common widgets folder. Every reusable
+  button, box/card, input, dialog, loader, chip, avatar, and scaffold
+  lives there, named `App*` (for example `AppButton`, `AppTextField`,
+  `AppScaffold`, `AppLoader`).
+- Do not create a second common folder (for example `lib/common/`).
+  Do not create a generic button, card/box, input, dialog, or loader
+  inside a feature folder.
+- A widget moves to `lib/core/widgets/` as soon as a second feature
+  needs it. Feature folders (`lib/features/<feature>/widgets/`) hold
+  only widgets used by that one feature (for example a venue card or a
+  booking summary card).
+- Common widgets are `StatelessWidget`s, theme-driven, and take their
+  data through parameters. They do not call a Cubit, a repository, or
+  Dio directly.
+
+### Screen size — max 500 lines per screen
+
+- Keep every `*Screen` file at **500 lines or fewer**.
+- If a screen grows past 500 lines, split it before finishing: move
+  sections into `lib/features/<feature>/widgets/` (feature-only
+  widgets) and keep the screen as composition + state rendering only.
+  Do not leave a 600–800 line screen and call it done.
+- Current known over-limit screens to split during the API rewrite:
+  `pick_slot_screen.dart` (818 lines) and `checkout_screen.dart`
+  (546 lines). `booking_confirmed_screen.dart` (485 lines) is close
+  to the limit — do not grow it.
+- The line limit is for the screen file only. It is not an excuse to
+  move server logic into a widget: layer rules still apply.
+
+### Proper MVVM — what each layer is
+
+- **View:** `*Screen` (`StatelessWidget`, with the narrow exceptions
+  already in the codebase for purely local UI state). Renders state,
+  calls Cubit methods, navigates with `go_router`. No Dio, no
+  repository, no JSON, no `setState` for server data.
+- **ViewModel:** the Cubit (`flutter_bloc` Cubit, never Bloc events).
+  Emits Equatable state, calls the repository, handles `ApiResult`
+  with `when(success:, failure:)`. No widgets, no `BuildContext`,
+  no Dio, no JSON parsing. After every `await`, return if `isClosed`
+  before `emit`.
+- **Repository:** calls the client and returns `ApiResult<T>`. No
+  widgets, no Dio construction, no mock data in production code.
+- **Client:** the only feature file that imports `dio`. Maps JSON to
+  models, returns `ApiResult<T>`, converts `DioException` with
+  `ApiError.fromDio`.
+- **Model:** `Equatable`, `fromJson`, and `toJson` when the request
+  has a body. Parsing stays in the model.
+- Do not skip a layer to "save time": a screen calling Dio, a Cubit
+  parsing JSON, and a repository constructing Dio are all violations,
+  even if the code works.
+
+### Auth tokens and the interceptor — do not weaken these
+
+- Tokens live in `flutter_secure_storage` via `SessionStore`, never in
+  `SharedPreferences`. SharedPreferences holds only the non-secret
+  user profile JSON.
+- `AppInterceptor` is the only place that attaches `Authorization`
+  and the only place that refreshes tokens. It must stay
+  single-flight: parallel 401s share one `POST /auth/refresh` call,
+  retry at most once, never refresh public auth endpoints, and clear
+  the session only on a refresh 401 — never on a transient refresh
+  failure (network, timeout, missing endpoint).
+- On every successful refresh, discard the old access + refresh pair
+  and store the new pair (`SessionCubit.applySession`). Never reuse
+  a rotated refresh token.
+
 ## GetIt
 
 One locator: `lib/core/services/locator.dart`.

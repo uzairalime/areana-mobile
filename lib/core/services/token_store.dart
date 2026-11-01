@@ -10,4 +10,8 @@ class TokenStore {
   String? get accessToken => _session.accessToken;
 
   set accessToken(String? value) => _session.accessToken = value;
+
+  String? get refreshToken => _session.refreshToken;
+
+  set refreshToken(String? value) => _session.refreshToken = value;
 }
