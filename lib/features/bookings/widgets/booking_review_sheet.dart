@@ -108,6 +108,7 @@ class _ReviewSheetBodyState extends State<_ReviewSheetBody> {
               AppTextField(
                 controller: _commentController,
                 label: 'Comment (optional)',
+                icon: Icons.comment_outlined,
                 hint: 'Tell others about this venue',
               ),
               20.h,

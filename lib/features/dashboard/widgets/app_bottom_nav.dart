@@ -20,11 +20,11 @@ class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  /// Home · Bookings · Explore · Messages · Profile
+  /// Home · Bookings · Explore · Games · Profile
   static const homeIndex = 0;
   static const bookingsIndex = 1;
   static const exploreIndex = 2;
-  static const messagesIndex = 3;
+  static const gamesIndex = 3;
   static const accountIndex = 4;
 
   static const _items = <_NavItem>[
@@ -41,8 +41,8 @@ class AppBottomNav extends StatelessWidget {
       selectedIcon: Icons.explore_rounded,
     ),
     _NavItem(
-      icon: Icons.chat_bubble_outline_rounded,
-      selectedIcon: Icons.chat_bubble_rounded,
+      icon: Icons.sports_soccer_outlined,
+      selectedIcon: Icons.sports_soccer_rounded,
     ),
     _NavItem(
       icon: Icons.account_circle_outlined,

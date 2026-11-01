@@ -15,10 +15,9 @@ import '../../features/explore/cubit/explore_cubit.dart';
 import '../../features/home/cubit/home_client.dart';
 import '../../features/home/cubit/home_cubit.dart';
 import '../../features/home/cubit/home_repository.dart';
-import '../../features/messages/cubit/chat_cubit.dart';
-import '../../features/messages/cubit/messages_client.dart';
-import '../../features/messages/cubit/messages_cubit.dart';
-import '../../features/messages/cubit/messages_repository.dart';
+import '../../features/games/cubit/games_client.dart';
+import '../../features/games/cubit/games_cubit.dart';
+import '../../features/games/cubit/games_repository.dart';
 import '../../features/notifications/cubit/notifications_client.dart';
 import '../../features/notifications/cubit/notifications_cubit.dart';
 import '../../features/notifications/cubit/notifications_repository.dart';
@@ -109,16 +108,12 @@ void setupLocator() {
     ..registerFactory<NotificationsCubit>(
       () => NotificationsCubit(getIt<NotificationsRepository>()),
     )
-    ..registerLazySingleton<MessagesClient>(() => MessagesClient(getIt<Dio>()))
-    ..registerLazySingleton<MessagesRepository>(
-      () => MessagesRepository(getIt<MessagesClient>()),
+    ..registerLazySingleton<GamesClient>(() => GamesClient(getIt<Dio>()))
+    ..registerLazySingleton<GamesRepository>(
+      () => GamesRepository(getIt<GamesClient>(), getIt<BookingsClient>()),
     )
-    ..registerFactory<MessagesCubit>(
-      () => MessagesCubit(getIt<MessagesRepository>()),
-    )
-    ..registerFactoryParam<ChatCubit, String, void>(
-      (threadId, _) =>
-          ChatCubit(getIt<MessagesRepository>(), threadId: threadId),
+    ..registerFactory<GamesCubit>(
+      () => GamesCubit(getIt<GamesRepository>()),
     )
     ..registerLazySingleton<ProfileClient>(() => ProfileClient(getIt<Dio>()))
     ..registerLazySingleton<ProfileRepository>(

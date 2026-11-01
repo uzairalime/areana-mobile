@@ -104,11 +104,10 @@ class DeepLinkService {
 
     switch (intent) {
       case MessagesListIntent():
-        router.go(AppRoutes.messages);
-      case ChatThreadIntent(:final threadId):
-        router.go(AppRoutes.messages);
-        await Future<void>.delayed(const Duration(milliseconds: 180));
-        router.push('${AppRoutes.chat}/$threadId');
+        router.go(AppRoutes.games);
+      case ChatThreadIntent():
+        // Chat no longer exists — the Games board replaced Messages.
+        router.go(AppRoutes.games);
       case NotificationsIntent():
         router.go(AppRoutes.home);
         await Future<void>.delayed(const Duration(milliseconds: 120));

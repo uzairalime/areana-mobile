@@ -129,6 +129,7 @@ class _RescheduleSheetBodyState extends State<_RescheduleSheetBody> {
               AppTextField(
                 controller: _timeController,
                 label: 'Start time (HH:MM)',
+                icon: Icons.schedule_outlined,
                 hint: '09:00',
                 keyboardType: TextInputType.datetime,
               ),
