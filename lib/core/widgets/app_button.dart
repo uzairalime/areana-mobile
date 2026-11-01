@@ -57,8 +57,12 @@ class AppButton extends StatelessWidget {
         foregroundColor: foregroundColor,
         disabledBackgroundColor: backgroundColor,
         disabledForegroundColor: foregroundColor,
+        // Width 0 (not infinity): the button sizes to its content and
+        // only stretches when its parent gives it width (Expanded /
+        // full-width parent). Size.fromHeight sets width to infinity
+        // and breaks buttons placed in a Row without Expanded.
         minimumSize:
-            minimumSize ?? const Size.fromHeight(AppSizes.buttonHeight),
+            minimumSize ?? const Size(0, AppSizes.buttonHeight),
       ),
       child: loading
           ? SizedBox(
@@ -98,7 +102,7 @@ class AppButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        minimumSize: minimumSize ?? const Size.fromHeight(52),
+        minimumSize: minimumSize ?? const Size(0, 52),
         side: const BorderSide(color: AppColors.border),
       ),
       child: Row(

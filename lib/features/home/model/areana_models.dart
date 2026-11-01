@@ -12,10 +12,22 @@ List<String> _stringList(dynamic value) => value is List
     ? value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
     : const [];
 
-double? _numOrNull(dynamic value) => value is num ? value.toDouble() : null;
+/// Prisma Decimal fields serialize as STRINGS ("3000", "18000"),
+/// so every numeric parse must accept num OR String. A plain
+/// `as num` cast crashes on the live payload.
+double? _numOrNull(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
+}
 
-int _int(dynamic value, [int fallback = 0]) =>
-    value is num ? value.toInt() : fallback;
+int _int(dynamic value, [int fallback = 0]) {
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
+  }
+  return fallback;
+}
 
 String _str(dynamic value) => value?.toString() ?? '';
 
@@ -52,7 +64,7 @@ class AreanaVenue extends Equatable {
       sports: _stringList(json['sports']),
       amenities: _stringList(json['amenities']),
       images: _stringList(json['images']),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      rating: _numOrNull(json['rating']) ?? 0,
       ratingCount: _int(json['ratingCount']),
       fromPrice: _numOrNull(json['fromPrice']),
       distanceKm: _numOrNull(json['distanceKm']),
@@ -220,7 +232,7 @@ class AreanaCourtListItem extends Equatable {
       venueAddress: _str(venueMap['address']),
       venueLat: _numOrNull(venueMap['lat']),
       venueLng: _numOrNull(venueMap['lng']),
-      venueRating: (venueMap['rating'] as num?)?.toDouble() ?? 0,
+      venueRating: _numOrNull(venueMap['rating']) ?? 0,
       venueRatingCount: _int(venueMap['ratingCount']),
       venueImages: _stringList(venueMap['images']),
       distanceKm: _numOrNull(json['distanceKm']),
@@ -319,7 +331,7 @@ class AreanaCourtDetail extends Equatable {
       venueAddress: _str(venueMap['address']),
       venueLat: _numOrNull(venueMap['lat']),
       venueLng: _numOrNull(venueMap['lng']),
-      venueRating: (venueMap['rating'] as num?)?.toDouble() ?? 0,
+      venueRating: _numOrNull(venueMap['rating']) ?? 0,
       venueRatingCount: _int(venueMap['ratingCount']),
       venueImages: _stringList(venueMap['images']),
       venueAmenities: _stringList(venueMap['amenities']),
@@ -542,7 +554,7 @@ class SlotSearchResult extends Equatable {
       venueName: _str(venueMap['name']),
       venueAddress: _str(venueMap['address']),
       venueCity: _str(venueMap['city']),
-      venueRating: (venueMap['rating'] as num?)?.toDouble() ?? 0,
+      venueRating: _numOrNull(venueMap['rating']) ?? 0,
       venueImages: _stringList(venueMap['images']),
       courts: (json['courts'] as List<dynamic>? ?? const [])
           .whereType<Map>()

@@ -1,8 +1,13 @@
 import 'package:equatable/equatable.dart';
 
 String _str(dynamic value) => value?.toString() ?? '';
-int _int(dynamic value, [int fallback = 0]) =>
-    value is num ? value.toInt() : fallback;
+int _int(dynamic value, [int fallback = 0]) {
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
+  }
+  return fallback;
+}
 
 String _fmtMinutes(int minutes) {
   final h = minutes ~/ 60;
@@ -118,9 +123,9 @@ class PromoPreview extends Equatable {
       code: _str(promoMap['code']),
       kind: _str(promoMap['kind']),
       value: _int(promoMap['value']),
-      maxDiscount: promoMap['maxDiscount'] is num
-          ? (promoMap['maxDiscount'] as num).toInt()
-          : null,
+      maxDiscount: promoMap['maxDiscount'] == null
+          ? null
+          : _int(promoMap['maxDiscount']),
       discount: _int(json['discount']),
     );
   }

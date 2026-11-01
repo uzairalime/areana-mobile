@@ -27,6 +27,8 @@ class BookingsClient {
       return ApiSuccess(pageResult, statusCode: response.statusCode);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 
@@ -43,6 +45,8 @@ class BookingsClient {
       );
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 
@@ -65,6 +69,8 @@ class BookingsClient {
       return ApiSuccess(null, statusCode: response.statusCode);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 
@@ -81,6 +87,8 @@ class BookingsClient {
       );
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 
@@ -97,6 +105,8 @@ class BookingsClient {
       return ApiSuccess(null, statusCode: response.statusCode);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 
@@ -108,6 +118,8 @@ class BookingsClient {
       return ApiSuccess(null, statusCode: response.statusCode);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
+    } catch (error) {
+      return ApiError(message: 'Could not read bookings: $error');
     }
   }
 

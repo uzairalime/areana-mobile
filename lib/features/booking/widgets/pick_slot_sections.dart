@@ -623,7 +623,7 @@ class PickSlotGrid extends StatelessWidget {
               crossAxisCount: 3,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio: 1.25,
+              childAspectRatio: 1.05,
             ),
             itemBuilder: (context, index) {
               final slot = state.slots[index];
@@ -736,17 +736,23 @@ class _SlotTile extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
-              if (!booked && (slot.peak || slot.deal))
-                Text(
-                  slot.peak ? 'Peak' : 'Off-peak deal',
-                  style: context.textTheme.labelSmall?.copyWith(
-                    color: selected
-                        ? AppColors.accent
-                        : AppColors.primary,
-                    fontWeight: .w800,
-                    fontSize: 11,
-                  ),
-                ),
+              // Fixed-height row, present even when neither badge
+              // applies, so every tile is exactly the same height.
+              SizedBox(
+                height: 15,
+                child: !booked && (slot.peak || slot.deal)
+                    ? Text(
+                        slot.peak ? 'Peak' : 'Off-peak deal',
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: selected
+                              ? AppColors.accent
+                              : AppColors.primary,
+                          fontWeight: .w800,
+                          fontSize: 11,
+                        ),
+                      )
+                    : null,
+              ),
             ],
           ),
         ),

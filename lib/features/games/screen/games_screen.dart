@@ -65,7 +65,10 @@ class GamesScreen extends StatelessWidget {
             p.isLoadingMore != c.isLoadingMore,
         builder: (context, state) {
           if (state.status.isLoading) {
-            return const AppLoadingHandler();
+            return AppLoadingHandler(
+              status: state.status,
+              child: const SizedBox.shrink(),
+            );
           }
           if (state.status.isError && state.games.isEmpty) {
             return _ErrorView(

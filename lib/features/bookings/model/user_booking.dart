@@ -43,6 +43,22 @@ String _fmtMinutes(int minutes) {
   return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 }
 
+/// Prisma Decimal fields serialize as STRINGS, so numeric parses
+/// must accept num OR String — a plain `as num` cast crashes.
+int _int(dynamic value, [int fallback = 0]) {
+  if (value is num) return value.toInt();
+  if (value is String) {
+    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
+  }
+  return fallback;
+}
+
+double? _numOrNull(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
+}
+
 /// Player booking, mirroring user-web `PlayerBooking`.
 /// UI labels are derived from the server fields, never invented.
 class UserBooking extends Equatable {
@@ -87,8 +103,8 @@ class UserBooking extends Equatable {
         ? images.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
         : const <String>[];
     final date = json['date']?.toString() ?? '';
-    final start = (json['startMinutes'] as num?)?.toInt() ?? 0;
-    final end = (json['endMinutes'] as num?)?.toInt() ?? start;
+    final start = _int(json['startMinutes']);
+    final end = _int(json['endMinutes'], start);
     final count = json['_count'];
     final countMap = count is Map ? Map<String, dynamic>.from(count) : const {};
     DateTime occurred;
@@ -119,7 +135,7 @@ class UserBooking extends Equatable {
       timeLabel: '${_fmtMinutes(start)} – ${_fmtMinutes(end)}',
       courtLabel: courtMap['name']?.toString() ?? '',
       durationLabel: '${end - start} min',
-      amountDue: (json['totalPrice'] as num?)?.toInt() ?? 0,
+      amountDue: _int(json['totalPrice']),
       payAtGround: true,
       status: UserBookingStatusX.fromJson(json['status'] as String?),
       heroColor: AppColors.primary,
@@ -130,13 +146,9 @@ class UserBooking extends Equatable {
       courtId: json['courtId']?.toString() ?? '',
       shareCode: json['shareCode'] as String?,
       hasReviewed: hasReviewed,
-      venueLat: venueMap['lat'] is num
-          ? (venueMap['lat'] as num).toDouble()
-          : null,
-      venueLng: venueMap['lng'] is num
-          ? (venueMap['lng'] as num).toDouble()
-          : null,
-      participantCount: (countMap['participants'] as num?)?.toInt() ?? 0,
+      venueLat: _numOrNull(venueMap['lat']),
+      venueLng: _numOrNull(venueMap['lng']),
+      participantCount: _int(countMap['participants']),
       gamePostId: gameMap['id']?.toString(),
       expiresAt: json['expiresAt'] as String?,
     );

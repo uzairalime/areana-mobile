@@ -71,17 +71,12 @@ class ApiEndpoints {
   static String waitlistEntry(String id) => 'waitlist/$id';
 
   // TEMPORARY compatibility constants for sections not yet rewritten
-  // (booking, bookings, messages, notifications, profile). They keep
-  // the app compiling between section pushes and are deleted in the
-  // final cleanup section once those clients are rewritten.
-  static const String profile = 'profile';
-  static const String profilePassword = 'profile/password';
-  static const String profileNotifications = 'profile/notifications';
-  static const String profileSavedVenues = 'profile/saved-venues';
-  static String profileSavedVenue(String id) => 'profile/saved-venues/$id';
-  static const String profileReviews = 'profile/reviews';
-  static const String profileHelp = 'profile/help';
-  static const String profileDownloadData = 'profile/download-data';
+  // (booking, bookings, messages, notifications). They keep the app
+  // compiling between section pushes and are deleted in the final
+  // cleanup section once those clients are rewritten. The old
+  // Pitchside /profile constants were deleted here: the Areana API
+  // has no /profile endpoint (it is /users/me), and leaving the
+  // constants around risked a future caller using them by mistake.
   static const String popularVenues = 'venues/popular';
   static const String searchVenues = 'venues/search';
   static String venueAvailability(String venueId) =>
