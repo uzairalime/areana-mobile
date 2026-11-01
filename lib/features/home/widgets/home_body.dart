@@ -16,6 +16,7 @@ import '../../profile/cubit/profile_state.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../model/venue.dart';
+import 'court_card.dart';
 import 'court_filter_sheet.dart';
 import 'home_near_me_section.dart';
 import 'home_sticky_search.dart';
@@ -45,6 +46,8 @@ class HomeBody extends StatelessWidget {
       buildWhen: (previous, current) =>
           previous.status != current.status ||
           previous.venues != current.venues ||
+          previous.courts != current.courts ||
+          previous.showingCourts != current.showingCourts ||
           previous.errorMessage != current.errorMessage ||
           previous.sports != current.sports ||
           previous.selectedSportId != current.selectedSportId ||
@@ -127,6 +130,32 @@ class HomeBody extends StatelessWidget {
                 ),
               ),
             ),
+            // Discovery tabs, like user-web Venues | Courts.
+            SliverPadding(
+              padding: const .fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.spaceSm,
+                AppSizes.pagePadding,
+                0,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Arenas'),
+                      selected: !state.showingCourts,
+                      onSelected: (_) => cubit.setShowingCourts(false),
+                    ),
+                    8.w,
+                    ChoiceChip(
+                      label: const Text('Courts'),
+                      selected: state.showingCourts,
+                      onSelected: (_) => cubit.setShowingCourts(true),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             if (state.status.isLoading)
               const SliverPadding(
                 padding: .fromLTRB(
@@ -164,7 +193,33 @@ class HomeBody extends StatelessWidget {
                   ),
                 ),
               )
-            else ...[
+            else if (state.showingCourts) ...[
+              SliverPadding(
+                padding: const .fromLTRB(
+                  AppSizes.pagePadding,
+                  AppSizes.spaceLg,
+                  AppSizes.pagePadding,
+                  110,
+                ),
+                sliver: SliverList.separated(
+                  itemCount: state.courts.length,
+                  separatorBuilder: (_, _) => AppSizes.spaceMd.h,
+                  itemBuilder: (context, index) {
+                    final item = state.courts[index];
+                    return CourtCard(
+                      item: item,
+                      onOpen: () => context.push(
+                        '${AppRoutes.courtDetail}/${item.court.id}',
+                      ),
+                      onBook: () => VenueNavigation.openBookSlot(
+                        context,
+                        item.toVenue(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ] else ...[
               SliverPadding(
                 padding: const .fromLTRB(
                   AppSizes.pagePadding,

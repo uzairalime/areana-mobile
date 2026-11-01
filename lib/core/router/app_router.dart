@@ -15,6 +15,9 @@ import '../../features/bookings/screen/booking_detail_screen.dart';
 import '../../features/bookings/screen/bookings_screen.dart';
 import '../../features/dashboard/screen/dashboard_shell.dart';
 import '../../features/home/cubit/home_cubit.dart';
+import '../../features/home/cubit/home_repository.dart';
+import '../../features/home/cubit/venue_detail_cubit.dart';
+import '../../features/home/screen/court_detail_screen.dart';
 import '../../features/home/screen/home_screen.dart';
 import '../../features/home/screen/venue_detail_screen.dart';
 import '../../features/explore/cubit/explore_cubit.dart';
@@ -72,6 +75,7 @@ abstract final class AppRoutes {
   static const legalDoc = '/account/legal-doc';
   static const search = '/search';
   static const venueDetail = '/venue';
+  static const courtDetail = '/court';
   static const pickSlot = '/booking/slot';
   static const checkout = '/booking/checkout';
   static const bookingConfirmed = '/booking/confirmed';
@@ -249,7 +253,35 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
               const Scaffold(body: Center(child: Text('Venue not found'))),
             );
           }
-          return _appPage(state, VenueDetailScreen(venue: venue));
+          return _appPage(
+            state,
+            BlocProvider(
+              create: (_) => VenueDetailCubit(
+                getIt<HomeRepository>(),
+                venue.id,
+              ),
+              child: VenueDetailScreen(venue: venue),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutes.courtDetail}/:id',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          if (id.isEmpty) {
+            return _appPage(
+              state,
+              const Scaffold(body: Center(child: Text('Court not found'))),
+            );
+          }
+          return _appPage(
+            state,
+            BlocProvider(
+              create: (_) => CourtDetailCubit(getIt<HomeRepository>(), id),
+              child: CourtDetailScreen(courtId: id),
+            ),
+          );
         },
       ),
       GoRoute(

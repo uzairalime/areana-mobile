@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
-import '../../../core/mock/mock_home_data.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/utils/venue_navigation.dart';
@@ -12,7 +12,9 @@ import '../../../core/media_slider/custom_image_carousel.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/venue_map_view.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
+import '../cubit/venue_detail_cubit.dart';
 import '../model/venue.dart';
+import '../widgets/venue_detail_sections.dart';
 
 class VenueDetailScreen extends StatelessWidget {
   const VenueDetailScreen({super.key, required this.venue});
@@ -22,7 +24,22 @@ class VenueDetailScreen extends StatelessWidget {
   static Venue? resolve(GoRouterState state) {
     final extra = state.extra;
     if (extra is Venue) return extra;
-    return MockHomeData.byId(state.pathParameters['id']);
+    // Deep link without a passed venue: the detail cubit (route
+    // provided) loads courts/reviews by id; the header falls back to
+    // an empty row until a detail-driven header lands. Never fall
+    // back to mock data.
+    final id = state.pathParameters['id'];
+    if (id == null || id.isEmpty) return null;
+    return Venue(
+      id: id,
+      name: '',
+      sport: '',
+      location: '',
+      priceFrom: 0,
+      amenities: const [],
+      nextSlot: '',
+      heroColor: AppColors.primary,
+    );
   }
 
   @override
@@ -190,6 +207,29 @@ class VenueDetailScreen extends StatelessWidget {
                         subtitle: venue.location,
                         venues: [venue],
                         height: 190,
+                      ),
+                      // Live courts + reviews from the Areana API,
+                      // loaded by VenueDetailCubit (route-provided).
+                      BlocBuilder<VenueDetailCubit, VenueDetailState>(
+                        builder: (context, detailState) {
+                          final detail = detailState.detail;
+                          if (detail == null) return const SizedBox.shrink();
+                          return Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              AppSizes.spaceLg.h,
+                              VenueCourtsSection(detail: detail),
+                              AppSizes.spaceLg.h,
+                              VenueReviewsSection(
+                                reviews: detailState.reviews,
+                                hasMore: detailState.hasMoreReviews,
+                                onLoadMore: () => context
+                                    .read<VenueDetailCubit>()
+                                    .loadMoreReviews(),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ]),
                   ),

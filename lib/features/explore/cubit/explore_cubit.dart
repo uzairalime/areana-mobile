@@ -24,14 +24,14 @@ class ExploreCubit extends Cubit<ExploreState> {
 
   Future<void> load() async {
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
-    final result = await _repository.fetchPopularVenues();
+    final result = await _repository.fetchVenues(page: 1, limit: 20);
     if (isClosed) return;
     result.when(
-      success: (venues) {
+      success: (page) {
         emit(
           state.copyWith(
             status: AppLoading.success,
-            venues: venues,
+            venues: page.items.map((v) => v.toVenue()).toList(),
             // Re-apply session snapshot in case a remount raced load().
             search: _session.search,
             pageTab: _session.pageTab,
