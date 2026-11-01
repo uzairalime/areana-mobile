@@ -50,8 +50,13 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                 right: 20,
                 child: _GlowCircle(size: 120, opacity: 0.12),
               ),
-              Column(
-                children: [
+              // Scrollable, not a fixed Column + Spacer: header +
+              // ticket + share card exceed the viewport on shorter
+              // phones (was a 65px RenderFlex overflow), and a Spacer
+              // cannot shrink below zero to absorb that.
+              SingleChildScrollView(
+                child: Column(
+                  children: [
                   SafeArea(
                     bottom: false,
                     child: Padding(
@@ -123,7 +128,7 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                       ),
                     ),
                   ],
-                  const Spacer(),
+                  24.h,
                   SafeArea(
                     top: false,
                     child: Padding(
@@ -160,7 +165,8 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                       ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ],
           );
@@ -187,7 +193,9 @@ class _GhostAction extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.onPrimary,
-        minimumSize: const Size.fromHeight(52),
+        // Size(0, 52), not Size.fromHeight (which is infinite width —
+        // the same trap fixed in AppButton).
+        minimumSize: const Size(0, 52),
         side: BorderSide(
           color: AppColors.onPrimary.withValues(alpha: 0.4),
           width: 1.5,
