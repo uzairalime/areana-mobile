@@ -1,7 +1,5 @@
-import '../../../core/config/app_config.dart';
-import '../../../core/mock/mock_delay.dart';
-import '../../../core/mock/mock_notification_data.dart';
 import '../../../core/services/api_result.dart';
+import '../../../core/services/pagination.dart';
 import '../model/app_notification.dart';
 import 'notifications_client.dart';
 
@@ -10,26 +8,13 @@ class NotificationsRepository {
 
   final NotificationsClient _client;
 
-  Future<ApiResult<List<AppNotification>>> fetchNotifications() {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(() => ApiSuccess(MockNotificationData.items));
-    }
-    return _client.fetchNotifications();
-  }
+  Future<ApiResult<CursorPage<AppNotification>>> fetchNotifications({
+    String? cursor,
+  }) => _client.fetchNotifications(cursor: cursor);
 
-  Future<ApiResult<void>> markRead(String id) {
-    if (AppConfig.useMockApi) {
-      MockNotificationData.markRead(id);
-      return Future.value(const ApiSuccess(null));
-    }
-    return _client.markRead(id);
-  }
+  Future<ApiResult<int>> fetchUnreadCount() => _client.fetchUnreadCount();
 
-  Future<ApiResult<void>> markAllRead() {
-    if (AppConfig.useMockApi) {
-      MockNotificationData.markAllRead();
-      return Future.value(const ApiSuccess(null));
-    }
-    return _client.markAllRead();
-  }
+  Future<ApiResult<void>> markRead(String id) => _client.markRead(id);
+
+  Future<ApiResult<void>> markAllRead() => _client.markAllRead();
 }

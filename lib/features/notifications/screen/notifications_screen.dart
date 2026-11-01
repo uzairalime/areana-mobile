@@ -76,6 +76,8 @@ class NotificationsScreen extends StatelessWidget {
                       child: _NotificationsBody(
                         tab: state.tab,
                         entries: state.listEntries,
+                        hasMore: state.hasMore,
+                        onLoadMore: cubit.loadMore,
                         onRefresh: cubit.refresh,
                         onOpen: (n) => _openNotification(context, n),
                       ),
@@ -172,12 +174,16 @@ class _NotificationsBody extends StatelessWidget {
   const _NotificationsBody({
     required this.tab,
     required this.entries,
+    required this.hasMore,
+    required this.onLoadMore,
     required this.onRefresh,
     required this.onOpen,
   });
 
   final NotificationFilterTab tab;
   final List<NotificationListEntry> entries;
+  final bool hasMore;
+  final VoidCallback onLoadMore;
   final Future<void> Function() onRefresh;
   final ValueChanged<AppNotification> onOpen;
 
@@ -197,8 +203,15 @@ class _NotificationsBody extends StatelessWidget {
                 AppSizes.pagePadding,
                 32,
               ),
-              itemCount: entries.length,
+              itemCount: entries.length + (hasMore ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index >= entries.length) {
+                  onLoadMore();
+                  return const Padding(
+                    padding: .symmetric(vertical: 12),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 final entry = entries[index];
                 return switch (entry) {
                   NotificationGroupHeader(:final title) => Padding(

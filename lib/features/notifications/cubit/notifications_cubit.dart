@@ -15,15 +15,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> load() async {
     final id = ++_requestId;
-    emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
+    emit(
+      state.copyWith(
+        status: AppLoading.loading,
+        errorMessage: '',
+        items: const [],
+        clearCursor: true,
+        hasMore: true,
+      ),
+    );
     final result = await _repository.fetchNotifications();
     if (isClosed || id != _requestId) return;
     result.when(
-      success: (items) {
+      success: (page) {
         emit(
           state.copyWith(
             status: AppLoading.success,
-            items: items,
+            items: page.items,
+            nextCursor: page.nextCursor,
+            hasMore: page.hasMore,
             errorMessage: '',
           ),
         );
@@ -44,17 +54,43 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final result = await _repository.fetchNotifications();
     if (isClosed || id != _requestId) return;
     result.when(
-      success: (items) {
+      success: (page) {
         emit(
           state.copyWith(
             status: AppLoading.success,
-            items: items,
+            items: page.items,
+            nextCursor: page.nextCursor,
+            hasMore: page.hasMore,
             errorMessage: '',
           ),
         );
       },
       failure: (error) {
         emit(state.copyWith(errorMessage: error.message));
+      },
+    );
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoadingMore || !state.hasMore) return;
+    emit(state.copyWith(isLoadingMore: true));
+    final result = await _repository.fetchNotifications(
+      cursor: state.nextCursor,
+    );
+    if (isClosed) return;
+    result.when(
+      success: (page) {
+        emit(
+          state.copyWith(
+            items: [...state.items, ...page.items],
+            nextCursor: page.nextCursor,
+            hasMore: page.hasMore,
+            isLoadingMore: false,
+          ),
+        );
+      },
+      failure: (_) {
+        emit(state.copyWith(isLoadingMore: false));
       },
     );
   }

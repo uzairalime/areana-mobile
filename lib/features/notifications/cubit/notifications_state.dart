@@ -11,6 +11,9 @@ class NotificationsState extends Equatable {
     this.tab = .all,
     this.items = const [],
     this.markingAllRead = false,
+    this.nextCursor,
+    this.hasMore = true,
+    this.isLoadingMore = false,
   });
 
   final AppLoading status;
@@ -18,6 +21,9 @@ class NotificationsState extends Equatable {
   final NotificationFilterTab tab;
   final List<AppNotification> items;
   final bool markingAllRead;
+  final String? nextCursor;
+  final bool hasMore;
+  final bool isLoadingMore;
 
   int get unreadCount => items.where((e) => e.isUnread).length;
 
@@ -54,6 +60,10 @@ class NotificationsState extends Equatable {
     NotificationFilterTab? tab,
     List<AppNotification>? items,
     bool? markingAllRead,
+    String? nextCursor,
+    bool clearCursor = false,
+    bool? hasMore,
+    bool? isLoadingMore,
   }) {
     return NotificationsState(
       status: status ?? this.status,
@@ -61,6 +71,9 @@ class NotificationsState extends Equatable {
       tab: tab ?? this.tab,
       items: items ?? this.items,
       markingAllRead: markingAllRead ?? this.markingAllRead,
+      nextCursor: clearCursor ? null : nextCursor ?? this.nextCursor,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -71,6 +84,9 @@ class NotificationsState extends Equatable {
     tab,
     items,
     markingAllRead,
+    nextCursor,
+    hasMore,
+    isLoadingMore,
   ];
 }
 

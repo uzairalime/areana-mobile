@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/consts/api_endpoints.dart';
 import '../../../core/services/api_result.dart';
+import '../../../core/services/pagination.dart';
 import '../model/app_notification.dart';
 
 class NotificationsClient {
@@ -9,18 +10,48 @@ class NotificationsClient {
 
   final Dio _dio;
 
-  Future<ApiResult<List<AppNotification>>> fetchNotifications() async {
+  /// Cursor-paged inbox, newest first (server order preserved).
+  Future<ApiResult<CursorPage<AppNotification>>> fetchNotifications({
+    String? cursor,
+  }) async {
     try {
-      final response = await _dio.get<dynamic>(ApiEndpoints.notifications);
-      final list = _asList(response.data);
-      if (list == null) {
-        return const ApiError(message: 'Unexpected response');
+      final response = await _dio.get<dynamic>(
+        ApiEndpoints.notifications,
+        queryParameters: {
+          'limit': 30,
+          if (cursor != null) 'cursor': cursor,
+        },
+      );
+      final page = parseCursorPage(
+        response.data,
+        (json) => AppNotification.fromJson(json),
+      );
+      return ApiSuccess(page, statusCode: response.statusCode);
+    } on DioException catch (error) {
+      return ApiError.fromDio(error);
+    }
+  }
+
+  /// Unread count. The exact response key is unverified in
+  /// api-reference, so every plausible key is accepted.
+  Future<ApiResult<int>> fetchUnreadCount() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        ApiEndpoints.notificationsUnreadCount,
+      );
+      final map = response.data is Map
+          ? Map<String, dynamic>.from(response.data as Map)
+          : const <String, dynamic>{};
+      for (final key in ['unreadCount', 'count', 'unread', 'total']) {
+        final value = map[key];
+        if (value is num) {
+          return ApiSuccess(
+            value.toInt(),
+            statusCode: response.statusCode,
+          );
+        }
       }
-      final items = list
-          .whereType<Map>()
-          .map((e) => AppNotification.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-      return ApiSuccess(items, statusCode: response.statusCode);
+      return const ApiError(message: 'Unexpected response');
     } on DioException catch (error) {
       return ApiError.fromDio(error);
     }
@@ -28,7 +59,7 @@ class NotificationsClient {
 
   Future<ApiResult<void>> markRead(String id) async {
     try {
-      await _dio.post<dynamic>(ApiEndpoints.notificationRead(id));
+      await _dio.patch<dynamic>(ApiEndpoints.notificationRead(id));
       return const ApiSuccess(null);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
@@ -37,16 +68,10 @@ class NotificationsClient {
 
   Future<ApiResult<void>> markAllRead() async {
     try {
-      await _dio.post<dynamic>(ApiEndpoints.notificationsReadAll);
+      await _dio.patch<dynamic>(ApiEndpoints.notificationsReadAll);
       return const ApiSuccess(null);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
     }
   }
-
-  static List? _asList(dynamic data) => switch (data) {
-    final List raw => raw,
-    final Map map when map['data'] is List => map['data'] as List,
-    _ => null,
-  };
 }
