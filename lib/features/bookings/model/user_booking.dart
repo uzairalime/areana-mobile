@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/consts/app_colors.dart';
+import '../../home/model/venue.dart';
 import 'booking_review_status.dart';
 
 /// Upcoming tab: [confirmed], [pending]
@@ -36,6 +37,14 @@ extension UserBookingStatusX on UserBookingStatus {
   bool get isPastTab => this == .completed || this == .cancelled;
 }
 
+String _fmtMinutes(int minutes) {
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+}
+
+/// Player booking, mirroring user-web `PlayerBooking`.
+/// UI labels are derived from the server fields, never invented.
 class UserBooking extends Equatable {
   const UserBooking({
     required this.id,
@@ -55,32 +64,81 @@ class UserBooking extends Equatable {
     this.payAtGround = true,
     this.imageUrl = '',
     this.reviewStatus = .none,
+    this.courtId = '',
+    this.shareCode,
+    this.hasReviewed = false,
+    this.venueLat,
+    this.venueLng,
+    this.participantCount = 0,
+    this.gamePostId,
+    this.expiresAt,
   });
 
   factory UserBooking.fromJson(Map<String, dynamic> json) {
+    final venue = json['venue'];
+    final venueMap = venue is Map ? Map<String, dynamic>.from(venue) : const {};
+    final court = json['court'];
+    final courtMap = court is Map ? Map<String, dynamic>.from(court) : const {};
+    final gamePost = json['gamePost'];
+    final gameMap =
+        gamePost is Map ? Map<String, dynamic>.from(gamePost) : const {};
+    final images = venueMap['images'];
+    final imageList = images is List
+        ? images.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+        : const <String>[];
+    final date = json['date']?.toString() ?? '';
+    final start = (json['startMinutes'] as num?)?.toInt() ?? 0;
+    final end = (json['endMinutes'] as num?)?.toInt() ?? start;
+    final count = json['_count'];
+    final countMap = count is Map ? Map<String, dynamic>.from(count) : const {};
+    DateTime occurred;
+    try {
+      final parts = date.split('-');
+      occurred = DateTime(
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+        int.parse(parts[2]),
+        start ~/ 60,
+        start % 60,
+      );
+    } catch (_) {
+      occurred = DateTime.now();
+    }
+    final hasReviewed = json['hasReviewed'] as bool? ?? false;
     return UserBooking(
       id: json['id']?.toString() ?? '',
-      code: json['code'] as String? ?? '',
-      venueId: json['venue_id']?.toString() ?? '',
-      venueName: json['venue_name'] as String? ?? '',
-      sport: json['sport'] as String? ?? '',
-      location: json['location'] as String? ?? '',
-      dateLabel: json['date_label'] as String? ?? '',
-      timeLabel: json['time_label'] as String? ?? '',
-      courtLabel: json['court_label'] as String? ?? '',
-      durationLabel: json['duration_label'] as String? ?? '',
-      amountDue: (json['amount_due'] as num?)?.toInt() ?? 0,
-      payAtGround: json['pay_at_ground'] as bool? ?? true,
+      code: json['checkInCode']?.toString() ?? '',
+      venueId: json['venueId']?.toString() ?? '',
+      venueName: venueMap['name']?.toString() ?? '',
+      sport: courtMap['sport']?.toString() ?? '',
+      location: [
+        venueMap['address']?.toString() ?? '',
+        venueMap['city']?.toString() ?? '',
+      ].where((e) => e.isNotEmpty).join(', '),
+      dateLabel: date,
+      timeLabel: '${_fmtMinutes(start)} – ${_fmtMinutes(end)}',
+      courtLabel: courtMap['name']?.toString() ?? '',
+      durationLabel: '${end - start} min',
+      amountDue: (json['totalPrice'] as num?)?.toInt() ?? 0,
+      payAtGround: true,
       status: UserBookingStatusX.fromJson(json['status'] as String?),
-      heroColor:
-          _colorFromHex(json['hero_color'] as String?) ?? AppColors.primary,
-      imageUrl: json['image_url'] as String? ?? '',
-      reviewStatus: BookingReviewStatusX.fromJson(
-        json['review_status'] as String?,
-      ),
-      occurredAt:
-          DateTime.tryParse(json['occurred_at'] as String? ?? '') ??
-          DateTime.now(),
+      heroColor: AppColors.primary,
+      imageUrl: imageList.isEmpty ? '' : imageList.first,
+      reviewStatus:
+          hasReviewed ? BookingReviewStatus.recommended : .none,
+      occurredAt: occurred,
+      courtId: json['courtId']?.toString() ?? '',
+      shareCode: json['shareCode'] as String?,
+      hasReviewed: hasReviewed,
+      venueLat: venueMap['lat'] is num
+          ? (venueMap['lat'] as num).toDouble()
+          : null,
+      venueLng: venueMap['lng'] is num
+          ? (venueMap['lng'] as num).toDouble()
+          : null,
+      participantCount: (countMap['participants'] as num?)?.toInt() ?? 0,
+      gamePostId: gameMap['id']?.toString(),
+      expiresAt: json['expiresAt'] as String?,
     );
   }
 
@@ -101,16 +159,23 @@ class UserBooking extends Equatable {
   final String imageUrl;
   final BookingReviewStatus reviewStatus;
   final DateTime occurredAt;
+  final String courtId;
+  final String? shareCode;
+  final bool hasReviewed;
+  final double? venueLat;
+  final double? venueLng;
+  final int participantCount;
+  final String? gamePostId;
+  final String? expiresAt;
 
   bool get isUpcoming => status.isUpcomingTab;
   bool get isPast => status.isPastTab;
 
-  /// Review CTA only for completed sessions that are not reviewed yet.
-  bool get canAddReview =>
-      status == .completed && reviewStatus == .none;
+  /// Review CTA only for completed bookings, one review per booking
+  /// (server enforces it with a 409 on duplicates).
+  bool get canAddReview => status == .completed && !hasReviewed;
 
-  bool get isReviewed =>
-      status == .completed && reviewStatus.isReviewed;
+  bool get isReviewed => status == .completed && hasReviewed;
 
   /// Confirmed / pending can reschedule or cancel.
   bool get canModify => status == .confirmed || status == .pending;
@@ -119,25 +184,36 @@ class UserBooking extends Equatable {
 
   int get year => occurredAt.year;
 
+  bool get hasCoordinates => venueLat != null && venueLng != null;
+
+  /// Venue row for rebook / map, filled from this booking's venue.
+  Venue toVenue() => Venue(
+    id: venueId,
+    name: venueName,
+    sport: sport,
+    location: location,
+    priceFrom: 0,
+    amenities: const [],
+    nextSlot: '',
+    heroColor: AppColors.primary,
+    latitude: venueLat ?? 0,
+    longitude: venueLng ?? 0,
+    imageUrls: imageUrl.isEmpty ? const [] : [imageUrl],
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
-    'code': code,
-    'venue_id': venueId,
-    'venue_name': venueName,
+    'checkInCode': code,
+    'venueId': venueId,
+    'venueName': venueName,
     'sport': sport,
     'location': location,
-    'date_label': dateLabel,
-    'time_label': timeLabel,
-    'court_label': courtLabel,
-    'duration_label': durationLabel,
-    'amount_due': amountDue,
-    'pay_at_ground': payAtGround,
+    'date': dateLabel,
+    'time': timeLabel,
+    'court': courtLabel,
+    'amountDue': amountDue,
     'status': status.apiValue,
-    'hero_color':
-        '#${heroColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}',
-    'image_url': imageUrl,
-    'review_status': reviewStatus.apiValue,
-    'occurred_at': occurredAt.toIso8601String(),
+    'reviewStatus': reviewStatus.apiValue,
   };
 
   UserBooking copyWith({
@@ -158,6 +234,14 @@ class UserBooking extends Equatable {
     String? imageUrl,
     BookingReviewStatus? reviewStatus,
     DateTime? occurredAt,
+    String? courtId,
+    String? shareCode,
+    bool? hasReviewed,
+    double? venueLat,
+    double? venueLng,
+    int? participantCount,
+    String? gamePostId,
+    String? expiresAt,
   }) {
     return UserBooking(
       id: id ?? this.id,
@@ -177,16 +261,15 @@ class UserBooking extends Equatable {
       imageUrl: imageUrl ?? this.imageUrl,
       reviewStatus: reviewStatus ?? this.reviewStatus,
       occurredAt: occurredAt ?? this.occurredAt,
+      courtId: courtId ?? this.courtId,
+      shareCode: shareCode ?? this.shareCode,
+      hasReviewed: hasReviewed ?? this.hasReviewed,
+      venueLat: venueLat ?? this.venueLat,
+      venueLng: venueLng ?? this.venueLng,
+      participantCount: participantCount ?? this.participantCount,
+      gamePostId: gamePostId ?? this.gamePostId,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
-  }
-
-  static Color? _colorFromHex(String? value) {
-    if (value == null || value.isEmpty) return null;
-    var hex = value.replaceFirst('#', '');
-    if (hex.length == 6) hex = 'FF$hex';
-    final parsed = int.tryParse(hex, radix: 16);
-    if (parsed == null) return null;
-    return Color(parsed);
   }
 
   @override

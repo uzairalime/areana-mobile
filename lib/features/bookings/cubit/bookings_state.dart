@@ -12,6 +12,9 @@ class BookingsState extends Equatable {
     this.bookings = const [],
     this.reviewSubmittingId = '',
     this.managingBookingId = '',
+    this.page = 1,
+    this.hasMore = true,
+    this.isLoadingMore = false,
   });
 
   final AppLoading status;
@@ -19,6 +22,9 @@ class BookingsState extends Equatable {
   final BookingFilterTab tab;
   final List<UserBooking> bookings;
   final String reviewSubmittingId;
+  final int page;
+  final bool hasMore;
+  final bool isLoadingMore;
 
   /// Cancel / manage in-flight booking id.
   final String managingBookingId;
@@ -115,6 +121,9 @@ class BookingsState extends Equatable {
     List<UserBooking>? bookings,
     String? reviewSubmittingId,
     String? managingBookingId,
+    int? page,
+    bool? hasMore,
+    bool? isLoadingMore,
   }) {
     return BookingsState(
       status: status ?? this.status,
@@ -123,6 +132,9 @@ class BookingsState extends Equatable {
       bookings: bookings ?? this.bookings,
       reviewSubmittingId: reviewSubmittingId ?? this.reviewSubmittingId,
       managingBookingId: managingBookingId ?? this.managingBookingId,
+      page: page ?? this.page,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -134,5 +146,8 @@ class BookingsState extends Equatable {
     bookings,
     reviewSubmittingId,
     managingBookingId,
+    page,
+    hasMore,
+    isLoadingMore,
   ];
 }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
-import '../../../core/mock/mock_home_data.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/venue_navigation.dart';
@@ -18,7 +17,7 @@ import '../cubit/bookings_state.dart';
 import '../model/booking_filter_tab.dart';
 import '../model/user_booking.dart';
 import '../widgets/booking_list_shimmer.dart';
-import '../widgets/booking_recommend_sheet.dart';
+import '../widgets/booking_review_sheet.dart';
 import '../widgets/past_booking_tile.dart';
 import '../widgets/upcoming_featured_card.dart';
 import '../widgets/upcoming_timeline_tile.dart';
@@ -46,38 +45,28 @@ class BookingsScreen extends StatelessWidget {
   }
 
   void _rebook(BuildContext context, UserBooking booking) {
-    final venue = MockHomeData.byId(booking.venueId);
-    if (venue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Venue not available to rebook right now'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    VenueNavigation.openBookSlot(context, venue);
+    VenueNavigation.openBookSlot(
+      context,
+      booking.toVenue(),
+      preselectedCourtId: booking.courtId.isEmpty ? null : booking.courtId,
+    );
   }
 
   Future<void> _addReview(BuildContext context, UserBooking booking) async {
-    final recommended = await showBookingRecommendSheet(
-      context,
-      booking: booking,
-    );
-    if (recommended == null || !context.mounted) return;
+    final result = await showBookingReviewSheet(context, booking: booking);
+    if (result == null || !context.mounted) return;
 
     final ok = await context.read<BookingsCubit>().submitReview(
       bookingId: booking.id,
-      recommended: recommended,
+      rating: result.rating,
+      comment: result.comment,
     );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           ok
-              ? (recommended
-                    ? 'Thanks — you recommended ${booking.venueName}'
-                    : 'Thanks for your feedback')
+              ? 'Thanks — your review for ${booking.venueName} is saved'
               : 'Could not save review',
         ),
         behavior: SnackBarBehavior.floating,

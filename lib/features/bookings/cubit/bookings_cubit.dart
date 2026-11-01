@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
 import '../model/booking_filter_tab.dart';
-import '../model/booking_review_status.dart';
 import 'bookings_repository.dart';
 import 'bookings_state.dart';
 
@@ -14,17 +13,30 @@ class BookingsCubit extends Cubit<BookingsState> {
   final BookingsRepository _repository;
   var _requestId = 0;
 
+  String get _filter =>
+      state.tab == .upcoming ? 'upcoming' : 'past';
+
   Future<void> load() async {
     final id = ++_requestId;
-    emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
-    final result = await _repository.fetchBookings();
+    emit(
+      state.copyWith(
+        status: AppLoading.loading,
+        errorMessage: '',
+        bookings: const [],
+        page: 1,
+        hasMore: true,
+      ),
+    );
+    final result = await _repository.fetchBookings(filter: _filter);
     if (isClosed || id != _requestId) return;
     result.when(
-      success: (bookings) {
+      success: (page) {
         emit(
           state.copyWith(
             status: AppLoading.success,
-            bookings: bookings,
+            bookings: page.items,
+            page: page.page,
+            hasMore: page.hasMore,
             errorMessage: '',
           ),
         );
@@ -42,14 +54,16 @@ class BookingsCubit extends Cubit<BookingsState> {
 
   Future<void> refresh() async {
     final id = ++_requestId;
-    final result = await _repository.fetchBookings();
+    final result = await _repository.fetchBookings(filter: _filter);
     if (isClosed || id != _requestId) return;
     result.when(
-      success: (bookings) {
+      success: (page) {
         emit(
           state.copyWith(
             status: AppLoading.success,
-            bookings: bookings,
+            bookings: page.items,
+            page: page.page,
+            hasMore: page.hasMore,
             errorMessage: '',
           ),
         );
@@ -60,14 +74,42 @@ class BookingsCubit extends Cubit<BookingsState> {
     );
   }
 
+  Future<void> loadMore() async {
+    if (state.isLoadingMore || !state.hasMore) return;
+    final nextPage = state.page + 1;
+    emit(state.copyWith(isLoadingMore: true));
+    final result = await _repository.fetchBookings(
+      filter: _filter,
+      page: nextPage,
+    );
+    if (isClosed) return;
+    result.when(
+      success: (page) {
+        emit(
+          state.copyWith(
+            bookings: [...state.bookings, ...page.items],
+            page: page.page,
+            hasMore: page.hasMore,
+            isLoadingMore: false,
+          ),
+        );
+      },
+      failure: (_) {
+        emit(state.copyWith(isLoadingMore: false));
+      },
+    );
+  }
+
   void setTab(BookingFilterTab tab) {
     if (tab == state.tab) return;
     emit(state.copyWith(tab: tab));
+    load();
   }
 
   Future<bool> submitReview({
     required String bookingId,
-    required bool recommended,
+    required int rating,
+    String? comment,
   }) async {
     if (state.reviewSubmittingId.isNotEmpty) return false;
 
@@ -80,18 +122,15 @@ class BookingsCubit extends Cubit<BookingsState> {
 
     final result = await _repository.submitReview(
       bookingId: bookingId,
-      recommended: recommended,
+      rating: rating,
+      comment: comment,
     );
     if (isClosed) return false;
 
     return result.when(
-      success: (updated) {
+      success: (_) {
         final next = [...state.bookings];
-        next[index] = updated.copyWith(
-          reviewStatus: recommended
-              ? BookingReviewStatus.recommended
-              : BookingReviewStatus.notRecommended,
-        );
+        next[index] = current.copyWith(hasReviewed: true);
         emit(
           state.copyWith(
             bookings: next,
@@ -137,6 +176,58 @@ class BookingsCubit extends Cubit<BookingsState> {
             errorMessage: '',
           ),
         );
+        return true;
+      },
+      failure: (error) {
+        emit(
+          state.copyWith(
+            managingBookingId: '',
+            errorMessage: error.message,
+          ),
+        );
+        return false;
+      },
+    );
+  }
+
+  Future<bool> requestReschedule({
+    required String bookingId,
+    required String date,
+    required int startMinutes,
+  }) async {
+    if (state.managingBookingId.isNotEmpty) return false;
+    emit(state.copyWith(managingBookingId: bookingId, errorMessage: ''));
+    final result = await _repository.requestReschedule(
+      bookingId: bookingId,
+      date: date,
+      startMinutes: startMinutes,
+    );
+    if (isClosed) return false;
+    return result.when(
+      success: (_) {
+        emit(state.copyWith(managingBookingId: '', errorMessage: ''));
+        return true;
+      },
+      failure: (error) {
+        emit(
+          state.copyWith(
+            managingBookingId: '',
+            errorMessage: error.message,
+          ),
+        );
+        return false;
+      },
+    );
+  }
+
+  Future<bool> withdrawReschedule(String bookingId) async {
+    if (state.managingBookingId.isNotEmpty) return false;
+    emit(state.copyWith(managingBookingId: bookingId, errorMessage: ''));
+    final result = await _repository.withdrawReschedule(bookingId);
+    if (isClosed) return false;
+    return result.when(
+      success: (_) {
+        emit(state.copyWith(managingBookingId: '', errorMessage: ''));
         return true;
       },
       failure: (error) {

@@ -7,8 +7,6 @@ import '../../../core/consts/app_icons.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/media_slider/cache_image.dart';
-import '../../../core/mock/mock_booking_data.dart';
-import '../../../core/mock/mock_home_data.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
@@ -19,6 +17,7 @@ import '../cubit/bookings_cubit.dart';
 import '../cubit/bookings_state.dart';
 import '../model/user_booking.dart';
 import '../widgets/booking_cancel_dialog.dart';
+import '../widgets/booking_reschedule_sheet.dart';
 import '../widgets/booking_status_chip.dart';
 
 class BookingDetailScreen extends StatelessWidget {
@@ -29,22 +28,39 @@ class BookingDetailScreen extends StatelessWidget {
   static UserBooking? resolve(GoRouterState state) {
     final extra = state.extra;
     if (extra is UserBooking) return extra;
-    return MockBookingData.bookingById(state.pathParameters['id']);
+    // Deep links without a passed booking are not yet detail-driven:
+    // the list screen always passes the booking as extra.
+    return null;
   }
 
   Future<void> _update(BuildContext context, UserBooking booking) async {
-    final venue = MockHomeData.byId(booking.venueId);
-    if (venue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Venue not available to update right now'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
     AppHaptics.medium();
-    VenueNavigation.openBookSlot(context, venue);
+    VenueNavigation.openBookSlot(
+      context,
+      booking.toVenue(),
+      preselectedCourtId: booking.courtId.isEmpty ? null : booking.courtId,
+    );
+  }
+
+  Future<void> _reschedule(BuildContext context, UserBooking booking) async {
+    final result = await showBookingRescheduleSheet(context, booking: booking);
+    if (result == null || !context.mounted) return;
+    final ok = await context.read<BookingsCubit>().requestReschedule(
+      bookingId: booking.id,
+      date: result.date,
+      startMinutes: result.startMinutes,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Reschedule request sent to ${booking.venueName}'
+              : 'Could not send reschedule request',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _cancel(BuildContext context, UserBooking booking) async {
@@ -91,7 +107,7 @@ class BookingDetailScreen extends StatelessWidget {
           p.managingBookingId != c.managingBookingId,
       builder: (context, state) {
         final live = state.bookingById(booking.id) ?? booking;
-        final venue = MockHomeData.byId(live.venueId);
+        final venue = live.toVenue();
         final managing = state.isManaging(live.id);
 
         return Scaffold(
@@ -181,7 +197,7 @@ class BookingDetailScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (venue != null && venue.hasCoordinates) ...[
+                          if (venue.hasCoordinates) ...[
                             AppSizes.spaceLg.h,
                             VenueMapCard(
                               title: 'Location',
@@ -200,6 +216,7 @@ class BookingDetailScreen extends StatelessWidget {
                 booking: live,
                 managing: managing,
                 onUpdate: () => _update(context, live),
+                onReschedule: () => _reschedule(context, live),
                 onCancel: () => _cancel(context, live),
                 onBack: () {
                   AppHaptics.selection();
@@ -223,6 +240,7 @@ class _BottomBar extends StatelessWidget {
     required this.booking,
     required this.managing,
     required this.onUpdate,
+    required this.onReschedule,
     required this.onCancel,
     required this.onBack,
   });
@@ -230,6 +248,7 @@ class _BottomBar extends StatelessWidget {
   final UserBooking booking;
   final bool managing;
   final VoidCallback onUpdate;
+  final VoidCallback onReschedule;
   final VoidCallback onCancel;
   final VoidCallback onBack;
 
@@ -242,6 +261,28 @@ class _BottomBar extends StatelessWidget {
         child: booking.canModify
             ? Row(
                 children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: managing ? null : onReschedule,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(
+                          AppSizes.buttonHeight,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppSizes.radiusMd,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Reschedule',
+                        style: context.textTheme.labelLarge?.copyWith(
+                          fontWeight: .w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  12.w,
                   Expanded(
                     child: OutlinedButton(
                       onPressed: managing ? null : onCancel,
