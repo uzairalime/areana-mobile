@@ -86,24 +86,24 @@ class AuthScreen extends StatelessWidget {
                           context,
                           next: next,
                         ),
-                      ).expand();
+                      );
                     }
                     return switch (state.step) {
                       AuthStep.email => AuthEmailStep(
                         onGuestContinue: () => context.go(AppRoutes.home),
-                      ).expand(),
+                      ),
                       AuthStep.code => OtpVerifyPanel(
                         email: cubit.emailController.text.trim(),
                         onVerify: cubit.verifyCode,
                         onResend: cubit.resendOtp,
-                      ).expand(),
-                      AuthStep.signup => const AuthSignupStep().expand(),
+                      ),
+                      AuthStep.signup => const AuthSignupStep(),
                       AuthStep.done => AuthDoneStep(
                         onContinue: () => AuthNavigation.afterAuthSuccess(
                           context,
                           next: next,
                         ),
-                      ).expand(),
+                      ),
                     };
                   },
                 ).expand(),
