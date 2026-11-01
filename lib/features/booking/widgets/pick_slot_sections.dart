@@ -623,7 +623,12 @@ class PickSlotGrid extends StatelessWidget {
               crossAxisCount: 3,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio: 1.05,
+              // Fixed height, not an aspect ratio: aspect-ratio cells
+              // shrink on narrow screens / large fonts and the tile
+              // Column then overflows by a few pixels (was 8.2px,
+              // then 6.1px after the ratio tweak). A fixed extent
+              // stops that chase: the tile always gets 112px.
+              mainAxisExtent: 112,
             ),
             itemBuilder: (context, index) {
               final slot = state.slots[index];
@@ -712,34 +717,45 @@ class _SlotTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: .center,
             children: [
-              Text(
-                slot.label,
-                style: context.textTheme.titleSmall?.copyWith(
-                  color: selected
-                      ? AppColors.onPrimary
-                      : booked
-                      ? AppColors.textSecondary
-                      : AppColors.text,
-                  fontWeight: .w800,
-                  fontSize: 15,
-                  decoration: booked ? TextDecoration.lineThrough : null,
+              // FittedBox (scaleDown only, never up): "10:00 – 11:00"
+              // and "Too late to book" both wrap to a second line in a
+              // narrow cell, and that second line is what overflowed
+              // (6.1px after the aspect-ratio fix). Shrinking slightly
+              // keeps the full text on one line instead of wrapping.
+              FittedBox(
+                fit: .scaleDown,
+                child: Text(
+                  slot.label,
+                  style: context.textTheme.titleSmall?.copyWith(
+                    color: selected
+                        ? AppColors.onPrimary
+                        : booked
+                        ? AppColors.textSecondary
+                        : AppColors.text,
+                    fontWeight: .w800,
+                    fontSize: 15,
+                    decoration: booked ? TextDecoration.lineThrough : null,
+                  ),
                 ),
               ),
               2.h,
-              Text(
-                booked ? slot.unavailableLabel : MoneyFormat.pkr(slot.price),
-                style: context.textTheme.labelMedium?.copyWith(
-                  color: selected
-                      ? AppColors.accent
-                      : AppColors.textSecondary,
-                  fontWeight: selected ? .w700 : .w600,
-                  fontSize: 12,
+              FittedBox(
+                fit: .scaleDown,
+                child: Text(
+                  booked ? slot.unavailableLabel : MoneyFormat.pkr(slot.price),
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: selected
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
+                    fontWeight: selected ? .w700 : .w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               // Fixed-height row, present even when neither badge
               // applies, so every tile is exactly the same height.
               SizedBox(
-                height: 15,
+                height: 16,
                 child: !booked && (slot.peak || slot.deal)
                     ? Text(
                         slot.peak ? 'Peak' : 'Off-peak deal',
