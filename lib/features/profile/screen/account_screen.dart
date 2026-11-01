@@ -9,6 +9,7 @@ import '../../../core/services/in_app_review_service.dart';
 import '../../../core/services/locator.dart';
 import '../../../core/services/session_cubit.dart';
 import '../../../core/services/session_state.dart';
+import '../../auth/cubit/auth_repository.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/app_loading_handler.dart';
 import '../../../core/widgets/guest_gate.dart';
@@ -52,7 +53,9 @@ class _ProfileHub extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     final ok = await showProfileLogoutDialog(context);
     if (!ok || !context.mounted) return;
-    await context.read<SessionCubit>().clear();
+    // Server revoke + local clear, same as auth switch-account.
+    // AuthRepository.logout clears locally even if the revoke fails.
+    await getIt<AuthRepository>().logout();
     if (!context.mounted) return;
     context.go(AppRoutes.splash);
   }

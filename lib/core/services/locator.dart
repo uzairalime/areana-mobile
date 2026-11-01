@@ -39,7 +39,6 @@ import 'explore_session_store.dart';
 import 'recent_search_store.dart';
 import 'session_cubit.dart';
 import 'session_store.dart';
-import 'social_auth_service.dart';
 import 'token_store.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -63,14 +62,13 @@ void setupLocator() {
     )
     ..registerLazySingleton<InAppReviewService>(InAppReviewService.new)
     ..registerLazySingleton<TokenStore>(() => TokenStore(getIt<SessionStore>()))
-    ..registerLazySingleton<SocialAuthService>(createSocialAuthService)
     ..registerLazySingleton<Dio>(DioService.create)
     ..registerLazySingleton<AuthClient>(() => AuthClient(getIt<Dio>()))
     ..registerLazySingleton<AuthRepository>(
       () => AuthRepository(
         getIt<AuthClient>(),
         getIt<SessionCubit>(),
-        getIt<SocialAuthService>(),
+        getIt<SessionStore>(),
       ),
     )
     ..registerLazySingleton<HomeClient>(() => HomeClient(getIt<Dio>()))

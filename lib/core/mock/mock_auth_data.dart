@@ -1,6 +1,4 @@
-import '../../features/auth/model/auth_session.dart';
-import '../../features/auth/model/social_credential.dart';
-import '../../features/auth/model/user_model.dart';
+import '../../features/auth/model/otp_models.dart';
 
 class MockAuthData {
   const MockAuthData._();
@@ -10,60 +8,28 @@ class MockAuthData {
 
   static bool isValidOtp(String otp) => otp.trim() == validOtp;
 
-  static AuthSession login({required String identifier}) {
-    return AuthSession(
-      accessToken: 'mock_access_token_login',
-      user: UserModel(
-        id: 'user_1',
-        name: 'Alex Player',
-        email: identifier.contains('@') ? identifier : 'alex@pitchside.app',
-        phone: identifier.contains('@') ? '03001234567' : identifier,
-        provider: 'email',
-      ),
-    );
-  }
-
-  static AuthSession signupVerified({
-    required String name,
-    required String phone,
+  /// Mock verify, mirroring the Areana response shape. The repository
+  /// decides signup vs returning: only `alex@pitchside.app` is a
+  /// returning account; every other email needs name + phone first.
+  static OtpVerifyResponse verifyOtp({
     required String email,
+    String? name,
+    String? phone,
+    String? city,
+    String? referralCode,
   }) {
-    return AuthSession(
-      accessToken: 'mock_access_token_signup',
-      user: UserModel(
-        id: 'user_1',
-        name: name,
-        email: email,
-        phone: phone,
-        provider: 'email',
-      ),
-    );
-  }
-
-  static AuthSession social(SocialCredential credential) {
-    return AuthSession(
-      accessToken: 'mock_access_token_social_${credential.provider.apiValue}',
-      user: UserModel(
-        id: 'user_${credential.providerUid}',
-        name: credential.name.isEmpty ? 'Pitchside player' : credential.name,
-        email: credential.email,
-        phone: '',
-        avatarUrl: credential.avatarUrl,
-        provider: credential.provider.apiValue,
-      ),
-    );
-  }
-
-  static AuthSession resetPassword({required String email}) {
-    return AuthSession(
-      accessToken: 'mock_access_token_reset',
-      user: UserModel(
-        id: 'user_1',
-        name: 'Alex Player',
-        email: email,
-        phone: '03001234567',
-        provider: 'email',
-      ),
+    final isReturning = email == 'alex@pitchside.app';
+    return OtpVerifyResponse(
+      accessToken: 'mock_access_token',
+      refreshToken: 'mock_refresh_token',
+      userId: 'user_1',
+      userName: isReturning ? 'Alex Player' : (name ?? ''),
+      userEmail: email,
+      userPhone: isReturning ? '03001234567' : (phone ?? ''),
+      userCity: city ?? '',
+      referralStatus: referralCode != null && referralCode.isNotEmpty
+          ? ReferralStatus.applied
+          : ReferralStatus.none,
     );
   }
 }

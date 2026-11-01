@@ -31,14 +31,6 @@ class AccountControlsScreen extends StatelessWidget {
               ProfileMenuCard(
                 children: [
                   ProfileMenuTile(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'Change password',
-                    trailing: user?.passwordUpdatedLabel.isEmpty ?? true
-                        ? null
-                        : user!.passwordUpdatedLabel,
-                    onTap: () => context.push(AppRoutes.changePassword),
-                  ),
-                  ProfileMenuTile(
                     icon: Icons.mail_outline,
                     label: 'Email',
                     trailing: user?.emailVerified == true ? 'Verified' : 'Pending',

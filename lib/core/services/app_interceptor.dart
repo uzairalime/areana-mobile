@@ -144,7 +144,7 @@ class AppInterceptor extends Interceptor {
     );
     try {
       final response = await refreshDio.post<dynamic>(
-        'auth/refresh',
+        ApiEndpoints.refresh,
         data: {'refreshToken': refreshToken},
       );
       final data = response.data;

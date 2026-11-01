@@ -5,13 +5,12 @@ class ApiEndpoints {
   const ApiEndpoints._();
 
   static const String baseUrl = AppConfig.apiBaseUrl;
-  static const String login = 'auth/login';
-  static const String signup = 'auth/signup';
-  static const String signupVerifyOtp = 'auth/signup/verify-otp';
-  static const String social = 'auth/social';
-  static const String forgotSendOtp = 'auth/forgot-password/send-otp';
-  static const String forgotVerifyOtp = 'auth/forgot-password/verify-otp';
-  static const String forgotReset = 'auth/forgot-password/reset';
+
+  // Areana player auth — passwordless email OTP, same as user-web /auth.
+  static const String requestOtp = 'auth/request-otp';
+  static const String verifyOtp = 'auth/verify-otp';
+  static const String refresh = 'auth/refresh';
+  static const String logout = 'auth/logout';
   static const String profile = 'profile';
   static const String profilePassword = 'profile/password';
   static const String profileNotifications = 'profile/notifications';

@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/cubit/auth_cubit.dart';
 import '../../features/auth/cubit/splash_cubit.dart';
-import '../../features/auth/screen/forgot_password_screen.dart';
-import '../../features/auth/screen/login_screen.dart';
-import '../../features/auth/screen/signup_screen.dart';
+import '../../features/auth/screen/auth_screen.dart';
 import '../../features/auth/screen/splash_screen.dart';
 import '../../features/booking/cubit/booking_cubit.dart';
 import '../../features/booking/screen/booking_confirmed_screen.dart';
@@ -30,7 +28,6 @@ import '../../features/notifications/screen/notifications_screen.dart';
 import '../../features/profile/model/legal_doc.dart';
 import '../../features/profile/screen/account_controls_screen.dart';
 import '../../features/profile/screen/account_screen.dart';
-import '../../features/profile/screen/change_password_screen.dart';
 import '../../features/profile/screen/edit_profile_screen.dart';
 import '../../features/profile/screen/help_support_screen.dart';
 import '../../features/profile/screen/language_screen.dart';
@@ -48,9 +45,13 @@ import '../services/session_store.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
-  static const login = '/login';
-  static const signup = '/signup';
-  static const forgotPassword = '/forgot-password';
+
+  /// Single Areana auth route, like user-web `/auth`. `login` and
+  /// `signup` are kept as aliases so every existing push site (splash,
+  /// checkout, guest cards) lands on the same OTP flow without edits.
+  static const auth = '/auth';
+  static const login = auth;
+  static const signup = auth;
   static const home = '/home';
   static const bookings = '/bookings';
   static const bookingDetail = '/bookings/detail';
@@ -61,7 +62,6 @@ abstract final class AppRoutes {
   static const account = '/account';
   static const editProfile = '/account/edit';
   static const accountControls = '/account/controls';
-  static const changePassword = '/account/change-password';
   static const notificationSettings = '/account/notifications';
   static const language = '/account/language';
   static const paymentPreference = '/account/payment';
@@ -98,37 +98,13 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         },
       ),
       GoRoute(
-        path: AppRoutes.login,
+        path: AppRoutes.auth,
         pageBuilder: (context, state) {
           return _appPage(
             state,
             BlocProvider(
               create: (_) => getIt<AuthCubit>(),
-              child: const LoginScreen(),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.signup,
-        pageBuilder: (context, state) {
-          return _appPage(
-            state,
-            BlocProvider(
-              create: (_) => getIt<AuthCubit>(),
-              child: const SignupScreen(),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.forgotPassword,
-        pageBuilder: (context, state) {
-          return _appPage(
-            state,
-            BlocProvider(
-              create: (_) => getIt<AuthCubit>(),
-              child: const ForgotPasswordScreen(),
+              child: const AuthScreen(),
             ),
           );
         },
@@ -169,13 +145,6 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         pageBuilder: (context, state) => _appPage(
           state,
           const ProfileScope(child: AccountControlsScreen()),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.changePassword,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: ChangePasswordScreen()),
         ),
       ),
       GoRoute(

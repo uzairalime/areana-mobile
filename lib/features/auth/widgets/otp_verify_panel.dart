@@ -11,6 +11,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_otp_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import 'otp_expiry_text.dart';
 
 class OtpVerifyPanel extends StatelessWidget {
   const OtpVerifyPanel({
@@ -29,7 +30,8 @@ class OtpVerifyPanel extends StatelessWidget {
     final cubit = context.read<AuthCubit>();
     return BlocBuilder<AuthCubit, AuthState>(
       buildWhen: (previous, current) =>
-          previous.otpResendSeconds != current.otpResendSeconds,
+          previous.otpResendSeconds != current.otpResendSeconds ||
+          previous.otpExpiresAtMs != current.otpExpiresAtMs,
       builder: (context, state) {
         return Form(
           key: cubit.otpFormKey,
@@ -55,6 +57,8 @@ class OtpVerifyPanel extends StatelessWidget {
                   ],
                 ),
               ),
+              AppSizes.spaceMd.h,
+              OtpExpiryText(expiresAtMs: state.otpExpiresAtMs),
               AppSizes.spaceMd.h,
               AppOtpField(
                 controller: cubit.otpController,
@@ -99,6 +103,13 @@ class OtpVerifyPanel extends StatelessWidget {
                     ),
                 ],
               ),
+              TextButton(
+                onPressed: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  cubit.backStep();
+                },
+                child: const Text('Use a different email'),
+              ).center(),
             ],
           ),
         );

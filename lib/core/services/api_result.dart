@@ -53,6 +53,7 @@ final class ApiError<T> extends ApiResult<T> {
     this.statusCode,
     this.error,
     this.errors,
+    this.data,
   });
 
   final String message;
@@ -60,18 +61,28 @@ final class ApiError<T> extends ApiResult<T> {
   final Object? error;
   final Map<String, dynamic>? errors;
 
+  /// Full response body, when it was a JSON object. Callers use it for
+  /// top-level fields that are not field errors — for example the
+  /// OTP 429 body's `retryAfterSeconds` / `resetsAt`.
+  final Map<String, dynamic>? data;
+
   factory ApiError.fromDio(DioException exception) {
     final apiException = ApiException.fromDio(exception);
     final data = exception.response?.data;
     Map<String, dynamic>? fieldErrors;
-    if (data is Map && data['errors'] is Map) {
-      fieldErrors = Map<String, dynamic>.from(data['errors'] as Map);
+    Map<String, dynamic>? body;
+    if (data is Map) {
+      body = Map<String, dynamic>.from(data);
+      if (data['errors'] is Map) {
+        fieldErrors = Map<String, dynamic>.from(data['errors'] as Map);
+      }
     }
     return ApiError(
       message: apiException.message,
       statusCode: apiException.statusCode,
       error: exception,
       errors: fieldErrors,
+      data: body,
     );
   }
 
@@ -93,6 +104,7 @@ final class ApiError<T> extends ApiResult<T> {
       statusCode: statusCode,
       error: error,
       errors: errors,
+      data: data,
     );
   }
 

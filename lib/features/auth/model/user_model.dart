@@ -20,7 +20,8 @@ class UserModel extends Equatable {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final rawAvatar = json['avatar_url'] as String?;
+    final rawAvatar =
+        json['avatar_url'] as String? ?? json['avatarUrl'] as String?;
     final rawProvider = json['provider'] as String?;
     final sportsRaw = json['favourite_sports'] ?? json['favorite_sports'];
     return UserModel(
