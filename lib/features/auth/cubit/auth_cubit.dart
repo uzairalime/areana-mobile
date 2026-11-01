@@ -199,8 +199,7 @@ class AuthCubit extends Cubit<AuthState> {
             state.copyWith(
               status: AppLoading.initial,
               errorMessage: '',
-              noticeMessage:
-                  'No account found for this email yet — finish creating it below.',
+              noticeMessage: 'No account found for this email yet — finish creating it below.',
               step: AuthStep.signup,
             ),
           );
@@ -304,7 +303,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
     if (referralEntered) {
       final notice = _referralNoticeFor(response.referralStatus);
-      if (notice != null && notice.isNotEmpty) {
+      if (notice.isNotEmpty) {
         emit(
           state.copyWith(
             status: AppLoading.initial,
@@ -342,8 +341,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(
         state.copyWith(
           status: AppLoading.error,
-          errorMessage:
-              'This code is blocked after too many wrong tries — tap Resend for a fresh code.',
+          errorMessage: 'This code is blocked after too many wrong tries — tap Resend for a fresh code.',
           errorTitle: 'Verification failed',
         ),
       );
@@ -365,8 +363,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(
         state.copyWith(
           status: AppLoading.error,
-          errorMessage:
-              'This account has been suspended. Please contact support for help.',
+          errorMessage: 'This account has been suspended. Please contact support for help.',
           errorTitle: 'Verification failed',
         ),
       );
@@ -379,8 +376,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(
         state.copyWith(
           status: AppLoading.error,
-          errorMessage:
-              'The service timed out — that try may have used up one of your attempts. Please try verifying again, or tap Resend for a fresh code if you\'re unsure.',
+          errorMessage: 'The service timed out — that try may have used up one of your attempts. Please try verifying again, or tap Resend for a fresh code if you\'re unsure.',
           errorTitle: 'Verification failed',
         ),
       );
@@ -407,8 +403,8 @@ class AuthCubit extends Cubit<AuthState> {
         errorMessage: nextCount >= 5
             ? 'This code is blocked after too many wrong tries — tap Resend for a fresh code.'
             : nextCount >= 3
-                ? '$base After a few wrong tries a code gets blocked — if this keeps failing, tap Resend for a fresh code.'
-                : base,
+            ? '$base After a few wrong tries a code gets blocked — if this keeps failing, tap Resend for a fresh code.'
+            : base,
         errorTitle: 'Verification failed',
         failedAttempts: nextCount,
       ),
@@ -431,7 +427,8 @@ class AuthCubit extends Cubit<AuthState> {
       final resetsAt = resetsAtRaw == null
           ? null
           : DateTime.tryParse(resetsAtRaw)?.millisecondsSinceEpoch;
-      final unlockAt = resetsAt ??
+      final unlockAt =
+          resetsAt ??
           (retryAfter != null
               ? DateTime.now().millisecondsSinceEpoch + retryAfter * 1000
               : null);
@@ -461,15 +458,11 @@ class AuthCubit extends Cubit<AuthState> {
   String _referralNoticeFor(ReferralStatus status) {
     return switch (status) {
       ReferralStatus.applied => 'Referral promo applied.',
-      ReferralStatus.self =>
-        'You cannot use your own referral code — account created without a welcome promo.',
-      ReferralStatus.invalid =>
-        'Referral code not recognised — account created without a welcome promo.',
-      ReferralStatus.failed =>
-        'Referral promo could not be applied — try again later. Your account was created without a welcome promo.',
+      ReferralStatus.self => 'You cannot use your own referral code — account created without a welcome promo.',
+      ReferralStatus.invalid => 'Referral code not recognised — account created without a welcome promo.',
+      ReferralStatus.failed => 'Referral promo could not be applied — try again later. Your account was created without a welcome promo.',
       ReferralStatus.none => '',
-      ReferralStatus.unknown =>
-        'Referral code not recognised — account created without a welcome promo.',
+      ReferralStatus.unknown => 'Referral code not recognised — account created without a welcome promo.',
     };
   }
 

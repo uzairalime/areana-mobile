@@ -1,5 +1,5 @@
 {
   "FLAVOR": "development",
-  "API_BASE_URL": "https://api-dev.example.com/",
+  "API_BASE_URL": "http://10.31.147.229:3000/api/",
   "USE_MOCK_API": "true"
 }
