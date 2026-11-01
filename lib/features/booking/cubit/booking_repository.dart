@@ -1,13 +1,6 @@
-import '../../../core/config/app_config.dart';
-import '../../../core/mock/mock_booking_data.dart';
-import '../../../core/mock/mock_delay.dart';
 import '../../../core/services/api_result.dart';
-import '../../home/model/venue.dart';
-import '../model/booking_confirmation.dart';
-import '../model/booking_date.dart';
-import '../model/court_option.dart';
-import '../model/time_slot.dart';
-import '../model/venue_availability.dart';
+import '../../home/model/areana_models.dart';
+import '../model/areana_booking.dart';
 import 'booking_client.dart';
 
 class BookingRepository {
@@ -15,44 +8,47 @@ class BookingRepository {
 
   final BookingClient _client;
 
-  Future<ApiResult<VenueAvailability>> fetchAvailability(Venue venue) {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(
-        () => ApiSuccess(MockBookingData.availabilityFor(venue)),
+  Future<ApiResult<List<AreanaCourt>>> fetchVenueCourts(String venueId) =>
+      _client.fetchVenueCourts(venueId);
+
+  Future<ApiResult<AvailabilityResponse>> fetchAvailability({
+    required String courtId,
+    required String date,
+  }) =>
+      _client.fetchAvailability(courtId: courtId, date: date);
+
+  Future<ApiResult<PromoPreview>> validatePromo({
+    required String code,
+    required String courtId,
+    required int slotCount,
+    String? date,
+    int? startMinutes,
+  }) =>
+      _client.validatePromo(
+        code: code,
+        courtId: courtId,
+        slotCount: slotCount,
+        date: date,
+        startMinutes: startMinutes,
       );
-    }
-    return _client.fetchAvailability(venue.id);
-  }
 
   Future<ApiResult<BookingConfirmation>> confirmBooking({
-    required Venue venue,
-    required CourtOption court,
-    required BookingDate date,
-    required TimeSlot slot,
-    required String duration,
-    required bool payAtGround,
-  }) {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(
-        () => ApiSuccess(
-          MockBookingData.confirm(
-            venue: venue,
-            court: court,
-            date: date,
-            slot: slot,
-            duration: duration,
-            payAtGround: payAtGround,
-          ),
-        ),
-      );
-    }
-    return _client.createBooking({
-      'venue_id': venue.id,
-      'court_id': court.id,
-      'date_id': date.id,
-      'slot_id': slot.id,
-      'duration': duration,
-      'pay_at_ground': payAtGround,
-    });
-  }
+    required String courtId,
+    required String date,
+    required int startMinutes,
+    required int slotCount,
+    String? promoCode,
+    int? expectedTotal,
+  }) =>
+      _client.createBooking({
+        'courtId': courtId,
+        'date': date,
+        'startMinutes': startMinutes,
+        'slotCount': slotCount,
+        if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
+        if (expectedTotal != null) 'expectedTotal': expectedTotal,
+      });
+
+  Future<ApiResult<ShareResult>> shareBooking(String bookingId) =>
+      _client.shareBooking(bookingId);
 }

@@ -13,6 +13,7 @@ import '../../../core/services/locator.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/widgets/app_button.dart';
+import '../widgets/confirmed_share_card.dart';
 import '../cubit/booking_cubit.dart';
 import '../cubit/booking_state.dart';
 
@@ -112,6 +113,16 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                   24.h,
                   if (confirmation != null)
                     _TicketCard(state: state).paddingSymmetric(horizontal: 20),
+                  if (confirmation != null &&
+                      confirmation.shareCode.isNotEmpty) ...[
+                    16.h,
+                    Padding(
+                      padding: const .symmetric(horizontal: 20),
+                      child: ConfirmedShareCard(
+                        shareCode: confirmation.shareCode,
+                      ),
+                    ),
+                  ],
                   const Spacer(),
                   SafeArea(
                     top: false,

@@ -112,8 +112,11 @@ class _CourtRow extends StatelessWidget {
                 ),
                 8.w,
                 TextButton(
-                  onPressed: () =>
-                      VenueNavigation.openBookSlot(context, venue),
+                  onPressed: () => VenueNavigation.openBookSlot(
+                    context,
+                    venue,
+                    preselectedCourtId: court.id,
+                  ),
                   child: const Text('Book'),
                 ),
               ],

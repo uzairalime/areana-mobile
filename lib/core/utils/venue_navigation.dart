@@ -15,9 +15,18 @@ abstract final class VenueNavigation {
   }
 
   /// Skips detail — starts availability load and opens pick-slot → checkout → confirm.
-  static void openBookSlot(BuildContext context, Venue venue) {
+  static void openBookSlot(
+    BuildContext context,
+    Venue venue, {
+    String? preselectedCourtId,
+  }) {
     AppHaptics.medium();
-    getIt<BookingCubit>().start(venue);
+    getIt<BookingCubit>().start(venue, preselectedCourtId: preselectedCourtId);
     context.push(AppRoutes.pickSlot);
+  }
+
+  static void openCourtDetail(BuildContext context, String courtId) {
+    AppHaptics.selection();
+    context.push('${AppRoutes.courtDetail}/$courtId');
   }
 }

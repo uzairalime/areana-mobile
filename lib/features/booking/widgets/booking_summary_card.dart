@@ -88,13 +88,13 @@ class BookingSummaryCard extends StatelessWidget {
               _MetaTile(
                 icon: Icons.calendar_today_outlined,
                 label: 'Date',
-                value: state.selectedDate?.fullLabel ?? '—',
+                value: state.selectedDate ?? '—',
               ).expand(),
               12.w,
               _MetaTile(
                 icon: Icons.schedule_outlined,
                 label: 'Time',
-                value: _timeRange(state),
+                value: state.timeRange,
               ).expand(),
             ],
           ),
@@ -109,8 +109,8 @@ class BookingSummaryCard extends StatelessWidget {
               12.w,
               _MetaTile(
                 icon: Icons.timer_outlined,
-                label: 'Duration',
-                value: state.selectedDuration ?? '—',
+                label: 'Slots',
+                value: '${state.slotCount} slot${state.slotCount == 1 ? '' : 's'}',
               ).expand(),
             ],
           ),
@@ -124,19 +124,7 @@ class BookingSummaryCard extends StatelessWidget {
     if (court == null) {
       return '—';
     }
-    return '${court.name}, ${court.note}';
-  }
-
-  static String _timeRange(BookingState state) {
-    final slot = state.selectedSlot;
-    final duration = state.selectedDuration;
-    if (slot == null) {
-      return '—';
-    }
-    if (duration == null) {
-      return slot.label;
-    }
-    return '${slot.label} · $duration';
+    return '${court.name} · ${court.sport}';
   }
 }
 

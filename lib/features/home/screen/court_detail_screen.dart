@@ -255,7 +255,11 @@ class CourtDetailScreen extends StatelessWidget {
                           icon: Icons.arrow_forward_rounded,
                           onPressed: () {
                             AppHaptics.selection();
-                            VenueNavigation.openBookSlot(context, venue);
+                            VenueNavigation.openBookSlot(
+                              context,
+                              venue,
+                              preselectedCourtId: court.id,
+                            );
                           },
                           minimumSize: const Size(0, AppSizes.buttonHeight),
                         ).expand(),
