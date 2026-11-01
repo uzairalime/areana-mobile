@@ -252,7 +252,7 @@ One `Dio` instance from `lib/core/services/dio_service.dart`. Clients receive it
 Interceptor order:
 
 1. `AppInterceptor` — on each request, set `Authorization: Bearer <token>` when `TokenStore.accessToken` is non-empty. Do not read the token when Dio is created.
-2. `LogInterceptor` — only when `kDebugMode` is true. Enable `request`, `requestHeader`, `requestBody`, `responseBody`, and `error`. Disable `responseHeader`. Pass `logPrint: (object) => debugPrint(object.toString())`.
+2. `ApiLogInterceptor` (via the `logger` package, shared `appLogger`) — only when `kDebugMode` is true. Logs method + full endpoint URL, request body, and response/error body with timing. Never log headers, and redact secrets (OTP `code`, passwords, access/refresh tokens, device tokens) as `***REDACTED***` — do NOT use Dio's built-in `LogInterceptor`, which prints them in the clear. The refresh Dio gets only this logging interceptor, never `AppInterceptor`.
 
 Full classes are in [reference.md](reference.md).
 

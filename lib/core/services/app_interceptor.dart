@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../features/auth/model/auth_session.dart';
+import 'api_log_interceptor.dart';
 import '../consts/api_endpoints.dart';
 import 'locator.dart';
 import 'session_cubit.dart';
@@ -128,8 +130,10 @@ class AppInterceptor extends Interceptor {
   }
 
   Future<AuthSession?> _doRefresh(String refreshToken) async {
-    // A clean Dio: no interceptors, otherwise the refresh call itself
-    // would re-enter this interceptor and loop.
+    // A clean Dio: no AppInterceptor, otherwise the refresh call
+    // itself would re-enter this interceptor and loop. Only the
+    // logging interceptor is added (debug only), so refresh calls
+    // are logged like every other API call, with tokens redacted.
     final refreshDio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
@@ -142,6 +146,9 @@ class AppInterceptor extends Interceptor {
         },
       ),
     );
+    if (kDebugMode) {
+      refreshDio.interceptors.add(ApiLogInterceptor());
+    }
     try {
       final response = await refreshDio.post<dynamic>(
         ApiEndpoints.refresh,
