@@ -1,435 +1,221 @@
-# Pitchside API contract
+# Areana API contract (mobile)
 
-Hand this file to the backend developer. The Flutter app already consumes these shapes through Dio + `ApiResult<T>`.
+The Flutter app consumes the **Areana Nest API** — the same API as the
+user-web player app (`areana-user-web`, `lib/player.ts`) — through a
+single Dio instance + `ApiResult<T>`. Endpoint constants live in
+`lib/core/consts/api_endpoints.dart`; do not hardcode a host in a client.
 
-While `USE_MOCK_API` is `"true"` in `config.*.json`, the app uses delayed mock data (2 seconds). When the real API is ready:
+Base URL comes from flavor config (`config.development.json` /
+`config.production.json`) via `--dart-define-from-file`. It is compiled
+in, not read at runtime: changing a config file requires a **full
+rebuild**, hot reload does not pick it up. The base URL must end with
+`/api/` (the API's global prefix), with a trailing slash.
 
-1. Deploy these endpoints under the flavor base URL.
-2. Set `USE_MOCK_API` to `"false"`.
-3. Point `API_BASE_URL` at the real host (keep the trailing `/`).
-4. No Flutter feature rewrite is required.
+Current development config (Nov 1, 2026):
 
-Base URL examples:
-
-- Development: `https://api-dev.example.com/`
-- Production: `https://api.example.com/`
-
-All paths below are relative to the base URL. Auth-protected routes expect:
-
-```http
-Authorization: Bearer <access_token>
+```json
+{
+  "FLAVOR": "development",
+  "API_BASE_URL": "http://10.31.147.229:3000/api/",
+  "USE_MOCK_API": "false"
+}
 ```
 
-Success responses should use HTTP `2xx`. Error responses should prefer:
+That IP is the Mac's LAN IP — `localhost` on a phone means the phone
+itself, not the Mac. The IP changes with the network; update
+`config.development.json` when it does. Production is not yet configured
+for the live API (still a placeholder host with mock on) — do not use
+the production flavor for live testing.
+
+All paths below are relative to the base URL. Auth-protected routes
+expect:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+The interceptor attaches it from secure storage on every request, and
+on 401 does a single-flight `POST auth/refresh`, rotates the pair,
+retries once, and only clears the session on a refresh 401.
+
+Success responses use HTTP `2xx`. Error responses use:
 
 ```json
 {
   "message": "Human readable error",
-  "errors": {
-    "email": ["Already taken"]
-  }
+  "statusCode": 401
 }
 ```
 
-`message` is required for UI dialogs. `errors` is optional field-level detail.
+`message` is required for UI dialogs. Some errors also carry field
+`errors` and, on 429, `retryAfterSeconds` / `resetsAt`.
 
----
+## Numbers that arrive as strings
 
-## Auth session payload (shared)
+Prisma Decimal fields serialize as **strings**, not numbers
+(`totalPrice: "18000"`, court `pricePerHour: "3000"`). Models must parse
+num **or** String (`int.tryParse` / `double.tryParse`) — a plain
+`as num` cast crashes. This bit the bookings list in live testing.
 
-Every successful auth endpoint below returns the same shape. The app stores both fields and keeps `user` in app-wide `SessionCubit` / `UserModel`.
+## Pagination
 
-```json
-{
-  "access_token": "jwt-or-opaque-token",
-  "user": {
-    "id": "user_1",
-    "name": "Alex Player",
-    "email": "you@example.com",
-    "phone": "03001234567",
-    "avatar_url": null,
-    "provider": "email"
-  }
-}
-```
+Listings never return a bare array:
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `access_token` | string | Required. Sent as `Authorization: Bearer …` |
-| `user.id` | string | App user id (not the Google/Apple uid) |
-| `user.avatar_url` | string\|null | Optional; UI falls back to initials (`Muhammad Arslan` → `MA`) |
-| `user.provider` | string\|null | `email` \| `google` \| `apple` |
+- **OffsetPage** (`?page&limit`, `items, total, page, limit, totalPages,
+  hasMore`): venues, courts, games board, my bookings.
+- **CursorPage** (`?cursor&limit`, `items, nextCursor, total?`):
+  favorites, notifications, venue/court reviews.
 
----
+Slot search is bounded, not paginated.
 
-## Auth
+## Auth — passwordless email OTP, same as user-web `/auth`
 
-### `POST auth/login`
+No passwords, no social login, no forgot-password flow. Single screen:
+email → 6-digit code → signup (new accounts only) → done / home.
 
-Request:
-
-```json
-{
-  "identifier": "you@example.com",
-  "password": "secret123"
-}
-```
-
-`identifier` may be email or phone. Success `200` → **session payload**.
-
----
-
-### `POST auth/signup`
-
-Creates a pending account and emails an OTP. Does **not** return `access_token` yet.
-
-Request:
-
-```json
-{
-  "name": "Alex Player",
-  "phone": "03001234567",
-  "email": "you@example.com",
-  "password": "secret123"
-}
-```
-
-Success `200` / `201`:
-
-```json
-{ "message": "OTP sent" }
-```
-
-### `POST auth/signup/verify-otp`
-
-Request:
-
-```json
-{
-  "email": "you@example.com",
-  "otp": "123456"
-}
-```
-
-Success `200` → **session payload**. App then calls `GET profile` and opens the dashboard.
-
----
-
-### `POST auth/social`
-
-Client gets account info from Google / Apple (including provider uid), then posts:
-
-```json
-{
-  "provider": "google",
-  "provider_uid": "google-sub-or-uid",
-  "email": "alex.google@pitchside.app",
-  "name": "Alex Google",
-  "avatar_url": null,
-  "id_token": "optional-id-token-for-server-verify"
-}
-```
-
-`provider` is `google` or `apple`.
-
-Backend verifies the token / uid, checks DB:
-
-- existing social link → login
-- new → create account
-
-Both cases return **session payload** (`200` / `201`).
-
----
-
-### Forgot password (3 steps)
-
-#### `POST auth/forgot-password/send-otp`
+### `POST auth/request-otp`
 
 ```json
 { "email": "you@example.com" }
 ```
 
-Success `200`: `{ "message": "OTP sent" }`
+Success `201`: `{ "message", "expiresAt", "ttlSeconds": 600 }`.
+Fresh random code per request, 10-minute expiry, max 5 codes/hour/email.
+A 503 means mail send failed and **no new code was issued** — a previous
+live code still works. A 429 carries `retryAfterSeconds` / `resetsAt`.
 
-#### `POST auth/forgot-password/verify-otp`
+### `POST auth/verify-otp`
 
 ```json
-{
-  "email": "you@example.com",
-  "otp": "123456"
-}
+{ "email": "you@example.com", "code": "123456" }
 ```
 
-Success `200`: `{ "message": "OTP verified" }`
+For a new account, add `name` (required), `phone` (required), `city`
+(optional), `referralCode` (optional). The code is **not** consumed when
+the server replies that name/phone are missing, so the same code is
+reused for the signup submit.
 
-#### `POST auth/forgot-password/reset`
-
-```json
-{
-  "email": "you@example.com",
-  "otp": "123456",
-  "password": "newSecret123"
-}
-```
-
-Success `200` → **session payload**. App stores the token, calls `GET profile`, then opens the dashboard.
-
-Mock OTP while `USE_MOCK_API` is true: `123456`.
-
----
-
-## Profile
-
-Requires auth.
-
-### `GET profile`
-
-Success `200` — bare user or wrapped:
+Success `201`:
 
 ```json
 {
+  "accessToken": "…",
+  "refreshToken": "…",
   "user": {
-    "id": "user_1",
-    "name": "Alex Player",
+    "id": "…",
     "email": "you@example.com",
-    "phone": "03001234567",
-    "avatar_url": null,
-    "provider": "email"
-  }
+    "name": "…",
+    "role": "player",
+    "permissions": ["bookings.create", "bookings.read", "reviews.write", "favorites.manage", "games.manage", "referrals.read"]
+  },
+  "welcomePromoCode": null,
+  "referralStatus": "none",
+  "expiresAt": "…",
+  "ttlSeconds": 600
 }
 ```
 
-### `PUT profile`
+Tokens live in `flutter_secure_storage` (user profile JSON stays in
+SharedPreferences). Access tokens are short-lived (~15 min).
 
-Request (send only fields to change):
+### `POST auth/refresh`
 
 ```json
-{
-  "name": "Alex Player",
-  "phone": "03001234567",
-  "email": "you@example.com",
-  "avatar_url": null
-}
+{ "refreshToken": "…" }
 ```
 
-Success `200` — same user object as GET. App updates `SessionCubit` / local cache.
+Rotates the pair; the old pair must be discarded. Presenting a
+just-rotated token again trips server reuse detection and revokes **all**
+sessions — that is why refresh is single-flight in the interceptor.
 
----
-
-## Home
-
-### `GET venues/search?q=`
-
-Auth optional. Query param `q` is the search string.
-
-Success `200`:
+### `POST auth/logout`
 
 ```json
-{
-  "places": [
-    {
-      "id": "pk-lahore",
-      "primary_text": "Lahore",
-      "secondary_text": "Punjab, Pakistan"
-    }
-  ],
-  "venues": [ { "...": "same shape as popular venue" } ]
-}
+{ "refreshToken": "…" }
 ```
 
-`places` is Google Places–style autocomplete (mock today). Selecting a place returns the user to Explore filtered by that area. Selecting a venue opens venue detail.
+Best-effort: the app clears the local session regardless of the result.
+`GET auth/sessions` and `POST auth/logout-all` also exist.
 
----
+## Discovery (public)
 
-### `GET venues/popular`
+- `GET venues` — browse, with `lat`, `lng`, `sort=distance` (Haversine),
+  plus sport / city / price filters. `GET venues/cities`,
+  `GET venues/surfaces`, `GET sports`, `GET amenities`, `GET banners`.
+- `GET venues/:id` — arena detail. `GET venues/:id/courts`,
+  `GET venues/:id/reviews` (cursor), `POST venues/:id/report`,
+  `GET venues/:id/report/me`, `POST venues/:id/events`
+  (`{ "type": "view" | "click" | "court_view" }`).
+- `GET courts`, `GET courts/:id` — court browse / detail (mirrors arena
+  detail). `GET courts/:id/reviews` (cursor).
+- `GET courts/:courtId/availability?date=YYYY-MM-DD` — windows + slots
+  with `available`, `reason` (`past` / `too_late` / `booked` …), `price`,
+  `peak`, `deal`.
+- `GET search/slots` — slot search across venues/courts.
 
-Auth optional for browsing.
+## Bookings (authenticated)
 
-Success `200` — either a bare array or a wrapped list:
+- `POST bookings` — create (court-first, pay-at-venue only, promo via
+  `POST bookings/validate-promo`). A 409 means the slot was taken.
+- `GET bookings/me?filter=upcoming|past&page=&limit=` — my bookings
+  (offset paging). Items carry nested `court` and `venue` objects.
+- `GET bookings/:id`, `POST bookings/:id/cancel`,
+  `POST bookings/:id/reschedule`, `POST bookings/:id/reschedule/withdraw`.
+- `GET bookings/reschedules/pending` (owner-facing; kept for completeness).
+- `POST bookings/:id/share`, `GET bookings/shared/:code`,
+  `POST bookings/shared/:code/join` — group share links.
+- `POST reviews` — one review per completed booking.
 
-```json
-{
-  "data": [
-    {
-      "id": "arena-one",
-      "name": "Arena One Padel Club",
-      "sport": "Padel",
-      "location": "DHA Phase 6, Karachi",
-      "price_from": 3000,
-      "amenities": ["Glass courts", "Floodlit", "Parking"],
-      "next_slot": "Today, 7:00 PM",
-      "hero_color": "#1B4B7A"
-    }
-  ]
-}
-```
+## Favorites (authenticated, cursor paging)
 
-Field notes:
+- `GET favorites`, `POST favorites` (`{ "venueId" }`),
+  `DELETE favorites/:venueId`, `GET favorites/check`.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `id` | string | Stable venue id |
-| `name` | string | Display title |
-| `sport` | string | Badge label |
-| `location` | string | City / area line |
-| `price_from` | number | Hourly price in PKR, integer preferred |
-| `amenities` | string[] | Chip labels |
-| `next_slot` | string | Short human text for now |
-| `description` | string | Detail page about copy |
-| `rating` | number | 0–5 average |
-| `review_count` | number | Review count for detail |
-| `open_hours` | string | e.g. `6:00 AM – 12:00 AM` |
-| `courts_label` | string | e.g. `4 glass courts` |
-| `hero_color` | string | Hex `#RRGGBB` used as card hero fallback |
-| `latitude` | number | Map marker latitude (WGS84) |
-| `longitude` | number | Map marker longitude (WGS84) |
-| `image_urls` | string[] | One or more court/venue photo URLs for the detail carousel |
+## Games board (public list, authenticated join/create)
 
----
+User-web `/games`. There is **no chat** in the app — Games replaced the
+old Messages/Chat feature, which was deleted.
 
-## Booking
+- `GET game-posts`, `GET game-posts/:id`,
+  `POST game-posts/:id/join`, `POST game-posts/:id/leave`,
+  `POST game-posts/:id/requests/:participantId/accept|reject`.
+- Creating a game is done from a booking (see the Games feature).
 
-### `GET venues/{venueId}/availability`
+## Waitlist (authenticated)
 
-Auth optional while browsing; required before `POST bookings`.
+- `GET waitlist`, `GET waitlist/mine`, `GET|DELETE waitlist/:id`.
+  Note: in user-web, waitlist join from a booked slot is arena-only;
+  the court page does not offer it yet.
 
-Success `200`:
+## Profile / referrals / notifications (authenticated)
 
-```json
-{
-  "courts": [
-    { "id": "c1", "name": "Court 1", "note": "Indoor" },
-    { "id": "c2", "name": "Court 2", "note": "Glass" }
-  ],
-  "dates": [
-    {
-      "id": "d1",
-      "weekday": "Wed",
-      "day": "28",
-      "month": "Oct",
-      "full_label": "Wed 28 Oct"
-    }
-  ],
-  "durations": ["60 min", "90 min", "120 min"],
-  "slots": [
-    { "id": "s1", "label": "6:00 PM", "price": 4500, "status": "open" },
-    { "id": "s5", "label": "10:00 PM", "price": 4500, "status": "booked" }
-  ]
-}
-```
+- `GET users/me`, `PATCH users/me` (name / phone / city only),
+  `DELETE users/me` (anonymises the account in place).
+- `GET users/me/device-tokens` (+ POST / DELETE by id) — FCM device
+  tokens. The FCM service itself is unchanged by the API migration.
+- `GET referrals/me`.
+- `GET notifications` (cursor paging, `?limit&cursor`),
+  `GET notifications/unread-count`,
+  `PATCH notifications/:id/read`, `PATCH notifications/read-all`.
+- There is **no** `/profile` endpoint — it is `/users/me`. Do not
+  reintroduce `/profile` constants.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `courts[].note` | string | Short court tag (Indoor / Glass) |
-| `slots[].price` | number | Slot price in PKR |
-| `slots[].status` | string | `open` or `booked` |
+## Logging
 
----
+Every Dio call is logged in debug builds only, via
+`ApiLogInterceptor` + the `logger` package: method + full endpoint URL,
+query, request body, response/error body, and duration. Headers are
+never logged, and OTP codes, passwords, and access / refresh / device
+tokens are redacted as `***REDACTED***`. Do not use Dio's built-in
+`LogInterceptor` — it prints secrets in the clear.
 
-### `POST bookings`
+## Mock mode (kept deliberately, auth only)
 
-Requires auth.
-
-Request:
-
-```json
-{
-  "venue_id": "arena-one",
-  "court_id": "c2",
-  "date_id": "d1",
-  "slot_id": "s2",
-  "duration": "60 min",
-  "pay_at_ground": true
-}
-```
-
-Success `201` or `200`:
-
-```json
-{
-  "code": "PS-48213",
-  "venue_name": "Arena One Padel Club",
-  "sport": "Padel",
-  "location": "DHA Phase 6, Karachi",
-  "date_label": "Wed 28 Oct 2026",
-  "time_label": "7:00 PM to 8:00 PM",
-  "court_label": "Court 2, Glass",
-  "duration_label": "60 min",
-  "amount_due": 4500,
-  "pay_at_ground": true
-}
-```
-
-Guest flow in the app: pick slot → checkout → auth bottom sheet → login/signup with `?next=checkout` → confirm → confirmed screen. Signed-in users skip the sheet and call this endpoint directly.
-
----
-
-### `GET bookings/mine`
-
-Requires auth. Returns the signed-in user’s bookings (upcoming + past).
-
-Success `200`:
-
-```json
-{
-  "data": [
-    {
-      "id": "bk-1",
-      "code": "PS-48213",
-      "venue_id": "arena-one",
-      "venue_name": "Arena One Padel Club",
-      "sport": "Padel",
-      "location": "DHA Phase 6, Karachi",
-      "date_label": "Thu 29 Oct 2026",
-      "time_label": "7:00 PM to 8:00 PM",
-      "court_label": "Court 2, Glass",
-      "duration_label": "60 min",
-      "amount_due": 3000,
-      "pay_at_ground": true,
-      "status": "upcoming",
-      "hero_color": "#1B4B7A",
-      "image_url": "https://..."
-    }
-  ]
-}
-```
-
-`status`:
-- Upcoming tab: `confirmed` | `pending`
-- Past tab: `completed` | `cancelled`
-
----
-
-## Session rules the app already implements
-
-- Login / social / signup verify-otp / forgot reset success → store token + `UserModel`, then `GET profile`, then dashboard.
-- Signup and forgot send/verify OTP are intermediate steps (no token until final success).
-- Cold start → restore session before routing. Authenticated users open Home.
-- Dio interceptor adds `Authorization: Bearer <token>` when present.
-- Profile get/update refreshes the same `UserModel` everywhere (`context.watch<SessionCubit>()`).
-- Profile logout clears token + user and returns to Splash.
-- Guest browsing is allowed without a token.
-- Guests can pick a slot; confirming a booking requires auth.
-- Google/Apple native SDKs are behind `SocialAuthService` (mock while `USE_MOCK_API` is true).
-
----
-
-## Flutter switch from mock → real
-
-```json
-{
-  "FLAVOR": "development",
-  "API_BASE_URL": "https://your-real-api.example.com/",
-  "USE_MOCK_API": "false"
-}
-```
-
-Mock sources to delete later (optional cleanup):
-
-- `lib/core/mock/mock_delay.dart`
-- `lib/core/mock/mock_auth_data.dart`
-- `lib/core/mock/mock_home_data.dart`
-- `lib/core/mock/mock_booking_data.dart`
-- `lib/core/mock/mock_profile_data.dart`
-- `MockSocialAuthService` in `lib/core/services/social_auth_service.dart`
-- repository branches that check `AppConfig.useMockApi`
+`USE_MOCK_API` is a compile-time dart-define. When true, repositories
+serve delayed mock data instead of Dio. After the migration, only the
+**auth** repository still has a mock branch
+(`lib/core/mock/mock_auth_data.dart` + `mock_delay.dart`, mock OTP
+`123456`, mock returning account `alex@pitchside.app`). All other mock
+files and the old Messages feature were deleted in the Section 8
+cleanup. Development runs with mock **off**; production still has it on
+until its base URL is configured.

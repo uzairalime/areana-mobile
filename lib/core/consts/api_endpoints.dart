@@ -70,28 +70,6 @@ class ApiEndpoints {
   static const String waitlistMine = 'waitlist/mine';
   static String waitlistEntry(String id) => 'waitlist/$id';
 
-  // TEMPORARY compatibility constants for sections not yet rewritten
-  // (booking, bookings, messages, notifications). They keep the app
-  // compiling between section pushes and are deleted in the final
-  // cleanup section once those clients are rewritten. The old
-  // Pitchside /profile constants were deleted here: the Areana API
-  // has no /profile endpoint (it is /users/me), and leaving the
-  // constants around risked a future caller using them by mistake.
-  static const String popularVenues = 'venues/popular';
-  static const String searchVenues = 'venues/search';
-  static String venueAvailability(String venueId) =>
-      'venues/$venueId/availability';
-  static const String createBooking = 'bookings';
-  static const String myBookings = 'bookings/me';
-  static String bookingReview(String id) => 'bookings/$id/review';
-  static const String notificationsReadAll = 'notifications/read-all';
-  static String notificationRead(String id) => 'notifications/$id/read';
-  static const String conversations = 'conversations';
-  static String conversation(String id) => 'conversations/$id';
-  static String conversationMessages(String id) =>
-      'conversations/$id/messages';
-  static String conversationRead(String id) => 'conversations/$id/read';
-
   // Profile / referrals / notifications (authenticated).
   static const String usersMe = 'users/me';
   static const String usersMeDeviceTokens = 'users/me/device-tokens';
@@ -99,4 +77,6 @@ class ApiEndpoints {
   static const String referralsMe = 'referrals/me';
   static const String notifications = 'notifications';
   static const String notificationsUnreadCount = 'notifications/unread-count';
+  static const String notificationsReadAll = 'notifications/read-all';
+  static String notificationRead(String id) => 'notifications/$id/read';
 }

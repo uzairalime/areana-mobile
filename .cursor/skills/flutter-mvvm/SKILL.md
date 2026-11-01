@@ -155,6 +155,30 @@ a single screen easier.
 - The line limit is for the screen file only. It is not an excuse to
   move server logic into a widget: layer rules still apply.
 
+### Cleanup — no dead code, no TEMP constants
+
+- A feature that is not routed and not registered in the locator is
+  dead: delete it (screens, cubits, clients, repositories, models,
+  widgets, and its mock data), do not leave it "for later". The old
+  Messages/Chat feature was deleted this way when Games replaced it;
+  `AppRoutes.messages` now points at `/games`.
+- A mock file with zero references is dead: delete it. The only mock
+  kept deliberately after the migration is auth
+  (`mock_auth_data.dart` + `mock_delay.dart`), because the auth
+  repository still serves mock data when `USE_MOCK_API` is true
+  (production flavor). Do not delete it without also removing the
+  auth repository's mock branch.
+- Do not leave "TEMPORARY compatibility" endpoint constants behind
+  after the section they bridged is rewritten. If a constant has no
+  caller in real code, delete it — especially a wrong one (the old
+  `/profile` constants were deleted because the Areana endpoint is
+  `/users/me`; leaving them risked a future caller using them).
+- The API contract lives in `docs/API.md` and the runbook in
+  `command.md`. When endpoints, config, or flows change, update both
+  in the same change — a doc that still describes the old Pitchside
+  contract (password/social auth, example.com hosts, `/profile`) is
+  worse than no doc.
+
 ### Proper MVVM — what each layer is
 
 - **View:** `*Screen` (`StatelessWidget`, with the narrow exceptions
@@ -219,7 +243,7 @@ Two flavors only: `development` and `production`. One entrypoint: `lib/main.dart
 | App name | Pitchside Dev | Pitchside |
 | Xcode scheme | `development` | `production` |
 
-Config keys are `FLAVOR` and `API_BASE_URL`. `API_BASE_URL` ends with `/`. `AppConfig` reads both with `String.fromEnvironment`. The default flavor is `production`. `ApiEndpoints.baseUrl` is `AppConfig.apiBaseUrl`. Dio uses that base URL. Do not hardcode a host in a client.
+Config keys are `FLAVOR`, `API_BASE_URL`, and `USE_MOCK_API`. `API_BASE_URL` ends with `/api/`. `AppConfig` reads them with `String.fromEnvironment` / `bool.fromEnvironment`. The default flavor is `production`. `ApiEndpoints.baseUrl` is `AppConfig.apiBaseUrl`. Dio uses that base URL. Do not hardcode a host in a client. Config is compiled in via `--dart-define-from-file`, so changing it needs a full rebuild, not hot reload.
 
 Every run and build passes both flags. Store uploads use `production` only.
 
