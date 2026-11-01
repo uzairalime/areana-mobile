@@ -18,14 +18,10 @@ class ProfileCubit extends Cubit<ProfileState> {
   var _savedIdsHydrated = false;
 
   final formKey = GlobalKey<FormState>();
-  final passwordFormKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final cityController = TextEditingController();
-  final currentPasswordController = TextEditingController();
-  final newPasswordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
   Future<void> load() async {
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.fetchOverview();
@@ -135,32 +131,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  Future<void> changePassword() async {
-    if (!(passwordFormKey.currentState?.validate() ?? false)) return;
-    emit(state.copyWith(saveStatus: AppLoading.loading, errorMessage: ''));
-    final result = await _repository.changePassword(
-      currentPassword: currentPasswordController.text.trim(),
-      newPassword: newPasswordController.text.trim(),
-    );
-    if (isClosed) return;
-    result.when(
-      success: (_) {
-        currentPasswordController.clear();
-        newPasswordController.clear();
-        confirmPasswordController.clear();
-        emit(state.copyWith(saveStatus: AppLoading.success, errorMessage: ''));
-      },
-      failure: (error) {
-        emit(
-          state.copyWith(
-            saveStatus: AppLoading.error,
-            errorMessage: error.message,
-          ),
-        );
-      },
-    );
-  }
-
+  // No change-password: players sign in with email OTP, and the
+  // Areana API has no password-change endpoint for players.
   Future<bool> deleteAccount() async {
     emit(state.copyWith(actionStatus: AppLoading.loading, errorMessage: ''));
     final result = await _repository.deleteAccount();
@@ -472,9 +444,6 @@ class ProfileCubit extends Cubit<ProfileState> {
     phoneController.dispose();
     emailController.dispose();
     cityController.dispose();
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
     return super.close();
   }
 }

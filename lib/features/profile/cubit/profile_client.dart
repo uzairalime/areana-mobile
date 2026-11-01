@@ -6,25 +6,24 @@ import '../../../core/services/pagination.dart';
 import '../../auth/model/user_model.dart';
 import '../../home/model/areana_models.dart';
 import '../../home/model/venue.dart';
-import '../model/help_faq.dart';
-import '../model/notification_prefs.dart';
 import '../model/profile_overview.dart';
-import '../model/user_review.dart';
 
 class ProfileClient {
   const ProfileClient(this._dio);
 
   final Dio _dio;
 
+  /// Own profile from the Areana API. No stats endpoint exists for
+  /// players, so stats stay at their defaults.
   Future<ApiResult<ProfileOverview>> fetchOverview() async {
     try {
-      final response = await _dio.get<dynamic>(ApiEndpoints.profile);
+      final response = await _dio.get<dynamic>(ApiEndpoints.usersMe);
       final map = _asMap(response.data);
       if (map == null) {
         return const ApiError(message: 'Unexpected response');
       }
       return ApiSuccess(
-        ProfileOverview.fromJson(map),
+        ProfileOverview(user: UserModel.fromJson(map)),
         statusCode: response.statusCode,
       );
     } on DioException catch (error) {
@@ -32,10 +31,13 @@ class ProfileClient {
     }
   }
 
+  /// PATCH /users/me. Only name/phone/city exist on the server;
+  /// blank strings are ignored by the server, so they are omitted.
+  /// (Password auth does not exist — players sign in with email OTP.)
   Future<ApiResult<UserModel>> updateProfile(Map<String, dynamic> body) async {
     try {
-      final response = await _dio.put<dynamic>(
-        ApiEndpoints.profile,
+      final response = await _dio.patch<dynamic>(
+        ApiEndpoints.usersMe,
         data: body,
       );
       return _parseUser(response.data, response.statusCode);
@@ -44,64 +46,11 @@ class ProfileClient {
     }
   }
 
-  Future<ApiResult<void>> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    try {
-      await _dio.post<dynamic>(
-        ApiEndpoints.profilePassword,
-        data: {
-          'current_password': currentPassword,
-          'new_password': newPassword,
-        },
-      );
-      return const ApiSuccess(null);
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
+  /// DELETE /users/me anonymises the account in place.
   Future<ApiResult<void>> deleteAccount() async {
     try {
-      await _dio.delete<dynamic>(ApiEndpoints.profile);
+      await _dio.delete<dynamic>(ApiEndpoints.usersMe);
       return const ApiSuccess(null);
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
-  Future<ApiResult<NotificationPrefs>> fetchNotificationPrefs() async {
-    try {
-      final response = await _dio.get<dynamic>(
-        ApiEndpoints.profileNotifications,
-      );
-      final map = _asMap(response.data);
-      if (map == null) {
-        return const ApiError(message: 'Unexpected response');
-      }
-      return ApiSuccess(
-        NotificationPrefs.fromJson(map),
-        statusCode: response.statusCode,
-      );
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
-  Future<ApiResult<NotificationPrefs>> updateNotificationPrefs(
-    NotificationPrefs prefs,
-  ) async {
-    try {
-      final response = await _dio.put<dynamic>(
-        ApiEndpoints.profileNotifications,
-        data: prefs.toJson(),
-      );
-      final map = _asMap(response.data) ?? prefs.toJson();
-      return ApiSuccess(
-        NotificationPrefs.fromJson(map),
-        statusCode: response.statusCode,
-      );
     } on DioException catch (error) {
       return ApiError.fromDio(error);
     }
@@ -166,49 +115,6 @@ class ProfileClient {
     }
   }
 
-  Future<ApiResult<List<UserReview>>> fetchReviews() async {
-    try {
-      final response = await _dio.get<dynamic>(ApiEndpoints.profileReviews);
-      final list = _asList(response.data);
-      if (list == null) {
-        return const ApiError(message: 'Unexpected response');
-      }
-      final reviews = list
-          .whereType<Map>()
-          .map((item) => UserReview.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
-      return ApiSuccess(reviews, statusCode: response.statusCode);
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
-  Future<ApiResult<List<HelpFaq>>> fetchHelp() async {
-    try {
-      final response = await _dio.get<dynamic>(ApiEndpoints.profileHelp);
-      final list = _asList(response.data);
-      if (list == null) {
-        return const ApiError(message: 'Unexpected response');
-      }
-      final faqs = list
-          .whereType<Map>()
-          .map((item) => HelpFaq.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
-      return ApiSuccess(faqs, statusCode: response.statusCode);
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
-  Future<ApiResult<void>> requestDownloadData() async {
-    try {
-      await _dio.post<dynamic>(ApiEndpoints.profileDownloadData);
-      return const ApiSuccess(null);
-    } on DioException catch (error) {
-      return ApiError.fromDio(error);
-    }
-  }
-
   ApiResult<UserModel> _parseUser(dynamic data, int? statusCode) {
     final map = _asMap(data);
     if (map == null) {
@@ -222,12 +128,6 @@ class ProfileClient {
 
   static Map<String, dynamic>? _asMap(dynamic data) => switch (data) {
     final Map raw => Map<String, dynamic>.from(raw),
-    _ => null,
-  };
-
-  static List? _asList(dynamic data) => switch (data) {
-    final List raw => raw,
-    final Map map when map['data'] is List => map['data'] as List,
     _ => null,
   };
 }

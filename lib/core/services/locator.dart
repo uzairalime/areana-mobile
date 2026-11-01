@@ -119,7 +119,6 @@ void setupLocator() {
     ..registerLazySingleton<ProfileRepository>(
       () => ProfileRepository(
         getIt<ProfileClient>(),
-        getIt<SessionStore>(),
         getIt<SessionCubit>(),
       ),
     )
