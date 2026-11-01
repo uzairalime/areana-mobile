@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../../../core/consts/api_endpoints.dart';
 import '../../../core/services/api_result.dart';
+import '../../../core/services/pagination.dart';
 import '../../auth/model/user_model.dart';
+import '../../home/model/areana_models.dart';
 import '../../home/model/venue.dart';
 import '../model/help_faq.dart';
 import '../model/notification_prefs.dart';
@@ -105,18 +107,37 @@ class ProfileClient {
     }
   }
 
+  /// Real favorites API: CursorPage of {venueId, venue} rows.
+  /// Walks all pages so the saved list and heart state are complete.
   Future<ApiResult<List<Venue>>> fetchSavedVenues() async {
     try {
-      final response = await _dio.get<dynamic>(ApiEndpoints.profileSavedVenues);
-      final list = _asList(response.data);
-      if (list == null) {
-        return const ApiError(message: 'Unexpected response');
-      }
-      final venues = list
-          .whereType<Map>()
-          .map((item) => Venue.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
-      return ApiSuccess(venues, statusCode: response.statusCode);
+      final venues = <Venue>[];
+      String? cursor;
+      do {
+        final response = await _dio.get<dynamic>(
+          ApiEndpoints.favorites,
+          queryParameters: {
+            'limit': 50,
+            if (cursor != null) 'cursor': cursor,
+          },
+        );
+        final page = parseCursorPage<Map<String, dynamic>>(
+          response.data,
+          (json) => json,
+        );
+        for (final item in page.items) {
+          final venueJson = item['venue'];
+          if (venueJson is Map) {
+            venues.add(
+              AreanaVenue.fromJson(
+                Map<String, dynamic>.from(venueJson),
+              ).toVenue(),
+            );
+          }
+        }
+        cursor = page.nextCursor;
+      } while (cursor != null);
+      return ApiSuccess(venues);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
     }
@@ -125,8 +146,8 @@ class ProfileClient {
   Future<ApiResult<void>> saveVenue(String venueId) async {
     try {
       await _dio.post<dynamic>(
-        ApiEndpoints.profileSavedVenues,
-        data: {'venue_id': venueId},
+        ApiEndpoints.favorites,
+        data: {'venueId': venueId},
       );
       return const ApiSuccess(null);
     } on DioException catch (error) {
@@ -136,7 +157,9 @@ class ProfileClient {
 
   Future<ApiResult<void>> unsaveVenue(String venueId) async {
     try {
-      await _dio.delete<dynamic>(ApiEndpoints.profileSavedVenue(venueId));
+      await _dio.delete<dynamic>(
+        '${ApiEndpoints.favorites}/$venueId',
+      );
       return const ApiSuccess(null);
     } on DioException catch (error) {
       return ApiError.fromDio(error);

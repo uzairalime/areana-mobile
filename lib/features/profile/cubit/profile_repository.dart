@@ -122,43 +122,19 @@ class ProfileRepository {
     return _client.updateNotificationPrefs(prefs);
   }
 
-  Future<ApiResult<List<Venue>>> fetchSavedVenues() {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(() => ApiSuccess(MockProfileData.savedVenues()));
-    }
-    return _client.fetchSavedVenues();
-  }
+  Future<ApiResult<List<Venue>>> fetchSavedVenues() =>
+      _client.fetchSavedVenues();
 
-  Future<ApiResult<List<String>>> fetchSavedVenueIds() {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(
-        () => ApiSuccess(MockProfileData.savedVenueIds()),
+  Future<ApiResult<List<String>>> fetchSavedVenueIds() =>
+      fetchSavedVenues().then(
+        (result) => result.map((venues) => [for (final v in venues) v.id]),
       );
-    }
-    return fetchSavedVenues().then(
-      (result) => result.map((venues) => [for (final v in venues) v.id]),
-    );
-  }
 
-  Future<ApiResult<void>> saveVenue(String venueId) {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(() {
-        MockProfileData.saveVenue(venueId);
-        return const ApiSuccess(null);
-      });
-    }
-    return _client.saveVenue(venueId);
-  }
+  Future<ApiResult<void>> saveVenue(String venueId) =>
+      _client.saveVenue(venueId);
 
-  Future<ApiResult<void>> unsaveVenue(String venueId) {
-    if (AppConfig.useMockApi) {
-      return MockDelay.run(() {
-        MockProfileData.unsaveVenue(venueId);
-        return const ApiSuccess(null);
-      });
-    }
-    return _client.unsaveVenue(venueId);
-  }
+  Future<ApiResult<void>> unsaveVenue(String venueId) =>
+      _client.unsaveVenue(venueId);
 
   Future<ApiResult<List<UserReview>>> fetchReviews() {
     if (AppConfig.useMockApi) {
