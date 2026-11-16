@@ -374,23 +374,17 @@ class _Hero extends StatelessWidget {
         SizedBox(
           height: 240,
           width: double.infinity,
-          child: booking.imageUrl.isNotEmpty
-              ? CacheImage(
-                  url: booking.imageUrl,
-                  height: 240,
-                  width: double.infinity,
-                  memCacheWidth: 900,
-                  errorWidget: CourtHeroCanvas(
-                    color: booking.heroColor,
-                    height: 240,
-                    showGradient: true,
-                  ),
-                )
-              : CourtHeroCanvas(
-                  color: booking.heroColor,
-                  height: 240,
-                  showGradient: true,
-                ),
+          child: CacheImage(
+            url: booking.imageUrl,
+            height: 240,
+            width: double.infinity,
+            memCacheWidth: 900,
+            errorWidget: CourtHeroCanvas(
+              color: booking.heroColor,
+              height: 240,
+              showGradient: true,
+            ),
+          ),
         ),
         SafeArea(
           bottom: false,

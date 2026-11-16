@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/json_parsing.dart';
+
 enum GamePostStatus { open, full, closed }
 
 extension GamePostStatusX on GamePostStatus {
@@ -30,20 +32,6 @@ extension GameJoinStateX on GameJoinState {
       _ => .none,
     };
   }
-}
-
-int _int(dynamic value, [int fallback = 0]) {
-  if (value is num) return value.toInt();
-  if (value is String) {
-    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
-  }
-  return fallback;
-}
-
-double? _numOrNull(dynamic value) {
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value);
-  return null;
 }
 
 String fmtGameMinutes(int minutes) {
@@ -97,12 +85,12 @@ class GamePost extends Equatable {
       sport: json['sport']?.toString() ?? '',
       city: json['city']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
-      startMinutes: _int(json['startMinutes']),
-      playersNeeded: _int(json['playersNeeded']),
+      startMinutes: JsonParsing.intValue(json['startMinutes']),
+      playersNeeded: JsonParsing.intValue(json['playersNeeded']),
       status: GamePostStatusX.fromJson(json['status'] as String?),
       creatorId: json['creatorId']?.toString(),
       creatorName: creatorMap['name']?.toString(),
-      squadSize: json['squadSize'] == null ? null : _int(json['squadSize']),
+      squadSize: json['squadSize'] == null ? null : JsonParsing.intValue(json['squadSize']),
       level: json['level'] as String?,
       note: json['note'] as String?,
       courtName: json['courtName'] as String?,
@@ -112,17 +100,17 @@ class GamePost extends Equatable {
       venueId: venueMap['id']?.toString(),
       venueName: venueMap['name']?.toString(),
       venueAddress: venueMap['address']?.toString(),
-      distanceKm: _numOrNull(json['distanceKm']),
+      distanceKm: JsonParsing.doubleOrNull(json['distanceKm']),
       participantCount: json['participantCount'] != null
-          ? _int(json['participantCount'])
-          : _int(countMap['participants']),
-      pricePerPlayer: _numOrNull(json['pricePerPlayer']),
-      courtFee: _numOrNull(json['courtFee']),
+          ? JsonParsing.intValue(json['participantCount'])
+          : JsonParsing.intValue(countMap['participants']),
+      pricePerPlayer: JsonParsing.doubleOrNull(json['pricePerPlayer']),
+      courtFee: JsonParsing.doubleOrNull(json['courtFee']),
       joinState: GameJoinStateX.fromJson(
         json['joinState'] as String?,
         json['joined'] as bool?,
       ),
-      pendingCount: _int(json['pendingCount']),
+      pendingCount: JsonParsing.intValue(json['pendingCount']),
       squadNames: squadNames is List
           ? squadNames.map((e) => e.toString()).toList()
           : const [],

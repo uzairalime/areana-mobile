@@ -49,24 +49,17 @@ class NearMeVenueCard extends StatelessWidget {
                     child: Stack(
                       fit: .expand,
                       children: [
-                        if (venue.imageUrls.isNotEmpty)
-                          CacheImage(
-                            url: venue.imageUrls.first,
-                            height: 96,
-                            width: 168,
-                            memCacheWidth: 360,
-                            errorWidget: CourtHeroCanvas(
-                              color: venue.heroColor,
-                              height: 96,
-                              showGradient: false,
-                            ),
-                          )
-                        else
-                          CourtHeroCanvas(
+                        CacheImage(
+                          url: venue.imageUrls.firstOrNull ?? '',
+                          height: 96,
+                          width: 168,
+                          memCacheWidth: 360,
+                          errorWidget: CourtHeroCanvas(
                             color: venue.heroColor,
                             height: 96,
                             showGradient: false,
                           ),
+                        ),
                         Positioned(
                           top: 8,
                           left: 8,

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
+import '../../../core/utils/json_parsing.dart';
 
 class Venue extends Equatable {
   const Venue({
@@ -30,7 +31,7 @@ class Venue extends Equatable {
       name: json['name'] as String? ?? '',
       sport: json['sport'] as String? ?? '',
       location: json['location'] as String? ?? '',
-      priceFrom: (json['price_from'] as num?)?.toInt() ?? 0,
+      priceFrom: JsonParsing.intValue(json['price_from']),
       amenities: (json['amenities'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
@@ -38,12 +39,12 @@ class Venue extends Equatable {
       heroColor:
           _colorFromHex(json['hero_color'] as String?) ?? AppColors.primary,
       description: json['description'] as String? ?? '',
-      rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      reviewCount: (json['review_count'] as num?)?.toInt() ?? 0,
+      rating: JsonParsing.doubleValue(json['rating']),
+      reviewCount: JsonParsing.intValue(json['review_count']),
       openHours: json['open_hours'] as String? ?? '',
       courtsLabel: json['courts_label'] as String? ?? '',
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+      latitude: JsonParsing.doubleValue(json['latitude']),
+      longitude: JsonParsing.doubleValue(json['longitude']),
       imageUrls: imagesRaw is List
           ? imagesRaw
                 .map((e) => e.toString())

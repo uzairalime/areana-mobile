@@ -47,24 +47,17 @@ class BookingListTile extends StatelessWidget {
                     child: Stack(
                       fit: .expand,
                       children: [
-                        if (booking.imageUrl.isNotEmpty)
-                          CacheImage(
-                            url: booking.imageUrl,
-                            height: height,
-                            width: 104,
-                            memCacheWidth: 240,
-                            errorWidget: CourtHeroCanvas(
-                              color: booking.heroColor,
-                              height: height,
-                              showGradient: false,
-                            ),
-                          )
-                        else
-                          CourtHeroCanvas(
+                        CacheImage(
+                          url: booking.imageUrl,
+                          height: height,
+                          width: 104,
+                          memCacheWidth: 240,
+                          errorWidget: CourtHeroCanvas(
                             color: booking.heroColor,
                             height: height,
                             showGradient: false,
                           ),
+                        ),
                         Positioned(
                           left: 8,
                           top: 8,
@@ -163,7 +156,7 @@ class _StatusChip extends StatelessWidget {
       .confirmed => (AppColors.accent, AppColors.onAccent),
       .pending => (AppColors.accentSoft, AppColors.payBadgeText),
       .completed => (AppColors.primarySoft, AppColors.primary),
-      .cancelled => (const Color(0xFFFCE8E8), AppColors.error),
+      .cancelled || .noShow => (const Color(0xFFFCE8E8), AppColors.error),
     };
     return DecoratedBox(
       decoration: BoxDecoration(

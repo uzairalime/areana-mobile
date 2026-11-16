@@ -21,11 +21,13 @@ class ExploreCubit extends Cubit<ExploreState> {
 
   final HomeRepository _repository;
   final ExploreSessionStore _session;
+  int _requestId = 0;
 
   Future<void> load() async {
+    final requestId = ++_requestId;
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.fetchVenues(page: 1, limit: 20);
-    if (isClosed) return;
+    if (isClosed || requestId != _requestId) return;
     result.when(
       success: (page) {
         emit(

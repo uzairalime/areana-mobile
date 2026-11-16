@@ -83,23 +83,17 @@ class UpcomingTimelineTile extends StatelessWidget {
                             child: SizedBox(
                               width: 56,
                               height: 56,
-                              child: booking.imageUrl.isNotEmpty
-                                  ? CacheImage(
-                                      url: booking.imageUrl,
-                                      width: 56,
-                                      height: 56,
-                                      memCacheWidth: 140,
-                                      errorWidget: CourtHeroCanvas(
-                                        color: booking.heroColor,
-                                        height: 56,
-                                        showGradient: false,
-                                      ),
-                                    )
-                                  : CourtHeroCanvas(
-                                      color: booking.heroColor,
-                                      height: 56,
-                                      showGradient: false,
-                                    ),
+                              child: CacheImage(
+                                url: booking.imageUrl,
+                                width: 56,
+                                height: 56,
+                                memCacheWidth: 140,
+                                errorWidget: CourtHeroCanvas(
+                                  color: booking.heroColor,
+                                  height: 56,
+                                  showGradient: false,
+                                ),
+                              ),
                             ),
                           ),
                           12.w,

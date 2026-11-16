@@ -2,12 +2,13 @@ import 'package:equatable/equatable.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
+import '../../../core/utils/json_parsing.dart';
 import '../../home/model/venue.dart';
 import 'booking_review_status.dart';
 
 /// Upcoming tab: [confirmed], [pending]
 /// Past tab: [completed], [cancelled]
-enum UserBookingStatus { confirmed, pending, completed, cancelled }
+enum UserBookingStatus { confirmed, pending, completed, cancelled, noShow }
 
 extension UserBookingStatusX on UserBookingStatus {
   String get label => switch (this) {
@@ -15,12 +16,14 @@ extension UserBookingStatusX on UserBookingStatus {
     .pending => 'Pending',
     .completed => 'Completed',
     .cancelled => 'Cancelled',
+    .noShow => 'No show',
   };
 
   static UserBookingStatus fromJson(String? raw) => switch (raw) {
     'pending' => .pending,
     'completed' => .completed,
     'cancelled' => .cancelled,
+    'no_show' => .noShow,
     'confirmed' || 'upcoming' => .confirmed,
     _ => .confirmed,
   };
@@ -30,33 +33,18 @@ extension UserBookingStatusX on UserBookingStatus {
     .pending => 'pending',
     .completed => 'completed',
     .cancelled => 'cancelled',
+    .noShow => 'no_show',
   };
 
   bool get isUpcomingTab => this == .confirmed || this == .pending;
 
-  bool get isPastTab => this == .completed || this == .cancelled;
+  bool get isPastTab => this == .completed || this == .cancelled || this == .noShow;
 }
 
 String _fmtMinutes(int minutes) {
   final h = minutes ~/ 60;
   final m = minutes % 60;
   return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
-}
-
-/// Prisma Decimal fields serialize as STRINGS, so numeric parses
-/// must accept num OR String — a plain `as num` cast crashes.
-int _int(dynamic value, [int fallback = 0]) {
-  if (value is num) return value.toInt();
-  if (value is String) {
-    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
-  }
-  return fallback;
-}
-
-double? _numOrNull(dynamic value) {
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value);
-  return null;
 }
 
 /// Player booking, mirroring user-web `PlayerBooking`.
@@ -104,23 +92,24 @@ class UserBooking extends Equatable {
         ? images.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
         : const <String>[];
     final date = json['date']?.toString() ?? '';
-    final start = _int(json['startMinutes']);
-    final end = _int(json['endMinutes'], start);
+    final start = JsonParsing.intValue(json['startMinutes']);
+    final end = JsonParsing.intValue(json['endMinutes'], start);
     final count = json['_count'];
     final countMap = count is Map ? Map<String, dynamic>.from(count) : const {};
-    DateTime occurred;
-    try {
-      final parts = date.split('-');
-      occurred = DateTime(
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-        int.parse(parts[2]),
+    // Prisma DATE fields may arrive as an ISO timestamp. Keep the venue's
+    // calendar date and apply its local slot time without timezone conversion.
+    final calendarDate = DateTime.tryParse(
+      date.length >= 10 ? date.substring(0, 10) : date,
+    );
+    final occurred = calendarDate == null
+        ? DateTime.now()
+        : DateTime(
+        calendarDate.year,
+        calendarDate.month,
+        calendarDate.day,
         start ~/ 60,
         start % 60,
       );
-    } catch (_) {
-      occurred = DateTime.now();
-    }
     final hasReviewed = json['hasReviewed'] as bool? ?? false;
     return UserBooking(
       id: json['id']?.toString() ?? '',
@@ -136,7 +125,7 @@ class UserBooking extends Equatable {
       timeLabel: '${_fmtMinutes(start)} – ${_fmtMinutes(end)}',
       courtLabel: courtMap['name']?.toString() ?? '',
       durationLabel: '${end - start} min',
-      amountDue: _int(json['totalPrice']),
+      amountDue: JsonParsing.intValue(json['totalPrice']),
       payAtGround: true,
       status: UserBookingStatusX.fromJson(json['status'] as String?),
       heroColor: AppColors.primary,
@@ -146,9 +135,9 @@ class UserBooking extends Equatable {
       courtId: json['courtId']?.toString() ?? '',
       shareCode: json['shareCode'] as String?,
       hasReviewed: hasReviewed,
-      venueLat: _numOrNull(venueMap['lat']),
-      venueLng: _numOrNull(venueMap['lng']),
-      participantCount: _int(countMap['participants']),
+      venueLat: JsonParsing.doubleOrNull(venueMap['lat']),
+      venueLng: JsonParsing.doubleOrNull(venueMap['lng']),
+      participantCount: JsonParsing.intValue(countMap['participants']),
       gamePostId: gameMap['id']?.toString(),
       expiresAt: json['expiresAt'] as String?,
     );

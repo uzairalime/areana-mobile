@@ -1,9 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../features/auth/model/auth_session.dart';
-import 'api_log_interceptor.dart';
 import '../consts/api_endpoints.dart';
+import 'api_dio.dart';
 import 'locator.dart';
 import 'session_cubit.dart';
 import 'session_store.dart';
@@ -33,6 +32,10 @@ import 'token_store.dart';
 ///   and public auth endpoints are never refreshed (a 401 there means
 ///   a wrong code/password, not an expired access token).
 class AppInterceptor extends Interceptor {
+  AppInterceptor({Dio? refreshDio}) : _refreshDio = refreshDio;
+
+  final Dio? _refreshDio;
+
   /// Set by [DioService] after the main Dio is created. Without it,
   /// retries cannot be dispatched and 401s pass through unchanged.
   late Dio dio;
@@ -130,58 +133,52 @@ class AppInterceptor extends Interceptor {
   }
 
   Future<AuthSession?> _doRefresh(String refreshToken) async {
+    final store = _sessionStore;
+    if (store == null || store.refreshToken != refreshToken) return null;
     // A clean Dio: no AppInterceptor, otherwise the refresh call
     // itself would re-enter this interceptor and loop. Only the
     // logging interceptor is added (debug only), so refresh calls
     // are logged like every other API call, with tokens redacted.
-    final refreshDio = Dio(
-      BaseOptions(
-        baseUrl: ApiEndpoints.baseUrl,
-        connectTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(seconds: 20),
-        responseType: ResponseType.json,
-        headers: const {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-    if (kDebugMode) {
-      refreshDio.interceptors.add(ApiLogInterceptor());
-    }
+    final refreshDio = _refreshDio ?? createApiDio();
     try {
       final response = await refreshDio.post<dynamic>(
         ApiEndpoints.refresh,
         data: {'refreshToken': refreshToken},
       );
       final data = response.data;
-      if (data is! Map) {
+      // Logout or another login may have happened while refresh was in flight.
+      // A response for the previous session must never restore that account.
+      if (data is! Map || store.refreshToken != refreshToken) {
         return null;
       }
       var session = AuthSession.fromJson(Map<String, dynamic>.from(data));
-      final store = _sessionStore;
       // Refresh responses may omit the user: keep the stored profile
       // instead of replacing it with an empty user model.
-      if (session.user.id.isEmpty && store?.user != null) {
+      if (session.user.id.isEmpty && store.user != null) {
         session = AuthSession(
           accessToken: session.accessToken,
           refreshToken: session.refreshToken,
-          user: store!.user!,
+          user: store.user!,
         );
       }
-      if (session.accessToken.isEmpty) {
+      if (session.accessToken.isEmpty ||
+          session.refreshToken == null ||
+          session.refreshToken!.isEmpty) {
         return null;
       }
       await _applySession(session);
       return session;
     } on DioException catch (error) {
-      if (error.response?.statusCode == 401) {
+      if (error.response?.statusCode == 401 &&
+          store.refreshToken == refreshToken) {
         // Dead session (revoked / expired / reuse-detected).
         await _clearSession();
       }
       return null;
     } catch (_) {
       return null;
+    } finally {
+      if (_refreshDio == null) refreshDio.close();
     }
   }
 

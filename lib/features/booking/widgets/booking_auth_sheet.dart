@@ -6,6 +6,7 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_sheet_handle.dart';
 
 Future<void> showBookingAuthSheet(
   BuildContext context, {
@@ -44,13 +45,7 @@ Future<void> showBookingAuthSheet(
             child: Column(
               mainAxisSize: .min,
               children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                  ),
-                  child: const SizedBox(width: 44, height: 5),
-                ),
+                const AppSheetHandle(width: 44, height: 5),
                 14.h,
                 DecoratedBox(
                   decoration: BoxDecoration(

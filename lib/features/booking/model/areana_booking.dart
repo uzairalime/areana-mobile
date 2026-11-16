@@ -1,13 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/json_parsing.dart';
+
 String _str(dynamic value) => value?.toString() ?? '';
-int _int(dynamic value, [int fallback = 0]) {
-  if (value is num) return value.toInt();
-  if (value is String) {
-    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
-  }
-  return fallback;
-}
 
 String _fmtMinutes(int minutes) {
   final h = minutes ~/ 60;
@@ -47,9 +42,9 @@ class BookingConfirmation extends Equatable {
     final venueMap = venue is Map ? Map<String, dynamic>.from(venue) : const {};
     final court = json['court'];
     final courtMap = court is Map ? Map<String, dynamic>.from(court) : const {};
-    final slotMinutes = _int(json['slotMinutes'], 60);
-    final start = _int(json['startMinutes']);
-    final end = _int(json['endMinutes']);
+    final slotMinutes = JsonParsing.intValue(json['slotMinutes'], 60);
+    final start = JsonParsing.intValue(json['startMinutes']);
+    final end = JsonParsing.intValue(json['endMinutes']);
     final count = slotMinutes > 0 ? ((end - start) ~/ slotMinutes) : 1;
     return BookingConfirmation(
       id: _str(json['id']),
@@ -58,8 +53,8 @@ class BookingConfirmation extends Equatable {
       date: _str(json['date']),
       startMinutes: start,
       endMinutes: end,
-      totalPrice: _int(json['totalPrice']),
-      discountAmount: _int(json['discountAmount']),
+      totalPrice: JsonParsing.intValue(json['totalPrice']),
+      discountAmount: JsonParsing.intValue(json['discountAmount']),
       status: _str(json['status']),
       shareCode: _str(json['shareCode']),
       checkInCode: _str(json['checkInCode']),
@@ -122,11 +117,11 @@ class PromoPreview extends Equatable {
     return PromoPreview(
       code: _str(promoMap['code']),
       kind: _str(promoMap['kind']),
-      value: _int(promoMap['value']),
+      value: JsonParsing.intValue(promoMap['value']),
       maxDiscount: promoMap['maxDiscount'] == null
           ? null
-          : _int(promoMap['maxDiscount']),
-      discount: _int(json['discount']),
+          : JsonParsing.intValue(promoMap['maxDiscount']),
+      discount: JsonParsing.intValue(json['discount']),
     );
   }
 

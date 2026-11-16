@@ -5,6 +5,7 @@ import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
+import '../../../core/widgets/app_sheet_handle.dart';
 
 Future<XFile?> showProfilePhotoSheet(BuildContext context) async {
   AppHaptics.light();
@@ -21,13 +22,7 @@ Future<XFile?> showProfilePhotoSheet(BuildContext context) async {
           child: Column(
             mainAxisSize: .min,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                ),
-                child: const SizedBox(width: 40, height: 4),
-              ),
+              const AppSheetHandle(),
               16.h,
               Text(
                 'Change profile photo',

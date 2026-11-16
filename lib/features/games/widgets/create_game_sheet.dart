@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
-import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_sheet_handle.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../bookings/model/user_booking.dart';
 
@@ -97,13 +97,7 @@ class _CreateGameSheetBodyState extends State<_CreateGameSheetBody> {
             mainAxisSize: .min,
             crossAxisAlignment: .start,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                ),
-                child: const SizedBox(width: 40, height: 4),
-              ),
+              const AppSheetHandle(),
               22.h,
               Text(
                 'Post a game',

@@ -6,6 +6,7 @@ import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
+import '../../../core/widgets/app_sheet_handle.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/widgets/app_button.dart';
 import '../model/court_filter.dart';
@@ -139,13 +140,7 @@ class _Handle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.border,
-          borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-        ),
-        child: const SizedBox(width: 44, height: 5),
-      ),
+      child: const AppSheetHandle(width: 44, height: 5),
     ).paddingOnly(top: 12, bottom: 8);
   }
 }

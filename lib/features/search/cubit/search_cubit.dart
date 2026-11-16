@@ -28,6 +28,8 @@ class SearchCubit extends Cubit<SearchState> {
   }
 
   void onQueryChanged(String value) {
+    // Invalidate immediately, including while the next query is debouncing.
+    _requestId++;
     final trimmed = value.trim();
     emit(
       state.copyWith(
@@ -44,6 +46,8 @@ class SearchCubit extends Cubit<SearchState> {
   }
 
   Future<void> search(String query) async {
+    _debounce?.cancel();
+    final id = ++_requestId;
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       emit(
@@ -57,7 +61,6 @@ class SearchCubit extends Cubit<SearchState> {
       return;
     }
 
-    final id = ++_requestId;
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.search(trimmed);
     if (isClosed || id != _requestId) return;

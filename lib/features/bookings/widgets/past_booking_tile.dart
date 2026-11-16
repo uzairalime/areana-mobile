@@ -58,23 +58,17 @@ class PastBookingTile extends StatelessWidget {
                       child: SizedBox(
                         width: 64,
                         height: 64,
-                        child: booking.imageUrl.isNotEmpty
-                            ? CacheImage(
-                                url: booking.imageUrl,
-                                width: 64,
-                                height: 64,
-                                memCacheWidth: 160,
-                                errorWidget: CourtHeroCanvas(
-                                  color: booking.heroColor,
-                                  height: 64,
-                                  showGradient: false,
-                                ),
-                              )
-                            : CourtHeroCanvas(
-                                color: booking.heroColor,
-                                height: 64,
-                                showGradient: false,
-                              ),
+                        child: CacheImage(
+                          url: booking.imageUrl,
+                          width: 64,
+                          height: 64,
+                          memCacheWidth: 160,
+                          errorWidget: CourtHeroCanvas(
+                            color: booking.heroColor,
+                            height: 64,
+                            showGradient: false,
+                          ),
+                        ),
                       ),
                     ),
                     12.w,

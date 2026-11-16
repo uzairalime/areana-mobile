@@ -42,24 +42,17 @@ class UpcomingFeaturedCard extends StatelessWidget {
               child: Stack(
                 fit: .expand,
                 children: [
-                  if (booking.imageUrl.isNotEmpty)
-                    CacheImage(
-                      url: booking.imageUrl,
-                      height: 220,
-                      width: double.infinity,
-                      memCacheWidth: 900,
-                      errorWidget: CourtHeroCanvas(
-                        color: booking.heroColor,
-                        height: 220,
-                        showGradient: false,
-                      ),
-                    )
-                  else
-                    CourtHeroCanvas(
+                  CacheImage(
+                    url: booking.imageUrl,
+                    height: 220,
+                    width: double.infinity,
+                    memCacheWidth: 900,
+                    errorWidget: CourtHeroCanvas(
                       color: booking.heroColor,
                       height: 220,
                       showGradient: false,
                     ),
+                  ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

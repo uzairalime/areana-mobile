@@ -9,8 +9,16 @@ class ApiException implements Exception {
   factory ApiException.fromDio(DioException error) {
     final data = error.response?.data;
     var message = error.message ?? 'Request failed';
-    if (data is Map && data['message'] is String) {
-      message = data['message'] as String;
+    if (data is Map) {
+      final serverMessage = data['message'];
+      if (serverMessage is String && serverMessage.isNotEmpty) {
+        message = serverMessage;
+      } else if (serverMessage is List) {
+        final messages = serverMessage.whereType<String>().where(
+          (value) => value.isNotEmpty,
+        );
+        if (messages.isNotEmpty) message = messages.join('\n');
+      }
     }
     return ApiException(message, statusCode: error.response?.statusCode);
   }

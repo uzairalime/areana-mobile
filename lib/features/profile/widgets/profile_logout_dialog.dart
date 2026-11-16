@@ -5,6 +5,7 @@ import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_sheet_handle.dart';
 
 /// ReelStay-style logout confirmation as a bottom sheet.
 Future<bool> showProfileLogoutDialog(BuildContext context) async {
@@ -23,13 +24,7 @@ Future<bool> showProfileLogoutDialog(BuildContext context) async {
           child: Column(
             mainAxisSize: .min,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                ),
-                child: const SizedBox(width: 40, height: 4),
-              ),
+              const AppSheetHandle(),
               18.h,
               Text(
                 'Log out',

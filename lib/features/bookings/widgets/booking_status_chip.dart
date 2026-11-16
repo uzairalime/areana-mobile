@@ -21,7 +21,7 @@ class BookingStatusChip extends StatelessWidget {
       .confirmed => (AppColors.accentSoft, AppColors.payBadgeText),
       .pending => (const Color(0xFFFFF4D6), const Color(0xFF8A6A00)),
       .completed => (AppColors.primarySoft, AppColors.primary),
-      .cancelled => (const Color(0xFFFCE8E8), AppColors.error),
+      .cancelled || .noShow => (const Color(0xFFFCE8E8), AppColors.error),
     };
 
     return DecoratedBox(

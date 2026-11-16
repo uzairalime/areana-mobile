@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/json_parsing.dart';
+
 class UserReview extends Equatable {
   const UserReview({
     required this.id,
@@ -21,7 +23,7 @@ class UserReview extends Equatable {
       venueName: json['venue_name'] as String? ?? '',
       dateLabel: json['date_label'] as String? ?? '',
       body: json['body'] as String? ?? '',
-      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      rating: JsonParsing.intValue(json['rating']),
       recommended: json['recommended'] as bool? ?? true,
       pending: json['pending'] as bool? ?? false,
       promptTitle: json['prompt_title'] as String? ?? '',

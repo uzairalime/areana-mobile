@@ -20,6 +20,7 @@ class HomeCubit extends Cubit<HomeState> {
 
   final HomeRepository _repository;
   final searchController = TextEditingController();
+  int _pageRequestId = 0;
 
   Future<void> load() async {
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
@@ -86,7 +87,7 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (state.status.isLoading || state.isLoadingMore || !state.hasMore) return;
     await _loadPage(page: state.page + 1, showLoading: false, append: true);
   }
 
@@ -97,8 +98,13 @@ class HomeCubit extends Cubit<HomeState> {
     bool showLoading = true,
     bool append = false,
   }) async {
+    final requestId = ++_pageRequestId;
     if (showLoading) {
-      emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
+      emit(state.copyWith(
+        status: AppLoading.loading,
+        errorMessage: '',
+        isLoadingMore: false,
+      ));
     } else if (append) {
       emit(state.copyWith(isLoadingMore: true));
     }
@@ -115,7 +121,7 @@ class HomeCubit extends Cubit<HomeState> {
         page: page,
         limit: 20,
       );
-      if (isClosed) return;
+      if (isClosed || requestId != _pageRequestId) return;
       result.when(
         success: (data) {
           emit(
@@ -151,7 +157,7 @@ class HomeCubit extends Cubit<HomeState> {
       page: page,
       limit: 20,
     );
-    if (isClosed) return;
+    if (isClosed || requestId != _pageRequestId) return;
     result.when(
       success: (data) {
         final mapped = data.items.map((v) => v.toVenue()).toList();

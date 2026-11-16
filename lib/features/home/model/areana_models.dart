@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/consts/app_colors.dart';
+import '../../../core/utils/json_parsing.dart';
 import 'venue.dart';
 
 /// Areana server models, mirroring user-web `lib/player-types.ts`
@@ -11,23 +12,6 @@ import 'venue.dart';
 List<String> _stringList(dynamic value) => value is List
     ? value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
     : const [];
-
-/// Prisma Decimal fields serialize as STRINGS ("3000", "18000"),
-/// so every numeric parse must accept num OR String. A plain
-/// `as num` cast crashes on the live payload.
-double? _numOrNull(dynamic value) {
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value);
-  return null;
-}
-
-int _int(dynamic value, [int fallback = 0]) {
-  if (value is num) return value.toInt();
-  if (value is String) {
-    return int.tryParse(value) ?? double.tryParse(value)?.toInt() ?? fallback;
-  }
-  return fallback;
-}
 
 String _str(dynamic value) => value?.toString() ?? '';
 
@@ -59,17 +43,17 @@ class AreanaVenue extends Equatable {
       address: _str(json['address']),
       city: _str(json['city']),
       phone: json['phone'] as String?,
-      lat: _numOrNull(json['lat']),
-      lng: _numOrNull(json['lng']),
+      lat: JsonParsing.doubleOrNull(json['lat']),
+      lng: JsonParsing.doubleOrNull(json['lng']),
       sports: _stringList(json['sports']),
       amenities: _stringList(json['amenities']),
       images: _stringList(json['images']),
-      rating: _numOrNull(json['rating']) ?? 0,
-      ratingCount: _int(json['ratingCount']),
-      fromPrice: _numOrNull(json['fromPrice']),
-      distanceKm: _numOrNull(json['distanceKm']),
+      rating: JsonParsing.doubleOrNull(json['rating']) ?? 0,
+      ratingCount: JsonParsing.intValue(json['ratingCount']),
+      fromPrice: JsonParsing.doubleOrNull(json['fromPrice']),
+      distanceKm: JsonParsing.doubleOrNull(json['distanceKm']),
       autoAccept: json['autoAccept'] as bool? ?? false,
-      courtCount: count is Map ? _int(count['courts']) : 0,
+      courtCount: count is Map ? JsonParsing.intValue(count['courts']) : 0,
     );
   }
 
@@ -158,10 +142,10 @@ class AreanaCourt extends Equatable {
       size: json['size'] as String?,
       surface: json['surface'] as String?,
       indoor: json['indoor'] as bool? ?? false,
-      pricePerHour: _int(json['pricePerHour']),
-      openMinutes: _int(json['openMinutes']),
-      closeMinutes: _int(json['closeMinutes']),
-      slotMinutes: _int(json['slotMinutes'], 60),
+      pricePerHour: JsonParsing.intValue(json['pricePerHour']),
+      openMinutes: JsonParsing.intValue(json['openMinutes']),
+      closeMinutes: JsonParsing.intValue(json['closeMinutes']),
+      slotMinutes: JsonParsing.intValue(json['slotMinutes'], 60),
       images: _stringList(json['images']),
     );
   }
@@ -230,12 +214,12 @@ class AreanaCourtListItem extends Equatable {
       venueName: _str(venueMap['name']),
       venueCity: _str(venueMap['city']),
       venueAddress: _str(venueMap['address']),
-      venueLat: _numOrNull(venueMap['lat']),
-      venueLng: _numOrNull(venueMap['lng']),
-      venueRating: _numOrNull(venueMap['rating']) ?? 0,
-      venueRatingCount: _int(venueMap['ratingCount']),
+      venueLat: JsonParsing.doubleOrNull(venueMap['lat']),
+      venueLng: JsonParsing.doubleOrNull(venueMap['lng']),
+      venueRating: JsonParsing.doubleOrNull(venueMap['rating']) ?? 0,
+      venueRatingCount: JsonParsing.intValue(venueMap['ratingCount']),
       venueImages: _stringList(venueMap['images']),
-      distanceKm: _numOrNull(json['distanceKm']),
+      distanceKm: JsonParsing.doubleOrNull(json['distanceKm']),
     );
   }
 
@@ -285,8 +269,8 @@ class AreanaVenueDetail extends Equatable {
   factory AreanaVenueDetail.fromJson(Map<String, dynamic> json) {
     return AreanaVenueDetail(
       venue: AreanaVenue.fromJson(json),
-      maxAdvanceDays: _numOrNull(json['maxAdvanceDays'])?.toInt(),
-      minAdvanceMinutes: _numOrNull(json['minAdvanceMinutes'])?.toInt(),
+      maxAdvanceDays: JsonParsing.doubleOrNull(json['maxAdvanceDays'])?.toInt(),
+      minAdvanceMinutes: JsonParsing.doubleOrNull(json['minAdvanceMinutes'])?.toInt(),
       courts: (json['courts'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((e) => AreanaCourt.fromJson(Map<String, dynamic>.from(e)))
@@ -329,14 +313,14 @@ class AreanaCourtDetail extends Equatable {
       venueName: _str(venueMap['name']),
       venueCity: _str(venueMap['city']),
       venueAddress: _str(venueMap['address']),
-      venueLat: _numOrNull(venueMap['lat']),
-      venueLng: _numOrNull(venueMap['lng']),
-      venueRating: _numOrNull(venueMap['rating']) ?? 0,
-      venueRatingCount: _int(venueMap['ratingCount']),
+      venueLat: JsonParsing.doubleOrNull(venueMap['lat']),
+      venueLng: JsonParsing.doubleOrNull(venueMap['lng']),
+      venueRating: JsonParsing.doubleOrNull(venueMap['rating']) ?? 0,
+      venueRatingCount: JsonParsing.intValue(venueMap['ratingCount']),
       venueImages: _stringList(venueMap['images']),
       venueAmenities: _stringList(venueMap['amenities']),
-      maxAdvanceDays: _int(venueMap['maxAdvanceDays']),
-      minAdvanceMinutes: _int(venueMap['minAdvanceMinutes']),
+      maxAdvanceDays: JsonParsing.intValue(venueMap['maxAdvanceDays']),
+      minAdvanceMinutes: JsonParsing.intValue(venueMap['minAdvanceMinutes']),
     );
   }
 
@@ -371,10 +355,10 @@ class AvailabilitySlot extends Equatable {
 
   factory AvailabilitySlot.fromJson(Map<String, dynamic> json) {
     return AvailabilitySlot(
-      startMinutes: _int(json['startMinutes']),
-      endMinutes: _int(json['endMinutes']),
+      startMinutes: JsonParsing.intValue(json['startMinutes']),
+      endMinutes: JsonParsing.intValue(json['endMinutes']),
       available: json['available'] as bool? ?? false,
-      price: _int(json['price']),
+      price: JsonParsing.intValue(json['price']),
       peak: json['peak'] as bool? ?? false,
       deal: json['deal'] as bool? ?? false,
       reason: json['reason'] as String?,
@@ -430,7 +414,7 @@ class AvailabilityResponse extends Equatable {
       venueId: _str(json['venueId']),
       date: _str(json['date']),
       currency: _str(json['currency']).isEmpty ? 'PKR' : _str(json['currency']),
-      slotMinutes: _int(json['slotMinutes'], 60),
+      slotMinutes: JsonParsing.intValue(json['slotMinutes'], 60),
       slots: (json['slots'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((e) => AvailabilitySlot.fromJson(Map<String, dynamic>.from(e)))
@@ -464,7 +448,7 @@ class AreanaReview extends Equatable {
     final userMap = user is Map ? Map<String, dynamic>.from(user) : const {};
     return AreanaReview(
       id: _str(json['id']),
-      rating: _int(json['rating']),
+      rating: JsonParsing.intValue(json['rating']),
       comment: json['comment'] as String?,
       ownerReply: json['ownerReply'] as String?,
       createdAt: _str(json['createdAt']),
@@ -554,7 +538,7 @@ class SlotSearchResult extends Equatable {
       venueName: _str(venueMap['name']),
       venueAddress: _str(venueMap['address']),
       venueCity: _str(venueMap['city']),
-      venueRating: _numOrNull(venueMap['rating']) ?? 0,
+      venueRating: JsonParsing.doubleOrNull(venueMap['rating']) ?? 0,
       venueImages: _stringList(venueMap['images']),
       courts: (json['courts'] as List<dynamic>? ?? const [])
           .whereType<Map>()

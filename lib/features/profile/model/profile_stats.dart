@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/utils/json_parsing.dart';
+
 class ProfileStats extends Equatable {
   const ProfileStats({
     this.bookingsCount = 0,
@@ -10,10 +12,10 @@ class ProfileStats extends Equatable {
 
   factory ProfileStats.fromJson(Map<String, dynamic> json) {
     return ProfileStats(
-      bookingsCount: (json['bookings_count'] as num?)?.toInt() ?? 0,
-      hoursPlayed: (json['hours_played'] as num?)?.toInt() ?? 0,
-      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
-      savedVenuesCount: (json['saved_venues_count'] as num?)?.toInt() ?? 0,
+      bookingsCount: JsonParsing.intValue(json['bookings_count']),
+      hoursPlayed: JsonParsing.intValue(json['hours_played']),
+      reviewsCount: JsonParsing.intValue(json['reviews_count']),
+      savedVenuesCount: JsonParsing.intValue(json['saved_venues_count']),
     );
   }
 
