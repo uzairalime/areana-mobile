@@ -22,7 +22,7 @@ class PastBookingTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onRebook;
 
-  /// Null when cancelled — review CTA is hidden.
+  /// Only completed bookings offer a review action.
   final VoidCallback? onAddReview;
 
   @override

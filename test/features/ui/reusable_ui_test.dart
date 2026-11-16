@@ -111,7 +111,7 @@ void main() {
         child: StatefulBuilder(
           builder: (context, setState) {
             rebuild = setState;
-            return HomeBody();
+            return HomeBody(key: ValueKey(home));
           },
         ),
       ),
