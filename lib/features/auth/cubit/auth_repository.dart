@@ -98,6 +98,15 @@ class AuthRepository {
       await _session.applySession(session);
       return ApiSuccess(session);
     } catch (error) {
+      // Do not leave a half-persisted login in memory after storage failure.
+      // A newer account, if one was applied meanwhile, remains untouched.
+      if (_store.accessToken == session.accessToken) {
+        try {
+          await _session.clear();
+        } catch (_) {
+          // clear() resets memory before attempting secure storage cleanup.
+        }
+      }
       return ApiError(
         message: 'Could not save your session. Please sign in again.',
         error: error,

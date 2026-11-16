@@ -242,7 +242,17 @@ class ProfileCubit extends Cubit<ProfileState> {
   /// Hydrates heart state for venue cards without loading full venue objects.
   Future<void> ensureSavedVenueIds() async {
     final userId = _session.state.user?.id;
-    if (!_session.state.isAuthenticated || userId == null) return;
+    if (!_session.state.isAuthenticated || userId == null) {
+      _savedIdsRequestId++;
+      _savedIdsHydrated = false;
+      _savedIdsUserId = null;
+      _savedIdsLoadingFor = null;
+      if (!isClosed &&
+          (state.savedVenueIds.isNotEmpty || state.savedVenues.isNotEmpty)) {
+        emit(state.copyWith(savedVenueIds: const [], savedVenues: const []));
+      }
+      return;
+    }
     if (_savedIdsUserId != userId) {
       _savedIdsHydrated = false;
       _savedIdsUserId = userId;

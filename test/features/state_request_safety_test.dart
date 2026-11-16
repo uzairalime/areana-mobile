@@ -93,6 +93,7 @@ class _Notifications extends NotificationService {
 
 class _Session extends SessionCubit {
   _Session() : super(SessionStore());
+  void signOut() => emit(const SessionState());
   void signIn(String id) => emit(
     SessionState(
       accessToken: 'test-token',
@@ -544,6 +545,9 @@ void main() {
       });
       await old;
       expect(cubit.state.savedVenueIds, ['new-save']);
+      session.signOut();
+      await cubit.ensureSavedVenueIds();
+      expect(cubit.state.savedVenueIds, isEmpty);
     },
   );
 
@@ -555,9 +559,11 @@ void main() {
       addTearDown(cubit.close);
       await tester.pumpWidget(
         MaterialApp(
-          home: Form(
-            key: cubit.otpFormKey,
-            child: TextFormField(controller: cubit.otpController),
+          home: Scaffold(
+            body: Form(
+              key: cubit.otpFormKey,
+              child: TextFormField(controller: cubit.otpController),
+            ),
           ),
         ),
       );

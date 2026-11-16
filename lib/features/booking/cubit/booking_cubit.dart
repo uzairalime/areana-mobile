@@ -128,8 +128,9 @@ class BookingCubit extends Cubit<BookingState> {
 
   void selectSlot(int startMinutes) {
     if (state.confirmStatus.isLoading ||
-        startMinutes == state.selectedStartMinutes)
+        startMinutes == state.selectedStartMinutes) {
       return;
+    }
     final slot = state.slots.where((s) => s.startMinutes == startMinutes);
     if (slot.isEmpty || !slot.first.available) return;
     AppHaptics.selection();
@@ -137,8 +138,9 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void selectSlotCount(int count) {
-    if (state.confirmStatus.isLoading || count < 1 || count == state.slotCount)
+    if (state.confirmStatus.isLoading || count < 1 || count == state.slotCount) {
       return;
+    }
     AppHaptics.selection();
     emit(_withoutPromo(state.copyWith(slotCount: count)));
   }
@@ -166,8 +168,9 @@ class BookingCubit extends Cubit<BookingState> {
   Future<void> validatePromo() async {
     final code = state.promoCode.trim();
     final courtId = state.selectedCourtId;
-    if (state.confirmStatus.isLoading || code.isEmpty || courtId == null)
+    if (state.confirmStatus.isLoading || code.isEmpty || courtId == null) {
       return;
+    }
     final requestId = ++_promoRequestId;
     emit(state.copyWith(promoStatus: AppLoading.loading, promoError: ''));
     final result = await _repository.validatePromo(

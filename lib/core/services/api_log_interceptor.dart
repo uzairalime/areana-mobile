@@ -69,30 +69,30 @@ class ApiLogInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException error, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     if (!Logger.isEnabled) {
-      handler.next(error);
+      handler.next(err);
       return;
     }
-    final request = error.requestOptions;
+    final request = err.requestOptions;
     Logger.error(
       tag: 'HTTP_ERROR',
       message: {
         'method': request.method,
         'url': _safeUri(request.uri),
-        'statusCode': error.response?.statusCode,
+        'statusCode': err.response?.statusCode,
         'elapsedMs': _elapsedMs(request),
-        'type': error.type.name,
-        if (error.message != null)
-          'message': error.message!.replaceAll(
+        'type': err.type.name,
+        if (err.message != null)
+          'message': err.message!.replaceAll(
             request.uri.toString(),
             _safeUri(request.uri),
           ),
-        if (error.response?.data != null) 'body': _redact(error.response!.data),
+        if (err.response?.data != null) 'body': _redact(err.response!.data),
       },
-      stackTrace: error.stackTrace,
+      stackTrace: err.stackTrace,
     );
-    handler.next(error);
+    handler.next(err);
   }
 
   int _elapsedMs(RequestOptions request) {

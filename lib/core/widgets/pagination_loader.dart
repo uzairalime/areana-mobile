@@ -40,16 +40,18 @@ class _PaginationLoaderState extends State<PaginationLoader> {
     if (_scheduled ||
         _requested ||
         !widget.enabled ||
-        widget.errorMessage.isNotEmpty)
+        widget.errorMessage.isNotEmpty) {
       return;
+    }
     _scheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scheduled = false;
       if (!mounted ||
           _requested ||
           !widget.enabled ||
-          widget.errorMessage.isNotEmpty)
+          widget.errorMessage.isNotEmpty) {
         return;
+      }
       _requested = true;
       widget.onLoadMore();
     });
