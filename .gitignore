@@ -49,3 +49,9 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Local credentials for the demo venue seeder
+/.seed-football-owner.json
+
+# Local Areana API database and runtime files
+/.local/areana/

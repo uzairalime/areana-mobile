@@ -2,8 +2,8 @@ import 'package:equatable/equatable.dart';
 
 /// Areana offset page: venues, courts, games, player bookings.
 /// Query: `?page&limit`. Response: `{items, total, page, limit,
-/// totalPages, hasMore}`. A wrapped small catalog (wrapList) carries
-/// the same shape.
+/// totalPages, hasMore}` or `{data, total, page, limit}`. A wrapped
+/// small catalog (wrapList) carries the same shape.
 class OffsetPage<T> extends Equatable {
   const OffsetPage({
     required this.items,
@@ -18,19 +18,25 @@ class OffsetPage<T> extends Equatable {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic> json) parseItem,
   ) {
-    final rawItems = json['items'];
+    final rawItems = json['items'] ?? json['data'];
+    final total = (json['total'] as num?)?.toInt() ?? 0;
+    final page = (json['page'] as num?)?.toInt() ?? 1;
+    final limit = (json['limit'] as num?)?.toInt() ?? 20;
+    final totalPages =
+        (json['totalPages'] as num?)?.toInt() ??
+        (total > 0 && limit > 0 ? (total / limit).ceil() : 1);
     return OffsetPage(
       items: rawItems is List
           ? rawItems
-              .whereType<Map>()
-              .map((e) => parseItem(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map((e) => parseItem(Map<String, dynamic>.from(e)))
+                .toList()
           : const [],
-      total: (json['total'] as num?)?.toInt() ?? 0,
-      page: (json['page'] as num?)?.toInt() ?? 1,
-      limit: (json['limit'] as num?)?.toInt() ?? 20,
-      totalPages: (json['totalPages'] as num?)?.toInt() ?? 1,
-      hasMore: json['hasMore'] as bool? ?? false,
+      total: total,
+      page: page,
+      limit: limit,
+      totalPages: totalPages,
+      hasMore: json['hasMore'] as bool? ?? page < totalPages,
     );
   }
 

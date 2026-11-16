@@ -66,6 +66,10 @@ Listings never return a bare array:
 - **CursorPage** (`?cursor&limit`, `items, nextCursor, total?`):
   favorites, notifications, venue/court reviews.
 
+The current tunneled venue API returns `{data, total, page, limit}`.
+Offset parsing accepts both `items` and `data`, and derives `totalPages`
+and `hasMore` from the totals when the server omits them.
+
 Slot search is bounded, not paginated.
 
 ## Auth — passwordless email OTP, same as user-web `/auth`
