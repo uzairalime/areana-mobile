@@ -1,12 +1,27 @@
 import 'package:arana360/core/consts/app_colors.dart';
+import 'package:arana360/core/enums/app_loading.dart';
+import 'package:arana360/core/services/locator.dart';
+import 'package:arana360/core/services/session_cubit.dart';
+import 'package:arana360/core/services/session_state.dart';
+import 'package:arana360/core/services/session_store.dart';
 import 'package:arana360/core/widgets/pagination_loader.dart';
+import 'package:arana360/features/auth/model/user_model.dart';
 import 'package:arana360/features/booking/widgets/court_hero_canvas.dart';
 import 'package:arana360/features/bookings/model/user_booking.dart';
-import 'package:arana360/features/bookings/widgets/booking_list_tile.dart';
 import 'package:arana360/features/bookings/widgets/booking_status_chip.dart';
 import 'package:arana360/features/bookings/widgets/past_booking_tile.dart';
 import 'package:arana360/features/bookings/widgets/upcoming_featured_card.dart';
 import 'package:arana360/features/bookings/widgets/upcoming_timeline_tile.dart';
+import 'package:arana360/features/home/cubit/home_client.dart';
+import 'package:arana360/features/home/cubit/home_cubit.dart';
+import 'package:arana360/features/home/cubit/home_repository.dart';
+import 'package:arana360/features/home/cubit/home_state.dart';
+import 'package:arana360/features/home/widgets/home_body.dart';
+import 'package:arana360/features/profile/cubit/profile_client.dart';
+import 'package:arana360/features/profile/cubit/profile_cubit.dart';
+import 'package:arana360/features/profile/cubit/profile_repository.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -33,21 +48,87 @@ UserBooking _booking({UserBookingStatus status = UserBookingStatus.confirmed}) {
 Future<void> _pump(WidgetTester tester, Widget child) {
   return tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(
-        textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 20, height: 1.2),
-          titleSmall: TextStyle(fontSize: 15, height: 1.2),
-          labelLarge: TextStyle(fontSize: 14, height: 1.2),
-          labelMedium: TextStyle(fontSize: 12, height: 1.2),
-          labelSmall: TextStyle(fontSize: 11, height: 1.2),
-        ),
-      ),
       home: Scaffold(body: Center(child: child)),
     ),
   );
 }
 
+class _Session extends SessionCubit {
+  _Session() : super(SessionStore());
+
+  void signIn(String id) {
+    emit(
+      SessionState(
+        accessToken: 'test-token',
+        user: UserModel(id: id, name: 'Test', email: 'test@example.com'),
+      ),
+    );
+  }
+}
+
+class _Home extends HomeCubit {
+  _Home() : super(HomeRepository(HomeClient(Dio()))) {
+    emit(const HomeState(status: AppLoading.error, errorMessage: 'Offline'));
+  }
+
+  @override
+  Future<void> load() async {}
+}
+
+class _Profile extends ProfileCubit {
+  _Profile(SessionCubit session)
+    : super(ProfileRepository(ProfileClient(Dio()), session), session);
+
+  var hydrationCalls = 0;
+
+  @override
+  Future<void> ensureSavedVenueIds() async {
+    hydrationCalls++;
+    emit(state.copyWith(savedVenueIds: ['saved-$hydrationCalls']));
+  }
+}
+
 void main() {
+  testWidgets('home hydrates favorites outside build and after user changes', (
+    tester,
+  ) async {
+    final session = _Session();
+    final home = _Home();
+    final profile = _Profile(session);
+    getIt.registerSingleton<ProfileCubit>(profile);
+    addTearDown(() => getIt.unregister<ProfileCubit>());
+    addTearDown(profile.close);
+    addTearDown(home.close);
+    addTearDown(session.close);
+    late StateSetter rebuild;
+    await _pump(
+      tester,
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<SessionCubit>.value(value: session),
+          BlocProvider<HomeCubit>.value(value: home),
+        ],
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            rebuild = setState;
+            return HomeBody();
+          },
+        ),
+      ),
+    );
+    expect(profile.hydrationCalls, 1);
+    rebuild(() {});
+    await tester.pump();
+    expect(profile.hydrationCalls, 1);
+    session.signIn('player-1');
+    await tester.pumpAndSettle();
+    expect(profile.hydrationCalls, 2);
+    session.signIn('player-2');
+    await tester.pumpAndSettle();
+    expect(profile.hydrationCalls, 3);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('pagination requests after layout and only once per cursor', (
     tester,
   ) async {
@@ -115,11 +196,6 @@ void main() {
   });
 
   final cards = <(String, Widget Function(VoidCallback), double)>[
-    (
-      'booking list',
-      (onTap) => BookingListTile(booking: _booking(), onTap: onTap),
-      BookingListTile.height,
-    ),
     (
       'featured booking',
       (onTap) => UpcomingFeaturedCard(booking: _booking(), onTap: onTap),
