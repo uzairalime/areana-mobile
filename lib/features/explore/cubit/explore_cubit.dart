@@ -104,10 +104,7 @@ class ExploreCubit extends Cubit<ExploreState> {
   }
 
   void applyPlace({required String location, String placeId = ''}) {
-    final search = state.search.copyWith(
-      location: location,
-      placeId: placeId,
-    );
+    final search = state.search.copyWith(location: location, placeId: placeId);
     _session
       ..saveSearch(search)
       ..savePageTab(.courts);
@@ -121,11 +118,7 @@ class ExploreCubit extends Cubit<ExploreState> {
 
   void clearPlace() {
     _session.clearSearch();
-    emit(
-      state.copyWith(
-        search: const ExploreSearchCriteria(),
-      ),
-    );
+    emit(state.copyWith(search: const ExploreSearchCriteria()));
   }
 
   void applyFilter(CourtFilterDraft filter) {

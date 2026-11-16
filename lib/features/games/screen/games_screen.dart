@@ -94,6 +94,7 @@ class GamesScreen extends StatelessWidget {
                   return PaginationLoader(
                     pageKey: state.page,
                     enabled: !state.isLoadingMore,
+                    errorMessage: state.errorMessage,
                     onLoadMore: context.read<GamesCubit>().loadMore,
                   );
                 }

@@ -77,10 +77,7 @@ void setupLocator() {
     ..registerLazySingleton<RecentSearchStore>(RecentSearchStore.new)
     ..registerLazySingleton<SearchClient>(() => SearchClient(getIt<Dio>()))
     ..registerLazySingleton<SearchRepository>(
-      () => SearchRepository(
-        getIt<SearchClient>(),
-        getIt<RecentSearchStore>(),
-      ),
+      () => SearchRepository(getIt<SearchClient>(), getIt<RecentSearchStore>()),
     )
     ..registerLazySingleton<BookingClient>(() => BookingClient(getIt<Dio>()))
     ..registerLazySingleton<BookingRepository>(
@@ -112,29 +109,19 @@ void setupLocator() {
     ..registerLazySingleton<GamesRepository>(
       () => GamesRepository(getIt<GamesClient>(), getIt<BookingsClient>()),
     )
-    ..registerFactory<GamesCubit>(
-      () => GamesCubit(getIt<GamesRepository>()),
-    )
+    ..registerFactory<GamesCubit>(() => GamesCubit(getIt<GamesRepository>()))
     ..registerLazySingleton<ProfileClient>(() => ProfileClient(getIt<Dio>()))
     ..registerLazySingleton<ProfileRepository>(
-      () => ProfileRepository(
-        getIt<ProfileClient>(),
-        getIt<SessionCubit>(),
-      ),
+      () => ProfileRepository(getIt<ProfileClient>(), getIt<SessionCubit>()),
     )
     ..registerFactory<AuthCubit>(() => AuthCubit(getIt<AuthRepository>()))
     ..registerFactory<SplashCubit>(() => SplashCubit(getIt<SessionCubit>()))
     ..registerFactory<HomeCubit>(() => HomeCubit(getIt<HomeRepository>()))
     ..registerLazySingleton<ExploreSessionStore>(ExploreSessionStore.new)
     ..registerLazySingleton<ExploreCubit>(
-      () => ExploreCubit(
-        getIt<HomeRepository>(),
-        getIt<ExploreSessionStore>(),
-      ),
+      () => ExploreCubit(getIt<HomeRepository>(), getIt<ExploreSessionStore>()),
     )
-    ..registerFactory<SearchCubit>(
-      () => SearchCubit(getIt<SearchRepository>()),
-    )
+    ..registerFactory<SearchCubit>(() => SearchCubit(getIt<SearchRepository>()))
     ..registerLazySingleton<ProfileCubit>(
       () => ProfileCubit(getIt<ProfileRepository>(), getIt<SessionCubit>()),
     );

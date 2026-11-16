@@ -61,7 +61,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> loadMore() async {
     if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
     final requestId = _requestId;
-    emit(state.copyWith(isLoadingMore: true));
+    emit(state.copyWith(isLoadingMore: true, errorMessage: ''));
     final result = await _repository.fetchNotifications(
       cursor: state.nextCursor,
     );
@@ -78,8 +78,8 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           ),
         );
       },
-      failure: (_) {
-        emit(state.copyWith(isLoadingMore: false));
+      failure: (error) {
+        emit(state.copyWith(isLoadingMore: false, errorMessage: error.message));
       },
     );
   }

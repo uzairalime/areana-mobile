@@ -195,6 +195,26 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('a failed page has an explicit retry without an automatic loop', (
+    tester,
+  ) async {
+    var calls = 0;
+    await _pump(
+      tester,
+      PaginationLoader(
+        pageKey: 'page-2',
+        errorMessage: 'Connection failed',
+        onLoadMore: () => calls++,
+      ),
+    );
+    expect(calls, 0);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    await tester.tap(find.text('Retry loading more'));
+    await tester.pump();
+    expect(calls, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   final cards = <(String, Widget Function(VoidCallback), double)>[
     (
       'featured booking',

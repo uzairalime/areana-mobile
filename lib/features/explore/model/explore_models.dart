@@ -65,5 +65,3 @@ class ExploreSearchCriteria extends Equatable {
   @override
   List<Object?> get props => [location, placeId, dateLabel, players];
 }
-
-enum ExploreSearchSection { where, when, who }

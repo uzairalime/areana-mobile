@@ -100,11 +100,13 @@ class HomeCubit extends Cubit<HomeState> {
   }) async {
     final requestId = ++_pageRequestId;
     if (showLoading) {
-      emit(state.copyWith(
-        status: AppLoading.loading,
-        errorMessage: '',
-        isLoadingMore: false,
-      ));
+      emit(
+        state.copyWith(
+          status: AppLoading.loading,
+          errorMessage: '',
+          isLoadingMore: false,
+        ),
+      );
     } else if (append) {
       emit(state.copyWith(isLoadingMore: true));
     }

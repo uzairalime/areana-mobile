@@ -72,12 +72,16 @@ class BookingCubit extends Cubit<BookingState> {
     final date = state.selectedDate;
     if (courtId == null || date == null) return;
     final requestId = ++_availabilityRequestId;
-    emit(_withoutPromo(state.copyWith(
-      status: AppLoading.loading,
-      errorMessage: '',
-      slots: const [],
-      clearSlot: true,
-    )));
+    emit(
+      _withoutPromo(
+        state.copyWith(
+          status: AppLoading.loading,
+          errorMessage: '',
+          slots: const [],
+          clearSlot: true,
+        ),
+      ),
+    );
     final result = await _repository.fetchAvailability(
       courtId: courtId,
       date: date,
@@ -103,7 +107,8 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> selectCourt(String id) async {
-    if (state.confirmStatus.isLoading || id == state.selectedCourtId ||
+    if (state.confirmStatus.isLoading ||
+        id == state.selectedCourtId ||
         !state.courts.any((court) => court.id == id)) {
       return;
     }
@@ -122,7 +127,9 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void selectSlot(int startMinutes) {
-    if (state.confirmStatus.isLoading || startMinutes == state.selectedStartMinutes) return;
+    if (state.confirmStatus.isLoading ||
+        startMinutes == state.selectedStartMinutes)
+      return;
     final slot = state.slots.where((s) => s.startMinutes == startMinutes);
     if (slot.isEmpty || !slot.first.available) return;
     AppHaptics.selection();
@@ -130,7 +137,8 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void selectSlotCount(int count) {
-    if (state.confirmStatus.isLoading || count < 1 || count == state.slotCount) return;
+    if (state.confirmStatus.isLoading || count < 1 || count == state.slotCount)
+      return;
     AppHaptics.selection();
     emit(_withoutPromo(state.copyWith(slotCount: count)));
   }
@@ -158,7 +166,8 @@ class BookingCubit extends Cubit<BookingState> {
   Future<void> validatePromo() async {
     final code = state.promoCode.trim();
     final courtId = state.selectedCourtId;
-    if (state.confirmStatus.isLoading || code.isEmpty || courtId == null) return;
+    if (state.confirmStatus.isLoading || code.isEmpty || courtId == null)
+      return;
     final requestId = ++_promoRequestId;
     emit(state.copyWith(promoStatus: AppLoading.loading, promoError: ''));
     final result = await _repository.validatePromo(
@@ -189,7 +198,8 @@ class BookingCubit extends Cubit<BookingState> {
     final courtId = state.selectedCourtId;
     final date = state.selectedDate;
     final start = state.selectedStartMinutes;
-    if (state.confirmStatus.isLoading || state.promoStatus.isLoading ||
+    if (state.confirmStatus.isLoading ||
+        state.promoStatus.isLoading ||
         courtId == null ||
         date == null ||
         start == null ||

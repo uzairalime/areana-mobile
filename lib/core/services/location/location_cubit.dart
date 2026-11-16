@@ -16,12 +16,7 @@ class LocationCubit extends Cubit<LocationState> {
   Future<void> ensurePermission({bool fetchLocation = false}) async {
     if (_ensuring) return;
     _ensuring = true;
-    emit(
-      state.copyWith(
-        isLoading: fetchLocation,
-        clearError: true,
-      ),
-    );
+    emit(state.copyWith(isLoading: fetchLocation, clearError: true));
 
     try {
       var permission = await _service.checkPermission();
@@ -84,11 +79,7 @@ class LocationCubit extends Cubit<LocationState> {
         return;
       }
       emit(
-        state.copyWith(
-          position: position,
-          isLoading: false,
-          clearError: true,
-        ),
+        state.copyWith(position: position, isLoading: false, clearError: true),
       );
     } catch (_) {
       _fail('Could not read your current location.');

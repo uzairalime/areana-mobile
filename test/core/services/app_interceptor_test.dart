@@ -27,13 +27,15 @@ const _initial = AuthSession(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late SessionStore store;
+  late InMemorySecureStorage secure;
   late Dio mainDio;
   late Dio refreshDio;
 
   setUp(() async {
     await getIt.reset();
     SharedPreferences.setMockInitialValues({});
-    store = SessionStore(secureStorage: InMemorySecureStorage());
+    secure = InMemorySecureStorage();
+    store = SessionStore(secureStorage: secure);
     await store.save(_initial);
     getIt.registerSingleton<SessionStore>(store);
     getIt.registerSingleton<TokenStore>(TokenStore(store));
@@ -149,6 +151,38 @@ void main() {
     expect(store.isAuthenticated, isFalse);
     expect(store.refreshToken, isNull);
   });
+
+  test(
+    'logout during refresh persistence prevents an authenticated retry',
+    () async {
+      final started = Completer<void>();
+      final release = Completer<void>();
+      secure.beforeWrite = (key, value) async {
+        if (key == 'areana_access_token' && value == 'new') {
+          started.complete();
+          await release.future;
+        }
+      };
+      refreshDio.httpClientAdapter = FakeHttpAdapter(
+        (_) =>
+            jsonResponse({'accessToken': 'new', 'refreshToken': 'refresh-new'}),
+      );
+      final adapter = FakeHttpAdapter((_) => jsonResponse({}, statusCode: 401));
+      mainDio.httpClientAdapter = adapter;
+      final failure = expectLater(
+        mainDio.get<dynamic>('favorites'),
+        throwsA(isA<DioException>()),
+      );
+      await started.future;
+      final clear = store.clear();
+      release.complete();
+      await Future.wait([clear, failure]);
+      expect(adapter.requests, hasLength(1));
+      final restored = SessionStore(secureStorage: secure);
+      await restored.restore();
+      expect(restored.isAuthenticated, isFalse);
+    },
+  );
 
   for (final status in [401, 503]) {
     test('refresh $status clears only a revoked session', () async {

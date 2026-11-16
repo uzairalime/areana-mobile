@@ -63,7 +63,7 @@ class GamesCubit extends Cubit<GamesState> {
   Future<void> loadMore() async {
     if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
     final requestId = _requestId;
-    emit(state.copyWith(isLoadingMore: true));
+    emit(state.copyWith(isLoadingMore: true, errorMessage: ''));
     final result = await _repository.fetchGames(
       sport: state.sport,
       city: state.city,
@@ -82,8 +82,8 @@ class GamesCubit extends Cubit<GamesState> {
           ),
         );
       },
-      failure: (_) {
-        emit(state.copyWith(isLoadingMore: false));
+      failure: (error) {
+        emit(state.copyWith(isLoadingMore: false, errorMessage: error.message));
       },
     );
   }
@@ -110,9 +110,7 @@ class GamesCubit extends Cubit<GamesState> {
     if (isClosed) return;
     result.when(
       success: (detail) {
-        emit(
-          state.copyWith(detail: detail, detailStatus: AppLoading.success),
-        );
+        emit(state.copyWith(detail: detail, detailStatus: AppLoading.success));
       },
       failure: (error) {
         emit(
@@ -149,10 +147,7 @@ class GamesCubit extends Cubit<GamesState> {
     );
   }
 
-  Future<bool> _manage(
-    String id,
-    Future<bool> Function() run,
-  ) async {
+  Future<bool> _manage(String id, Future<bool> Function() run) async {
     if (state.managingId.isNotEmpty) return false;
     emit(state.copyWith(managingId: id, errorMessage: ''));
     final ok = await run();
@@ -200,9 +195,7 @@ class GamesCubit extends Cubit<GamesState> {
     return result.when(
       success: (_) {
         emit(
-          state.copyWith(
-            games: state.games.where((g) => g.id != id).toList(),
-          ),
+          state.copyWith(games: state.games.where((g) => g.id != id).toList()),
         );
         return true;
       },

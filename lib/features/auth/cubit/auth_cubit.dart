@@ -288,11 +288,13 @@ class AuthCubit extends Cubit<AuthState> {
     }
     final error = persisted.errorOrNull;
     if (error != null) {
-      emit(state.copyWith(
-        status: AppLoading.error,
-        errorMessage: error.message,
-        errorTitle: 'Could not sign in',
-      ));
+      emit(
+        state.copyWith(
+          status: AppLoading.error,
+          errorMessage: error.message,
+          errorTitle: 'Could not sign in',
+        ),
+      );
       return;
     }
     _stopOtpTimer();

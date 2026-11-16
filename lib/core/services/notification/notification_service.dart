@@ -187,8 +187,7 @@ class NotificationService {
     );
   }
 
-  Future<void> cancel(int notificationId) =>
-      _local.cancel(id: notificationId);
+  Future<void> cancel(int notificationId) => _local.cancel(id: notificationId);
 
   Future<void> cancelAll() => _local.cancelAll();
 

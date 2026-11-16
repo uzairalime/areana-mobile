@@ -1,145 +1,155 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
 
-/// App-wide logger. Reuse this for non-API logs too; do not create a
-/// second `Logger` elsewhere.
-///
-/// Debug-only in practice: the interceptor that uses it is only added
-/// in `kDebugMode` (see [DioService] and the refresh Dio in
-/// [AppInterceptor]), so no request or response body ever reaches a
-/// release log.
-final appLogger = Logger(printer: SimplePrinter(colors: false));
+import '../logger/logger.dart';
 
-/// Logs every API call through [appLogger]: method + full endpoint URL,
-/// request body, and response body (or error body).
-///
-/// Example (debug console):
-///   API → POST http://10.31.147.229:3000/api/auth/request-otp
-///   API → body: {"email":"alex@pitchside.app"}
-///   API ← 200 POST http://10.31.147.229:3000/api/auth/request-otp (214ms)
-///   API ← body: {"message":"...","expiresAt":"...","ttlSeconds":600}
-///
-/// Sensitive values are NEVER logged in the clear. Any map key that
-/// looks like a secret — OTP `code`, passwords, `accessToken` /
-/// `refreshToken`, `deviceToken`, `Authorization` — is replaced with
-/// `***REDACTED***` in both request and response bodies, and headers
-/// are never logged at all. That rule is the reason this interceptor
-/// exists instead of Dio's built-in `LogInterceptor`, which would
-/// print the OTP code and both tokens verbatim.
+/// Logs every request, response and error without changing transport data.
+/// Headers and file contents are omitted; credentials are redacted recursively.
 class ApiLogInterceptor extends Interceptor {
   static const _startedAtKey = '__areana_log_started_at';
-  static const _maxBodyLength = 2000;
-
-  /// Keys whose values are redacted, compared after lowercasing and
-  /// stripping underscores, so `accessToken`, `access_token` and
-  /// `AccessToken` all match.
+  static const _redacted = '***REDACTED***';
   static const _sensitiveKeys = {
     'code',
     'otp',
     'password',
+    'passwordhash',
     'accesstoken',
     'refreshtoken',
     'token',
     'authorization',
     'devicetoken',
+    'apikey',
+    'clientsecret',
+    'secret',
   };
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    options.extra[_startedAtKey] =
-        DateTime.now().millisecondsSinceEpoch;
-    appLogger.i('API → ${options.method} ${options.uri}');
-    if (options.queryParameters.isNotEmpty) {
-      appLogger.i('API → query: ${_stringify(options.queryParameters)}');
+    if (!Logger.isEnabled) {
+      handler.next(options);
+      return;
     }
-    if (options.data != null) {
-      appLogger.i('API → body: ${_stringify(_redact(options.data))}');
-    }
+    options.extra[_startedAtKey] = Stopwatch()..start();
+    Logger.info(
+      tag: 'HTTP_REQUEST',
+      message: {
+        'method': options.method,
+        'url': _safeUri(options.uri),
+        if (options.queryParameters.isNotEmpty)
+          'query': _redact(options.queryParameters),
+        if (options.data != null) 'body': _redact(options.data),
+      },
+    );
     handler.next(options);
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
-    final request = response.requestOptions;
-    appLogger.i(
-      'API ← ${response.statusCode} ${request.method} ${request.uri} '
-      '(${_elapsedMs(request)}ms)',
-    );
-    if (response.data != null) {
-      appLogger.i('API ← body: ${_stringify(_redact(response.data))}');
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
+    if (!Logger.isEnabled) {
+      handler.next(response);
+      return;
     }
+    final request = response.requestOptions;
+    Logger.success(
+      tag: 'HTTP_RESPONSE',
+      message: {
+        'method': request.method,
+        'url': _safeUri(request.uri),
+        'statusCode': response.statusCode,
+        'elapsedMs': _elapsedMs(request),
+        'body': _redact(response.data),
+      },
+    );
     handler.next(response);
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    final request = err.requestOptions;
-    final status = err.response?.statusCode;
-    appLogger.e(
-      'API ✗ ${status ?? err.type} ${request.method} ${request.uri} '
-      '(${_elapsedMs(request)}ms)',
-    );
-    final errorBody = err.response?.data;
-    if (errorBody != null) {
-      appLogger.e('API ✗ body: ${_stringify(_redact(errorBody))}');
-    } else if (err.message != null) {
-      appLogger.e('API ✗ ${err.message}');
+  void onError(DioException error, ErrorInterceptorHandler handler) {
+    if (!Logger.isEnabled) {
+      handler.next(error);
+      return;
     }
-    handler.next(err);
+    final request = error.requestOptions;
+    Logger.error(
+      tag: 'HTTP_ERROR',
+      message: {
+        'method': request.method,
+        'url': _safeUri(request.uri),
+        'statusCode': error.response?.statusCode,
+        'elapsedMs': _elapsedMs(request),
+        'type': error.type.name,
+        if (error.message != null)
+          'message': error.message!.replaceAll(
+            request.uri.toString(),
+            _safeUri(request.uri),
+          ),
+        if (error.response?.data != null) 'body': _redact(error.response!.data),
+      },
+      stackTrace: error.stackTrace,
+    );
+    handler.next(error);
   }
 
   int _elapsedMs(RequestOptions request) {
     final started = request.extra[_startedAtKey];
-    if (started is! int) return 0;
-    return DateTime.now().millisecondsSinceEpoch - started;
+    return started is Stopwatch ? started.elapsedMilliseconds : 0;
   }
 
-  dynamic _redact(dynamic data) {
-    if (data is Map) {
-      return data.map(
-        (key, value) => MapEntry(
-          key,
-          _sensitiveKeys.contains(
-            key.toString().toLowerCase().replaceAll('_', ''),
-          )
-              ? '***REDACTED***'
-              : _redact(value),
-        ),
-      );
-    }
-    if (data is List) {
-      return data.map(_redact).toList();
-    }
+  bool _isSensitive(String key) => _sensitiveKeys.contains(
+    key.toLowerCase().replaceAll(RegExp(r'[_\-\s]'), ''),
+  );
+
+  String _safeUri(Uri uri) => uri
+      .replace(
+        userInfo: '',
+        queryParameters: uri.hasQuery
+            ? {
+                for (final entry in uri.queryParametersAll.entries)
+                  entry.key: _isSensitive(entry.key) ? _redacted : entry.value,
+              }
+            : null,
+      )
+      .toString();
+
+  Object? _redact(Object? data) {
     if (data is FormData) {
-      // Fields only, redacted the same way; file contents are never
-      // logged, only their names.
       return {
-        'fields': data.fields.map(
-          (field) => MapEntry(
-            field.key,
-            _sensitiveKeys.contains(
-              field.key.toLowerCase().replaceAll('_', ''),
-            )
-                ? '***REDACTED***'
-                : field.value,
-          ),
-        ),
-        'files': data.files.map((file) => file.value.filename).toList(),
+        'fields': [
+          for (final field in data.fields)
+            {
+              'name': field.key,
+              'value': _isSensitive(field.key)
+                  ? _redacted
+                  : _redact(field.value),
+            },
+        ],
+        'files': [for (final file in data.files) file.value.filename],
       };
     }
-    return data;
-  }
-
-  String _stringify(dynamic data) {
-    String text;
-    try {
-      text = data is String ? data : jsonEncode(data);
-    } catch (_) {
-      text = data.toString();
+    if (data is Uint8List) return '<binary: ${data.length} bytes>';
+    if (data is Stream) return '<stream>';
+    if (data is Map) {
+      return {
+        for (final entry in data.entries)
+          entry.key.toString(): _isSensitive(entry.key.toString())
+              ? _redacted
+              : _redact(entry.value),
+      };
     }
-    if (text.length <= _maxBodyLength) return text;
-    return '${text.substring(0, _maxBodyLength)}… (truncated)';
+    if (data is List) return data.map(_redact).toList(growable: false);
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is Map || decoded is List) return _redact(decoded);
+      } on FormatException {
+        // Plain text, rather than JSON.
+      }
+    }
+    return data;
   }
 }

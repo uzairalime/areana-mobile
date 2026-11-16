@@ -7,11 +7,7 @@ import '../../../features/notifications/model/notification_type.dart';
 /// When push/API arrives, map server fields into this once:
 /// `type` → [NotificationType], `link` → deep link, `id` → server id.
 class NotificationPayload {
-  const NotificationPayload({
-    required this.type,
-    this.link = '',
-    this.id = '',
-  });
+  const NotificationPayload({required this.type, this.link = '', this.id = ''});
 
   factory NotificationPayload.fromJson(Map<String, dynamic> json) {
     return NotificationPayload(
@@ -31,9 +27,7 @@ class NotificationPayload {
       try {
         final map = jsonDecode(value);
         if (map is Map) {
-          return NotificationPayload.fromJson(
-            Map<String, dynamic>.from(map),
-          );
+          return NotificationPayload.fromJson(Map<String, dynamic>.from(map));
         }
       } catch (_) {
         // Fall through to treat as deep link.
@@ -48,9 +42,7 @@ class NotificationPayload {
     return NotificationPayload(
       type: NotificationTypeX.fromJson(data['type'] as String?),
       link: link?.toString() ?? '',
-      id: data['id']?.toString() ??
-          data['notification_id']?.toString() ??
-          '',
+      id: data['id']?.toString() ?? data['notification_id']?.toString() ?? '',
     );
   }
 

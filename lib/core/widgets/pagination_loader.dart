@@ -7,11 +7,13 @@ class PaginationLoader extends StatefulWidget {
     required this.pageKey,
     required this.onLoadMore,
     this.enabled = true,
+    this.errorMessage = '',
   });
 
   final Object? pageKey;
   final VoidCallback onLoadMore;
   final bool enabled;
+  final String errorMessage;
 
   @override
   State<PaginationLoader> createState() => _PaginationLoaderState();
@@ -35,11 +37,19 @@ class _PaginationLoaderState extends State<PaginationLoader> {
   }
 
   void _scheduleRequest() {
-    if (_scheduled || _requested || !widget.enabled) return;
+    if (_scheduled ||
+        _requested ||
+        !widget.enabled ||
+        widget.errorMessage.isNotEmpty)
+      return;
     _scheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scheduled = false;
-      if (!mounted || _requested || !widget.enabled) return;
+      if (!mounted ||
+          _requested ||
+          !widget.enabled ||
+          widget.errorMessage.isNotEmpty)
+        return;
       _requested = true;
       widget.onLoadMore();
     });
@@ -47,9 +57,22 @@ class _PaginationLoaderState extends State<PaginationLoader> {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      child: Center(child: CircularProgressIndicator()),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: widget.errorMessage.isEmpty
+            ? const CircularProgressIndicator()
+            : TextButton.icon(
+                onPressed: widget.enabled
+                    ? () {
+                        _requested = true;
+                        widget.onLoadMore();
+                      }
+                    : null,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry loading more'),
+              ),
+      ),
     );
   }
 }

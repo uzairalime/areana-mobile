@@ -18,16 +18,11 @@ class AuthRepository {
   final SessionCubit _session;
   final SessionStore _store;
 
-  Future<ApiResult<OtpRequestResponse>> requestOtp({
-    required String email,
-  }) {
+  Future<ApiResult<OtpRequestResponse>> requestOtp({required String email}) {
     if (AppConfig.useMockApi) {
       return MockDelay.run(
         () => const ApiSuccess(
-          OtpRequestResponse(
-            message: 'Code sent',
-            ttlSeconds: 600,
-          ),
+          OtpRequestResponse(message: 'Code sent', ttlSeconds: 600),
         ),
       );
     }
@@ -92,12 +87,12 @@ class AuthRepository {
   /// Single persist step, called by the Cubit after a successful
   /// verify (mock and real alike) — the repository itself never
   /// persists a verify result, so a session is stored exactly once.
-  Future<ApiResult<AuthSession>> persistVerify(
-    OtpVerifyResponse verify,
-  ) async {
+  Future<ApiResult<AuthSession>> persistVerify(OtpVerifyResponse verify) async {
     final session = AuthClient.sessionFromVerify(verify);
     if (session.accessToken.isEmpty) {
-      return const ApiError(message: 'The server did not return a valid session.');
+      return const ApiError(
+        message: 'The server did not return a valid session.',
+      );
     }
     try {
       await _session.applySession(session);

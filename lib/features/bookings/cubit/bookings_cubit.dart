@@ -14,8 +14,7 @@ class BookingsCubit extends Cubit<BookingsState> {
   var _requestId = 0;
   bool _isRefreshing = false;
 
-  String get _filter =>
-      state.tab == .upcoming ? 'upcoming' : 'past';
+  String get _filter => state.tab == .upcoming ? 'upcoming' : 'past';
 
   Future<void> load() => _loadFirstPage(showLoading: true);
 
@@ -117,7 +116,9 @@ class BookingsCubit extends Cubit<BookingsState> {
     return result.when(
       success: (_) {
         final next = [...state.bookings];
-        final currentIndex = next.indexWhere((booking) => booking.id == bookingId);
+        final currentIndex = next.indexWhere(
+          (booking) => booking.id == bookingId,
+        );
         if (currentIndex >= 0) {
           next[currentIndex] = next[currentIndex].copyWith(hasReviewed: true);
         }
@@ -132,10 +133,7 @@ class BookingsCubit extends Cubit<BookingsState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            reviewSubmittingId: '',
-            errorMessage: error.message,
-          ),
+          state.copyWith(reviewSubmittingId: '', errorMessage: error.message),
         );
         return false;
       },
@@ -158,7 +156,9 @@ class BookingsCubit extends Cubit<BookingsState> {
     return result.when(
       success: (updated) {
         final next = [...state.bookings];
-        final currentIndex = next.indexWhere((booking) => booking.id == bookingId);
+        final currentIndex = next.indexWhere(
+          (booking) => booking.id == bookingId,
+        );
         if (currentIndex >= 0) next[currentIndex] = updated;
         emit(
           state.copyWith(
@@ -171,10 +171,7 @@ class BookingsCubit extends Cubit<BookingsState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            managingBookingId: '',
-            errorMessage: error.message,
-          ),
+          state.copyWith(managingBookingId: '', errorMessage: error.message),
         );
         return false;
       },
@@ -201,10 +198,7 @@ class BookingsCubit extends Cubit<BookingsState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            managingBookingId: '',
-            errorMessage: error.message,
-          ),
+          state.copyWith(managingBookingId: '', errorMessage: error.message),
         );
         return false;
       },
@@ -223,10 +217,7 @@ class BookingsCubit extends Cubit<BookingsState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            managingBookingId: '',
-            errorMessage: error.message,
-          ),
+          state.copyWith(managingBookingId: '', errorMessage: error.message),
         );
         return false;
       },

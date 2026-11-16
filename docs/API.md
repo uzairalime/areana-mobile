@@ -206,12 +206,17 @@ old Messages/Chat feature, which was deleted.
 
 ## Logging
 
-Every Dio call is logged in debug builds only, via
-`ApiLogInterceptor` + the `logger` package: method + full endpoint URL,
-query, request body, response/error body, and duration. Headers are
-never logged, and OTP codes, passwords, and access / refresh / device
-tokens are redacted as `***REDACTED***`. Do not use Dio's built-in
-`LogInterceptor` — it prints secrets in the clear.
+Every Dio call is logged in debug builds through `ApiLogInterceptor`
+and the shared `core/logger/logger.dart`, following the Reelstay logger
+pattern. Tagged, timestamped entries include the method, URL, query,
+complete request / response / error body, status, and duration:
+`HTTP_REQUEST`, `HTTP_RESPONSE`, and `HTTP_ERROR`. This also covers token
+refresh. Headers and file contents are omitted. OTP codes, passwords,
+and tokens are masked in URL queries and nested JSON / multipart fields
+as `***REDACTED***`; logged data never changes the actual request.
+Use `Logger.info/debug/warn/error/success/trace` with a `tag` for other
+app logs. `Logger.isEnabled` defaults to `kDebugMode` and can disable
+logging without changing network behavior.
 
 ## Mock mode (kept deliberately, auth only)
 

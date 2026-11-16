@@ -84,9 +84,9 @@ class CursorPage<T> extends Equatable {
     return CursorPage(
       items: rawItems is List
           ? rawItems
-              .whereType<Map>()
-              .map((e) => parseItem(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map((e) => parseItem(Map<String, dynamic>.from(e)))
+                .toList()
           : const [],
       nextCursor: json['nextCursor'] as String?,
       total: (json['total'] as num?)?.toInt(),

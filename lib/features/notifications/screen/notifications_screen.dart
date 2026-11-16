@@ -81,6 +81,7 @@ class NotificationsScreen extends StatelessWidget {
                         hasMore: state.hasMore,
                         nextCursor: state.nextCursor,
                         isLoadingMore: state.isLoadingMore,
+                        errorMessage: state.errorMessage,
                         onLoadMore: cubit.loadMore,
                         onRefresh: cubit.refresh,
                         onOpen: (n) => _openNotification(context, n),
@@ -176,6 +177,7 @@ class _NotificationsBody extends StatelessWidget {
     required this.hasMore,
     required this.nextCursor,
     required this.isLoadingMore,
+    required this.errorMessage,
     required this.onLoadMore,
     required this.onRefresh,
     required this.onOpen,
@@ -186,6 +188,7 @@ class _NotificationsBody extends StatelessWidget {
   final bool hasMore;
   final String? nextCursor;
   final bool isLoadingMore;
+  final String errorMessage;
   final VoidCallback onLoadMore;
   final Future<void> Function() onRefresh;
   final ValueChanged<AppNotification> onOpen;
@@ -212,6 +215,7 @@ class _NotificationsBody extends StatelessWidget {
                   return PaginationLoader(
                     pageKey: nextCursor,
                     enabled: !isLoadingMore,
+                    errorMessage: errorMessage,
                     onLoadMore: onLoadMore,
                   );
                 }

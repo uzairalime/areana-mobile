@@ -167,6 +167,10 @@ class AppInterceptor extends Interceptor {
         return null;
       }
       await _applySession(session);
+      if (store.accessToken != session.accessToken ||
+          store.refreshToken != session.refreshToken) {
+        return null;
+      }
       return session;
     } on DioException catch (error) {
       if (error.response?.statusCode == 401 &&

@@ -213,7 +213,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     _savedIdsLoadingFor = null;
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.fetchSavedVenues();
-    if (isClosed || requestId != _savedIdsRequestId ||
+    if (isClosed ||
+        requestId != _savedIdsRequestId ||
         _session.state.user?.id != userId) {
       return;
     }
@@ -253,8 +254,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     _savedIdsLoadingFor = userId;
     try {
       final result = await _repository.fetchSavedVenueIds();
-      if (isClosed || requestId != _savedIdsRequestId ||
-          !_session.state.isAuthenticated || _session.state.user?.id != userId) {
+      if (isClosed ||
+          requestId != _savedIdsRequestId ||
+          !_session.state.isAuthenticated ||
+          _session.state.user?.id != userId) {
         return;
       }
       result.when(
@@ -266,11 +269,13 @@ class ProfileCubit extends Cubit<ProfileState> {
             ...current.difference(snapshot),
           }.toList();
           _savedIdsHydrated = true;
-          emit(state.copyWith(
-            savedVenueIds: merged,
-            overview: _overviewWithSavedCount(merged.length),
-            errorMessage: '',
-          ));
+          emit(
+            state.copyWith(
+              savedVenueIds: merged,
+              overview: _overviewWithSavedCount(merged.length),
+              errorMessage: '',
+            ),
+          );
         },
         failure: (_) {},
       );

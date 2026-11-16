@@ -99,7 +99,8 @@ class BookingState extends Equatable {
 
   bool get selectedSlotsAvailable {
     final selected = selectedSlots;
-    return selected.length == slotCount && selected.every((slot) => slot.available);
+    return selected.length == slotCount &&
+        selected.every((slot) => slot.available);
   }
 
   bool get canContinue =>
@@ -108,8 +109,7 @@ class BookingState extends Equatable {
       selectedStartMinutes != null &&
       selectedSlotsAvailable;
 
-  int get grossTotal =>
-      selectedSlots.fold(0, (sum, slot) => sum + slot.price);
+  int get grossTotal => selectedSlots.fold(0, (sum, slot) => sum + slot.price);
 
   int get discount => promo?.discount ?? 0;
 
@@ -128,8 +128,8 @@ class BookingState extends Equatable {
   String get timeRange {
     final slot = selectedSlot;
     if (slot == null) return '—';
-    final end = slot.startMinutes +
-        slotCount * (selectedCourt?.slotMinutes ?? 60);
+    final end =
+        slot.startMinutes + slotCount * (selectedCourt?.slotMinutes ?? 60);
     return '${_fmtMinutes(slot.startMinutes)} – ${_fmtMinutes(end)}';
   }
 
@@ -164,16 +164,18 @@ class BookingState extends Equatable {
       selectedCourtId: selectedCourtId ?? this.selectedCourtId,
       selectedDate: selectedDate ?? this.selectedDate,
       slots: slots ?? this.slots,
-      selectedStartMinutes:
-          clearSlot ? null : selectedStartMinutes ?? this.selectedStartMinutes,
+      selectedStartMinutes: clearSlot
+          ? null
+          : selectedStartMinutes ?? this.selectedStartMinutes,
       slotCount: slotCount ?? this.slotCount,
       payMethod: payMethod ?? this.payMethod,
       promoCode: promoCode ?? this.promoCode,
       promo: clearPromo ? null : promo ?? this.promo,
       promoError: promoError ?? this.promoError,
       promoStatus: promoStatus ?? this.promoStatus,
-      confirmation:
-          clearConfirmation ? null : confirmation ?? this.confirmation,
+      confirmation: clearConfirmation
+          ? null
+          : confirmation ?? this.confirmation,
       share: share ?? this.share,
     );
   }
