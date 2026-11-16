@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -59,10 +59,7 @@ class GameDetailScreen extends StatelessWidget {
                 ),
               ),
               8.h,
-              Text(
-                game.playersLine,
-                style: context.textTheme.bodyMedium,
-              ),
+              Text(game.playersLine, style: context.textTheme.bodyMedium),
               if (game.level != null && game.level!.isNotEmpty) ...[
                 8.h,
                 Text('Level: ${game.level}'),

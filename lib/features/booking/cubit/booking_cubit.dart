@@ -1,6 +1,6 @@
 import 'dart:async' show unawaited;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
@@ -16,7 +16,7 @@ import 'booking_state.dart';
 /// changed price surfaces as its 400/409 message, never a local guess.
 class BookingCubit extends Cubit<BookingState> {
   BookingCubit(this._repository, this._notifications)
-      : super(const BookingState());
+    : super(const BookingState());
 
   final BookingRepository _repository;
   final NotificationService _notifications;
@@ -35,7 +35,8 @@ class BookingCubit extends Cubit<BookingState> {
     if (isClosed) return;
     await result.when(
       success: (courts) async {
-        final selectedId = preselectedCourtId != null &&
+        final selectedId =
+            preselectedCourtId != null &&
                 courts.any((c) => c.id == preselectedCourtId)
             ? preselectedCourtId
             : (courts.isEmpty ? null : courts.first.id);
@@ -53,10 +54,7 @@ class BookingCubit extends Cubit<BookingState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -85,10 +83,7 @@ class BookingCubit extends Cubit<BookingState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -147,9 +142,7 @@ class BookingCubit extends Cubit<BookingState> {
     if (isClosed) return;
     result.when(
       success: (promo) {
-        emit(
-          state.copyWith(promoStatus: AppLoading.success, promo: promo),
-        );
+        emit(state.copyWith(promoStatus: AppLoading.success, promo: promo));
       },
       failure: (error) {
         emit(
@@ -167,7 +160,10 @@ class BookingCubit extends Cubit<BookingState> {
     final courtId = state.selectedCourtId;
     final date = state.selectedDate;
     final start = state.selectedStartMinutes;
-    if (courtId == null || date == null || start == null || !state.canContinue) {
+    if (courtId == null ||
+        date == null ||
+        start == null ||
+        !state.canContinue) {
       return false;
     }
     AppHaptics.medium();
@@ -232,9 +228,7 @@ class BookingCubit extends Cubit<BookingState> {
 
   void clearConfirmError() {
     if (state.errorMessage.isEmpty && !state.confirmStatus.isError) return;
-    emit(
-      state.copyWith(confirmStatus: AppLoading.initial, errorMessage: ''),
-    );
+    emit(state.copyWith(confirmStatus: AppLoading.initial, errorMessage: ''));
   }
 
   @override

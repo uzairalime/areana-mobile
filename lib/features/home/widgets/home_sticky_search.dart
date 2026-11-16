@@ -1,14 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import 'home_search_bar.dart';
 
 class HomeStickySearchDelegate extends SliverPersistentHeaderDelegate {
-  HomeStickySearchDelegate({
-    required this.onSearchTap,
-    required this.onFilter,
-  });
+  HomeStickySearchDelegate({required this.onSearchTap, required this.onFilter});
 
   final VoidCallback onSearchTap;
   final VoidCallback onFilter;
@@ -52,10 +49,7 @@ class HomeStickySearchDelegate extends SliverPersistentHeaderDelegate {
           AppSizes.pagePadding,
           _bottom,
         ),
-        child: HomeSearchBar(
-          onSearchTap: onSearchTap,
-          onFilter: onFilter,
-        ),
+        child: HomeSearchBar(onSearchTap: onSearchTap, onFilter: onFilter),
       ),
     );
   }

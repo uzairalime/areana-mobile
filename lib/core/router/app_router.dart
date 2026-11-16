@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -140,17 +140,13 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
       ),
       GoRoute(
         path: AppRoutes.editProfile,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: EditProfileScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: EditProfileScreen())),
       ),
       GoRoute(
         path: AppRoutes.accountControls,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: AccountControlsScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: AccountControlsScreen())),
       ),
       GoRoute(
         path: AppRoutes.notificationSettings,
@@ -161,10 +157,8 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
       ),
       GoRoute(
         path: AppRoutes.language,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: LanguageScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: LanguageScreen())),
       ),
       GoRoute(
         path: AppRoutes.paymentPreference,
@@ -175,29 +169,22 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
       ),
       GoRoute(
         path: AppRoutes.savedVenues,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: SavedVenuesScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: SavedVenuesScreen())),
       ),
       GoRoute(
         path: AppRoutes.myReviews,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: MyReviewsScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: MyReviewsScreen())),
       ),
       GoRoute(
         path: AppRoutes.helpSupport,
-        pageBuilder: (context, state) => _appPage(
-          state,
-          const ProfileScope(child: HelpSupportScreen()),
-        ),
+        pageBuilder: (context, state) =>
+            _appPage(state, const ProfileScope(child: HelpSupportScreen())),
       ),
       GoRoute(
         path: AppRoutes.legal,
-        pageBuilder: (context, state) =>
-            _appPage(state, const LegalScreen()),
+        pageBuilder: (context, state) => _appPage(state, const LegalScreen()),
       ),
       GoRoute(
         path: '${AppRoutes.legalDoc}/:doc',
@@ -263,10 +250,8 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
           return _appPage(
             state,
             BlocProvider(
-              create: (_) => VenueDetailCubit(
-                getIt<HomeRepository>(),
-                venue.id,
-              ),
+              create: (_) =>
+                  VenueDetailCubit(getIt<HomeRepository>(), venue.id),
               child: VenueDetailScreen(venue: venue),
             ),
           );

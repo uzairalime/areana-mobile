@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -39,7 +39,8 @@ Future<XFile?> showProfilePhotoSheet(BuildContext context) async {
               _PhotoOption(
                 icon: Icons.photo_library_outlined,
                 label: 'Choose from gallery',
-                onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
+                onTap: () =>
+                    Navigator.of(sheetContext).pop(ImageSource.gallery),
               ),
               10.h,
               _PhotoOption(

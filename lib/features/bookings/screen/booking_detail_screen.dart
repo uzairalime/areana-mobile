@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -64,10 +64,7 @@ class BookingDetailScreen extends StatelessWidget {
   }
 
   Future<void> _cancel(BuildContext context, UserBooking booking) async {
-    final confirmed = await showBookingCancelDialog(
-      context,
-      booking: booking,
-    );
+    final confirmed = await showBookingCancelDialog(context, booking: booking);
     if (!confirmed || !context.mounted) return;
 
     final ok = await context.read<BookingsCubit>().cancelBooking(booking.id);
@@ -91,9 +88,7 @@ class BookingDetailScreen extends StatelessWidget {
     final message = context.read<BookingsCubit>().state.errorMessage;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message.isEmpty ? 'Could not cancel booking' : message,
-        ),
+        content: Text(message.isEmpty ? 'Could not cancel booking' : message),
         behavior: SnackBarBehavior.floating,
       ),
     );

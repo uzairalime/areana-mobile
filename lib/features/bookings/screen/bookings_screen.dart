@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,58 +78,57 @@ class BookingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GuestGate(
       title: 'Account required',
-      message:
-          'Create an account to save court bookings, get slot reminders, and manage your schedule in one place.',
+      message: 'Create an account to save court bookings, get slot reminders, and manage your schedule in one place.',
       child: _BookingsTabDeepLinkListener(
         child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppCustomAppBar(
-          onAvatarTap: () => _onAvatarTap(context),
-          onMessages: () => _onMessages(context),
-          onNotifications: () => _onNotifications(context),
-        ),
-        body: BlocBuilder<BookingsCubit, BookingsState>(
-          buildWhen: (p, c) =>
-              p.status != c.status ||
-              p.errorMessage != c.errorMessage ||
-              p.tab != c.tab ||
-              p.bookings != c.bookings ||
-              p.reviewSubmittingId != c.reviewSubmittingId,
-          builder: (context, state) {
-            final cubit = context.read<BookingsCubit>();
-            return Column(
-              crossAxisAlignment: .start,
-              children: [
-                BuildLabels<BookingFilterTab>(
-                  expanded: true,
-                  padding: const .symmetric(horizontal: AppSizes.pagePadding),
-                  labels: BookingFilterTab.values,
-                  label: state.tab,
-                  textOf: (value) => value.label,
-                  itemHorizontalPadding: 12,
-                  onChange: cubit.setTab,
-                ),
-                8.h,
-                Expanded(
-                  child: AppLoadingHandler(
-                    status: state.status,
-                    errorMessage: state.errorMessage,
-                    onRetry: cubit.load,
-                    loading: BookingListShimmer(tab: state.tab),
-                    child: _BookingsBody(
-                      state: state,
-                      onRefresh: cubit.refresh,
-                      onOpen: (b) => _openBooking(context, b),
-                      onRebook: (b) => _rebook(context, b),
-                      onAddReview: (b) => _addReview(context, b),
+          backgroundColor: AppColors.background,
+          appBar: AppCustomAppBar(
+            onAvatarTap: () => _onAvatarTap(context),
+            onMessages: () => _onMessages(context),
+            onNotifications: () => _onNotifications(context),
+          ),
+          body: BlocBuilder<BookingsCubit, BookingsState>(
+            buildWhen: (p, c) =>
+                p.status != c.status ||
+                p.errorMessage != c.errorMessage ||
+                p.tab != c.tab ||
+                p.bookings != c.bookings ||
+                p.reviewSubmittingId != c.reviewSubmittingId,
+            builder: (context, state) {
+              final cubit = context.read<BookingsCubit>();
+              return Column(
+                crossAxisAlignment: .start,
+                children: [
+                  BuildLabels<BookingFilterTab>(
+                    expanded: true,
+                    padding: const .symmetric(horizontal: AppSizes.pagePadding),
+                    labels: BookingFilterTab.values,
+                    label: state.tab,
+                    textOf: (value) => value.label,
+                    itemHorizontalPadding: 12,
+                    onChange: cubit.setTab,
+                  ),
+                  8.h,
+                  Expanded(
+                    child: AppLoadingHandler(
+                      status: state.status,
+                      errorMessage: state.errorMessage,
+                      onRetry: cubit.load,
+                      loading: BookingListShimmer(tab: state.tab),
+                      child: _BookingsBody(
+                        state: state,
+                        onRefresh: cubit.refresh,
+                        onOpen: (b) => _openBooking(context, b),
+                        onRebook: (b) => _rebook(context, b),
+                        onAddReview: (b) => _addReview(context, b),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
-      ),
       ),
     );
   }
@@ -241,10 +240,7 @@ class _UpcomingList extends StatelessWidget {
         110,
       ),
       children: [
-        UpcomingFeaturedCard(
-          booking: featured,
-          onTap: () => onOpen(featured),
-        ),
+        UpcomingFeaturedCard(booking: featured, onTap: () => onOpen(featured)),
         if (alsoComingUp.isNotEmpty) ...[
           22.h,
           Text(
@@ -367,9 +363,7 @@ class _ReviewsList extends StatelessWidget {
           booking: booking,
           onTap: () => onOpen(booking),
           onRebook: () => onRebook(booking),
-          onAddReview: booking.canAddReview
-              ? () => onAddReview(booking)
-              : null,
+          onAddReview: booking.canAddReview ? () => onAddReview(booking) : null,
         );
       },
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -27,11 +27,9 @@ class ProfileMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive
-        ? AppColors.error
-        : labelColor ?? AppColors.text;
-    final leading = iconColor ??
-        (destructive ? AppColors.error : AppColors.primary);
+    final color = destructive ? AppColors.error : labelColor ?? AppColors.text;
+    final leading =
+        iconColor ?? (destructive ? AppColors.error : AppColors.primary);
 
     return Material(
       color: AppColors.surface,

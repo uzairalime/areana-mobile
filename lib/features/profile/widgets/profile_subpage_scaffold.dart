@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -30,10 +30,8 @@ class ProfileSubpageScaffold extends StatelessWidget {
         titleSpacing: 8,
         title: Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: AppColors.text,
-          ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.w800, color: AppColors.text),
         ),
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
@@ -53,11 +51,7 @@ class ProfileSubpageScaffold extends StatelessWidget {
                 child: const SizedBox(
                   width: 40,
                   height: 40,
-                  child: Icon(
-                    AppIcons.back,
-                    color: AppColors.text,
-                    size: 18,
-                  ),
+                  child: Icon(AppIcons.back, color: AppColors.text, size: 18),
                 ),
               ),
             ),

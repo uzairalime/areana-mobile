@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -110,7 +110,8 @@ class BookingSummaryCard extends StatelessWidget {
               _MetaTile(
                 icon: Icons.timer_outlined,
                 label: 'Slots',
-                value: '${state.slotCount} slot${state.slotCount == 1 ? '' : 's'}',
+                value:
+                    '${state.slotCount} slot${state.slotCount == 1 ? '' : 's'}',
               ).expand(),
             ],
           ),

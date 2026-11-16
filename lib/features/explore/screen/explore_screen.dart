@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -145,9 +145,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         errorMessage: state.errorMessage,
                         onRetry: cubit.load,
                         loading: const ExploreVenueTileShimmerList()
-                            .paddingSymmetric(
-                              horizontal: AppSizes.pagePadding,
-                            ),
+                            .paddingSymmetric(horizontal: AppSizes.pagePadding),
                         child: _CourtsList(
                           venues: venues,
                           onTap: (venue) => _openDetail(context, venue),
@@ -201,9 +199,7 @@ class _LazyMapPage extends StatelessWidget {
     if (status == .loading || status == .initial) {
       return const ColoredBox(
         color: AppColors.background,
-        child: Center(
-          child: Text('Loading courts…'),
-        ),
+        child: Center(child: Text('Loading courts…')),
       );
     }
 
@@ -225,14 +221,12 @@ class _LazyMapPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: .center,
           children: [
-            const Icon(
-              Icons.map_outlined,
-              size: 40,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.map_outlined, size: 40, color: AppColors.primary),
             10.h,
             Text(
-              hasPlaceFilter ? 'No courts in this area' : 'No courts on the map',
+              hasPlaceFilter
+                  ? 'No courts in this area'
+                  : 'No courts on the map',
               style: context.textTheme.titleSmall?.copyWith(fontWeight: .w800),
             ),
             if (hasPlaceFilter) ...[

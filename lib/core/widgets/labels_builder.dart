@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../consts/app_colors.dart';
 import '../extensions/extensions.dart';
@@ -259,10 +259,7 @@ class _TabButton extends StatelessWidget {
       onTap: onTap,
       behavior: .opaque,
       child: Padding(
-        padding: .symmetric(
-          horizontal: horizontalPadding ?? 20,
-          vertical: 10,
-        ),
+        padding: .symmetric(horizontal: horizontalPadding ?? 20, vertical: 10),
         child: Text(
           title,
           maxLines: 1,

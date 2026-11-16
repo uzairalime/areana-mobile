@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../services/session_cubit.dart';
@@ -34,9 +34,7 @@ class GuestGate extends StatelessWidget {
         }
         return GuestGateScreen(
           title: title ?? 'Account required',
-          message:
-              message ??
-              'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
+          message: message ?? 'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
         );
       },
     );

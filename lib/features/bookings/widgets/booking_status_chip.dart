@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -29,17 +29,18 @@ class BookingStatusChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(AppSizes.radiusPill),
       ),
-      child: Text(
-        status.label,
-        style: context.textTheme.labelMedium?.copyWith(
-          color: fg,
-          fontWeight: .w800,
-          fontSize: compact ? 10 : 12,
-        ),
-      ).paddingSymmetric(
-        horizontal: compact ? 8 : 10,
-        vertical: compact ? 4 : 5,
-      ),
+      child:
+          Text(
+            status.label,
+            style: context.textTheme.labelMedium?.copyWith(
+              color: fg,
+              fontWeight: .w800,
+              fontSize: compact ? 10 : 12,
+            ),
+          ).paddingSymmetric(
+            horizontal: compact ? 8 : 10,
+            vertical: compact ? 4 : 5,
+          ),
     );
   }
 }

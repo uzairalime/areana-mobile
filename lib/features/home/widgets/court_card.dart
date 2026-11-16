@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -99,10 +99,7 @@ class CourtCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    TextButton(
-                      onPressed: onBook,
-                      child: const Text('Book'),
-                    ),
+                    TextButton(onPressed: onBook, child: const Text('Book')),
                   ],
                 ),
               ],

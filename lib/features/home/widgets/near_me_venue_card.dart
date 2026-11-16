@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -11,11 +11,7 @@ import '../../booking/widgets/court_hero_canvas.dart';
 import '../model/nearby_venue.dart';
 
 class NearMeVenueCard extends StatelessWidget {
-  const NearMeVenueCard({
-    super.key,
-    required this.item,
-    required this.onTap,
-  });
+  const NearMeVenueCard({super.key, required this.item, required this.onTap});
 
   final NearbyVenue item;
   final VoidCallback onTap;

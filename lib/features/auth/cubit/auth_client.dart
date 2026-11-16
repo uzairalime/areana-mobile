@@ -50,10 +50,10 @@ class AuthClient {
         data: {
           'email': email,
           'code': code,
-          if (name != null) 'name': name,
-          if (phone != null) 'phone': phone,
-          if (city != null) 'city': city,
-          if (referralCode != null) 'referralCode': referralCode,
+          'name': ?name,
+          'phone': ?phone,
+          'city': ?city,
+          'referralCode': ?referralCode,
         },
       );
       final data = response.data;

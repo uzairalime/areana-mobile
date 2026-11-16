@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:upgrader/upgrader.dart';
 
 import '../consts/app_colors.dart';
@@ -53,9 +53,7 @@ class _AppUpgradeAlertState extends UpgradeAlertState {
       backgroundColor: AppColors.surface,
       surfaceTintColor: AppColors.surface,
       insetPadding: const .symmetric(horizontal: 28, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400, maxHeight: 520),
         child: Padding(

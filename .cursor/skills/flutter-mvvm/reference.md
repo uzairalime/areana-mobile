@@ -212,7 +212,7 @@ Keep paths relative and without a leading slash. The host lives only in `config.
 ## `lib/main.dart`
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
@@ -441,7 +441,7 @@ Call `context.read<AuthCubit>().login(...)` from the feature widget. Do not cons
 `lib/core/extensions/widget_extensions.dart`
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 extension WidgetPaddingX on Widget {
@@ -560,7 +560,7 @@ extension NumSpacingX on num {
 `lib/core/extensions/context_extensions.dart`
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension ContextX on BuildContext {
   ThemeData get theme => Theme.of(this);

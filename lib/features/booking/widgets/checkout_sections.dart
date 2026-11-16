@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -256,7 +256,10 @@ class CheckoutPriceCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _PriceRow(label: 'Court fee', value: MoneyFormat.pkr(state.grossTotal)),
+          _PriceRow(
+            label: 'Court fee',
+            value: MoneyFormat.pkr(state.grossTotal),
+          ),
           if (state.discount > 0) ...[
             8.h,
             _PriceRow(
@@ -279,7 +282,11 @@ class CheckoutPriceCard extends StatelessWidget {
 }
 
 class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.label, required this.value, this.bold = false});
+  const _PriceRow({
+    required this.label,
+    required this.value,
+    this.bold = false,
+  });
 
   final String label;
   final String value;

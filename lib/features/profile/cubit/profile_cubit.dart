@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
@@ -40,10 +40,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -171,10 +168,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -228,10 +222,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -346,10 +337,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
@@ -371,10 +359,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );

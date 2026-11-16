@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/services/locator.dart';
@@ -12,9 +12,6 @@ class ProfileScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: getIt<ProfileCubit>(),
-      child: child,
-    );
+    return BlocProvider.value(value: getIt<ProfileCubit>(), child: child);
   }
 }

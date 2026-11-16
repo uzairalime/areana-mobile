@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -102,10 +102,7 @@ Future<bool> showDeleteAccountDialog(BuildContext context) async {
       return FadeTransition(
         opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
         child: ScaleTransition(
-          scale: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack,
-          ),
+          scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
           child: child,
         ),
       );
@@ -149,9 +146,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
     return AlertDialog(
       backgroundColor: AppColors.surface,
       surfaceTintColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       titlePadding: const .fromLTRB(20, 22, 20, 10),
       contentPadding: const .symmetric(horizontal: 20, vertical: 12),
       actionsPadding: const .all(16),
@@ -187,10 +182,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 hintText: "Tell us why you're leaving",
                 filled: true,
                 fillColor: AppColors.background,
-                contentPadding: const .symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+                contentPadding: const .symmetric(horizontal: 14, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(color: AppColors.outline),

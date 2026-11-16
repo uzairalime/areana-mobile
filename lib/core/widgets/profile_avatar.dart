@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../consts/app_colors.dart';
 import '../utils/name_initials.dart';
@@ -32,10 +32,7 @@ class ProfileAvatar extends StatelessWidget {
       width: size,
       height: size,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: .circle,
-        ),
+        decoration: BoxDecoration(color: backgroundColor, shape: .circle),
         child: ClipOval(
           child: _hasImage
               ? Image.network(

@@ -1,6 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -45,12 +45,7 @@ class _ExploreSearchSheetState extends State<ExploreSearchSheet> {
     'Gulberg, Lahore',
   ];
 
-  static const _dates = [
-    'Today',
-    'Tomorrow',
-    'This weekend',
-    'Next week',
-  ];
+  static const _dates = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
 
   @override
   void initState() {
@@ -71,9 +66,8 @@ class _ExploreSearchSheetState extends State<ExploreSearchSheet> {
 
   void _submit() {
     AppHaptics.medium();
-    Navigator.of(context).pop(
-      _draft.copyWith(location: _locationController.text.trim()),
-    );
+    Navigator.of(context)
+        .pop(_draft.copyWith(location: _locationController.text.trim()));
   }
 
   @override
@@ -98,9 +92,7 @@ class _ExploreSearchSheetState extends State<ExploreSearchSheet> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: AppColors.border,
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusPill,
-                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
                     ),
                     child: const SizedBox(width: 44, height: 5),
                   ),
@@ -526,9 +518,13 @@ class _RoundIcon extends StatelessWidget {
           color: enabled ? AppColors.text : AppColors.textDisabled,
         ),
       ),
-    ).onTap(enabled ? () {
-      AppHaptics.selection();
-      onTap();
-    } : null);
+    ).onTap(
+      enabled
+          ? () {
+              AppHaptics.selection();
+              onTap();
+            }
+          : null,
+    );
   }
 }

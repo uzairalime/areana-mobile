@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -277,9 +277,17 @@ class _PastTileShimmer extends StatelessWidget {
             height: 48,
             child: Row(
               children: [
-                const ShimmerBox(width: 100, height: 14, radius: 7).center().expand(),
+                const ShimmerBox(
+                  width: 100,
+                  height: 14,
+                  radius: 7,
+                ).center().expand(),
                 const VerticalDivider(width: 1, color: AppColors.outline),
-                const ShimmerBox(width: 72, height: 14, radius: 7).center().expand(),
+                const ShimmerBox(
+                  width: 72,
+                  height: 14,
+                  radius: 7,
+                ).center().expand(),
               ],
             ),
           ),

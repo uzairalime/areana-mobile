@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../consts/app_colors.dart';
@@ -12,8 +12,7 @@ class AccountRequiredCard extends StatelessWidget {
   const AccountRequiredCard({
     super.key,
     this.title = 'Account required',
-    this.message =
-        'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
+    this.message = 'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
     this.primaryLabel = 'Create account',
     this.onPrimary,
     this.onSignIn,
@@ -197,8 +196,7 @@ class GuestGateScreen extends StatelessWidget {
   const GuestGateScreen({
     super.key,
     this.title = 'Account required',
-    this.message =
-        'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
+    this.message = 'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
   });
 
   final String title;

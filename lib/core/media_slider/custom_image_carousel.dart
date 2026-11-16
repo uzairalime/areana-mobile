@@ -1,5 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../extensions/extensions.dart';
 import '../utils/app_haptics.dart';
@@ -34,7 +34,8 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
   final _currentIndex = ValueNotifier<int>(0);
   static const _preloadCount = 3;
 
-  List<String> get _urls => widget.urls.where((u) => u.trim().isNotEmpty).toList();
+  List<String> get _urls =>
+      widget.urls.where((u) => u.trim().isNotEmpty).toList();
 
   int get _total {
     if (_urls.isNotEmpty) return _urls.length;
@@ -137,27 +138,28 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
                 bottom: false,
                 child: Padding(
                   padding: const .only(left: 15, top: 8),
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      color: Colors.black45,
-                      shape: .circle,
-                    ),
-                    child: const Padding(
-                      padding: .all(10),
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ).onTap(() {
-                    AppHaptics.selection();
-                    if (widget.onBack != null) {
-                      widget.onBack!();
-                    } else if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    }
-                  }),
+                  child:
+                      DecoratedBox(
+                        decoration: const BoxDecoration(
+                          color: Colors.black45,
+                          shape: .circle,
+                        ),
+                        child: const Padding(
+                          padding: .all(10),
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ).onTap(() {
+                        AppHaptics.selection();
+                        if (widget.onBack != null) {
+                          widget.onBack!();
+                        } else if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      }),
                 ),
               ),
             ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/extensions/extensions.dart';
@@ -50,10 +50,7 @@ class NotificationListTile extends StatelessWidget {
               crossAxisAlignment: .start,
               children: [
                 DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: .circle,
-                    color: type.iconBg,
-                  ),
+                  decoration: BoxDecoration(shape: .circle, color: type.iconBg),
                   child: SizedBox(
                     width: 44,
                     height: 44,

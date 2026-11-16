@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
@@ -193,19 +193,13 @@ class HomeCubit extends Cubit<HomeState> {
   Future<AreanaVenueDetail?> fetchVenueDetail(String id) async {
     final result = await _repository.fetchVenueDetail(id);
     if (isClosed) return null;
-    return result.when(
-      success: (detail) => detail,
-      failure: (_) => null,
-    );
+    return result.when(success: (detail) => detail, failure: (_) => null);
   }
 
   Future<AreanaCourtDetail?> fetchCourtDetail(String id) async {
     final result = await _repository.fetchCourtDetail(id);
     if (isClosed) return null;
-    return result.when(
-      success: (detail) => detail,
-      failure: (_) => null,
-    );
+    return result.when(success: (detail) => detail, failure: (_) => null);
   }
 
   static List<SportGame> _ensureAllFirst(List<SportGame> sports) {

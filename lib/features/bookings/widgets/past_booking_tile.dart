@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -160,10 +160,7 @@ class PastBookingTile extends StatelessWidget {
                             : AppColors.textBody,
                         onTap: booking.isReviewed ? null : onAddReview,
                       ).expand(),
-                      const VerticalDivider(
-                        width: 1,
-                        color: AppColors.outline,
-                      ),
+                      const VerticalDivider(width: 1, color: AppColors.outline),
                     ],
                     _FooterAction(
                       icon: Icons.replay_rounded,

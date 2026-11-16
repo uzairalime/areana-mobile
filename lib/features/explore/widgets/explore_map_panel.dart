@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/widgets/venue_map_view.dart';
 import '../../home/model/venue.dart';

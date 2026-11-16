@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -24,9 +24,8 @@ class LegalScreen extends StatelessWidget {
                 ProfileMenuTile(
                   icon: Icons.description_outlined,
                   label: type.title,
-                  onTap: () => context.push(
-                    '${AppRoutes.legalDoc}/${type.path}',
-                  ),
+                  onTap: () =>
+                      context.push('${AppRoutes.legalDoc}/${type.path}'),
                 ),
             ],
           ),

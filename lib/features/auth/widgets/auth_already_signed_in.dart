@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -47,17 +47,16 @@ class AuthAlreadySignedIn extends StatelessWidget {
                   fontWeight: .w800,
                 ),
               ),
-              const TextSpan(text: '. Continue to where you were headed, or switch accounts.'),
+              const TextSpan(
+                text:
+                    '. Continue to where you were headed, or switch accounts.',
+              ),
             ],
           ),
           textAlign: .center,
         ),
         AppSizes.spaceLg.h,
-        AppButton(
-          label: 'Continue',
-          showArrow: false,
-          onPressed: onContinue,
-        ),
+        AppButton(label: 'Continue', showArrow: false, onPressed: onContinue),
         AppSizes.spaceMd.h,
         TextButton(
           onPressed: () => cubit.switchAccount(),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -26,10 +26,7 @@ class AuthSignupStep extends StatelessWidget {
       child: ListView(
         padding: const .fromLTRB(24, 12, 24, 24),
         children: [
-          Text(
-            'Create your account',
-            style: context.textTheme.headlineLarge,
-          ),
+          Text('Create your account', style: context.textTheme.headlineLarge),
           8.h,
           Text(
             "Just a few details and you're in.",

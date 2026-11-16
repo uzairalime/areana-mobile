@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -41,11 +41,7 @@ class VenueCardShimmer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: .start,
           children: [
-            const ShimmerBox(
-              width: double.infinity,
-              height: 170,
-              radius: 0,
-            ),
+            const ShimmerBox(width: double.infinity, height: 170, radius: 0),
             Column(
               crossAxisAlignment: .start,
               children: [
@@ -103,8 +99,7 @@ class SportGameGridShimmer extends StatelessWidget {
         AppSizes.spaceSm.h,
         Row(
           children: [
-            for (var i = 0; i < count; i++)
-              const _SportTileShimmer().expand(),
+            for (var i = 0; i < count; i++) const _SportTileShimmer().expand(),
           ],
         ),
       ],

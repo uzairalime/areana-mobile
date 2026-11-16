@@ -67,7 +67,7 @@ class GamesClient {
         data: {
           'bookingId': bookingId,
           'playersNeeded': playersNeeded,
-          if (squadSize != null) 'squadSize': squadSize,
+          'squadSize': ?squadSize,
           if (level != null && level.isNotEmpty) 'level': level,
           if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         },

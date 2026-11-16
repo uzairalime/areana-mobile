@@ -46,7 +46,7 @@ class BookingRepository {
         'startMinutes': startMinutes,
         'slotCount': slotCount,
         if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
-        if (expectedTotal != null) 'expectedTotal': expectedTotal,
+        'expectedTotal': ?expectedTotal,
       });
 
   Future<ApiResult<ShareResult>> shareBooking(String bookingId) =>

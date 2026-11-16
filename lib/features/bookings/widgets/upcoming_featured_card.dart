@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -65,10 +65,7 @@ class UpcomingFeaturedCard extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: .topCenter,
                         end: .bottomCenter,
-                        colors: [
-                          Color(0x140D1B14),
-                          Color(0xCC0D1B14),
-                        ],
+                        colors: [Color(0x140D1B14), Color(0xCC0D1B14)],
                       ),
                     ),
                   ),

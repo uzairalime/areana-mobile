@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,114 +57,115 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
               SingleChildScrollView(
                 child: Column(
                   children: [
-                  SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const .fromLTRB(24, 28, 24, 0),
-                      child: Column(
-                        children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              shape: .circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.18,
+                    SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const .fromLTRB(24, 28, 24, 0),
+                        child: Column(
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: AppColors.accent,
+                                shape: .circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.18,
+                                    ),
+                                    spreadRadius: 10,
                                   ),
-                                  spreadRadius: 10,
+                                ],
+                              ),
+                              child: const SizedBox(
+                                width: 68,
+                                height: 68,
+                                child: Icon(
+                                  Icons.check,
+                                  size: 34,
+                                  color: AppColors.text,
                                 ),
+                              ),
+                            ),
+                            10.h,
+                            Text(
+                              'Slot booked!',
+                              textAlign: .center,
+                              style: context.textTheme.headlineMedium?.copyWith(
+                                color: AppColors.onPrimary,
+                                fontSize: 28,
+                                fontWeight: .w800,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+                            8.h,
+                            Text(
+                              confirmation?.payAtGround == true
+                                  ? 'Show your booking code at the front desk and pay when you arrive.'
+                                  : 'Your payment is confirmed. Show your booking code at the front desk.',
+                              textAlign: .center,
+                              style: context.textTheme.bodyMedium?.copyWith(
+                                color: AppColors.onPrimary.withValues(
+                                  alpha: 0.82,
+                                ),
+                                fontSize: 14,
+                                height: 1.45,
+                              ),
+                            ).paddingSymmetric(horizontal: 12),
+                          ],
+                        ),
+                      ),
+                    ),
+                    24.h,
+                    if (confirmation != null)
+                      _TicketCard(state: state)
+                          .paddingSymmetric(horizontal: 20),
+                    if (confirmation != null &&
+                        confirmation.shareCode.isNotEmpty) ...[
+                      16.h,
+                      Padding(
+                        padding: const .symmetric(horizontal: 20),
+                        child: ConfirmedShareCard(
+                          shareCode: confirmation.shareCode,
+                        ),
+                      ),
+                    ],
+                    24.h,
+                    SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const .fromLTRB(20, 20, 20, 24),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                _GhostAction(
+                                  label: 'Add to calendar',
+                                  icon: Icons.event_outlined,
+                                  onPressed: () => AppHaptics.selection(),
+                                ).expand(),
+                                10.w,
+                                _GhostAction(
+                                  label: 'Get directions',
+                                  icon: Icons.directions_outlined,
+                                  onPressed: () => AppHaptics.selection(),
+                                ).expand(),
                               ],
                             ),
-                            child: const SizedBox(
-                              width: 68,
-                              height: 68,
-                              child: Icon(
-                                Icons.check,
-                                size: 34,
-                                color: AppColors.text,
-                              ),
+                            10.h,
+                            AppButton(
+                              label: 'Back to home',
+                              showArrow: false,
+                              backgroundColor: AppColors.accent,
+                              foregroundColor: AppColors.onAccent,
+                              onPressed: () {
+                                AppHaptics.medium();
+                                context.go(AppRoutes.home);
+                              },
                             ),
-                          ),
-                          10.h,
-                          Text(
-                            'Slot booked!',
-                            textAlign: .center,
-                            style: context.textTheme.headlineMedium?.copyWith(
-                              color: AppColors.onPrimary,
-                              fontSize: 28,
-                              fontWeight: .w800,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                          8.h,
-                          Text(
-                            confirmation?.payAtGround == true
-                                ? 'Show your booking code at the front desk and pay when you arrive.'
-                                : 'Your payment is confirmed. Show your booking code at the front desk.',
-                            textAlign: .center,
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.onPrimary.withValues(
-                                alpha: 0.82,
-                              ),
-                              fontSize: 14,
-                              height: 1.45,
-                            ),
-                          ).paddingSymmetric(horizontal: 12),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  24.h,
-                  if (confirmation != null)
-                    _TicketCard(state: state).paddingSymmetric(horizontal: 20),
-                  if (confirmation != null &&
-                      confirmation.shareCode.isNotEmpty) ...[
-                    16.h,
-                    Padding(
-                      padding: const .symmetric(horizontal: 20),
-                      child: ConfirmedShareCard(
-                        shareCode: confirmation.shareCode,
-                      ),
-                    ),
-                  ],
-                  24.h,
-                  SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const .fromLTRB(20, 20, 20, 24),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              _GhostAction(
-                                label: 'Add to calendar',
-                                icon: Icons.event_outlined,
-                                onPressed: () => AppHaptics.selection(),
-                              ).expand(),
-                              10.w,
-                              _GhostAction(
-                                label: 'Get directions',
-                                icon: Icons.directions_outlined,
-                                onPressed: () => AppHaptics.selection(),
-                              ).expand(),
-                            ],
-                          ),
-                          10.h,
-                          AppButton(
-                            label: 'Back to home',
-                            showArrow: false,
-                            backgroundColor: AppColors.accent,
-                            foregroundColor: AppColors.onAccent,
-                            onPressed: () {
-                              AppHaptics.medium();
-                              context.go(AppRoutes.home);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                   ],
                 ),
               ),

@@ -35,8 +35,8 @@ class HomeClient {
       if (sort != null && sort.isNotEmpty) 'sort': sort,
       if (lat != null && lng != null) 'lat': lat,
       if (lat != null && lng != null) 'lng': lng,
-      if (page != null) 'page': page,
-      if (limit != null) 'limit': limit,
+      'page': ?page,
+      'limit': ?limit,
     };
   }
 
@@ -214,7 +214,7 @@ class HomeClient {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.venueReviews(venueId),
         queryParameters: {
-          if (cursor != null) 'cursor': cursor,
+          'cursor': ?cursor,
           'limit': limit,
         },
       );
@@ -236,7 +236,7 @@ class HomeClient {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.courtReviews(courtId),
         queryParameters: {
-          if (cursor != null) 'cursor': cursor,
+          'cursor': ?cursor,
           'limit': limit,
         },
       );
@@ -308,8 +308,8 @@ class HomeClient {
         ApiEndpoints.venueEvents(venueId),
         data: {
           'type': type,
-          if (courtId != null) 'courtId': courtId,
-          if (visitorId != null) 'visitorId': visitorId,
+          'courtId': ?courtId,
+          'visitorId': ?visitorId,
         },
       );
     } catch (_) {

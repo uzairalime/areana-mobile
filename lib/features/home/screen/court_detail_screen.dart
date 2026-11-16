@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -178,14 +178,15 @@ class CourtDetailScreen extends StatelessWidget {
                                         color: AppColors.outline,
                                       ),
                                     ),
-                                    child: Text(
-                                      amenity,
-                                      style: context.textTheme.labelMedium
-                                          ?.copyWith(fontWeight: .w600),
-                                    ).paddingSymmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
+                                    child:
+                                        Text(
+                                          amenity,
+                                          style: context.textTheme.labelMedium
+                                              ?.copyWith(fontWeight: .w600),
+                                        ).paddingSymmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
                                   ),
                               ],
                             ),

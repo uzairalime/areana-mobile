@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -85,11 +85,7 @@ class PickSlotShimmer extends StatelessWidget {
                             ),
                             10.h,
                             // Location
-                            const ShimmerBox(
-                              width: 170,
-                              height: 14,
-                              radius: 7,
-                            ),
+                            const ShimmerBox(width: 170, height: 14, radius: 7),
                             14.h,
                             // Amenities
                             Row(
@@ -253,11 +249,7 @@ class _HeaderCircle extends StatelessWidget {
 }
 
 class _TileBone extends StatelessWidget {
-  const _TileBone({
-    this.width,
-    this.height,
-    this.radius = AppSizes.radiusMd,
-  });
+  const _TileBone({this.width, this.height, this.radius = AppSizes.radiusMd});
 
   final double? width;
   final double? height;

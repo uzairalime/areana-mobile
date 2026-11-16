@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,13 +33,17 @@ class AccountControlsScreen extends StatelessWidget {
                   ProfileMenuTile(
                     icon: Icons.mail_outline,
                     label: 'Email',
-                    trailing: user?.emailVerified == true ? 'Verified' : 'Pending',
+                    trailing: user?.emailVerified == true
+                        ? 'Verified'
+                        : 'Pending',
                     onTap: () {},
                   ),
                   ProfileMenuTile(
                     icon: Icons.phone_outlined,
                     label: 'Phone number',
-                    trailing: user?.phoneVerified == true ? 'Verified' : 'Pending',
+                    trailing: user?.phoneVerified == true
+                        ? 'Verified'
+                        : 'Pending',
                     onTap: () {},
                   ),
                   ProfileMenuTile(

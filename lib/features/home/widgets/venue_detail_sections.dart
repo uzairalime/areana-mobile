@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -63,8 +63,7 @@ class _CourtRow extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
       child: InkWell(
-        onTap: () =>
-            context.push('${AppRoutes.courtDetail}/${court.id}'),
+        onTap: () => context.push('${AppRoutes.courtDetail}/${court.id}'),
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -161,7 +160,11 @@ class VenueReviewsSection extends StatelessWidget {
           for (final review in reviews) ...[
             Row(
               children: [
-                const Icon(Icons.star_rounded, size: 16, color: AppColors.accent),
+                const Icon(
+                  Icons.star_rounded,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
                 4.w,
                 Text(
                   '${review.rating}/5',
@@ -182,8 +185,7 @@ class VenueReviewsSection extends StatelessWidget {
               4.h,
               Text(review.comment!, style: context.textTheme.bodyMedium),
             ],
-            if (review.ownerReply != null &&
-                review.ownerReply!.isNotEmpty) ...[
+            if (review.ownerReply != null && review.ownerReply!.isNotEmpty) ...[
               4.h,
               Text(
                 'Owner: ${review.ownerReply!}',

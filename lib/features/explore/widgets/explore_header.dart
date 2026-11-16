@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -73,8 +73,9 @@ class ExploreHeader extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: .ellipsis,
                                   style: context.textTheme.labelLarge?.copyWith(
-                                    fontWeight:
-                                        search.hasLocation ? .w700 : .w500,
+                                    fontWeight: search.hasLocation
+                                        ? .w700
+                                        : .w500,
                                     fontSize: 13,
                                     color: search.hasLocation
                                         ? AppColors.text

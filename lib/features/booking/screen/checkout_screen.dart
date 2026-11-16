@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -154,8 +154,7 @@ class CheckoutScreen extends StatelessWidget {
       await showBookingAuthSheet(
         context,
         title: 'Log in to confirm your booking',
-        body:
-            'Create a free account or log in to lock this slot. Nothing is paid until you arrive.',
+        body: 'Create a free account or log in to lock this slot. Nothing is paid until you arrive.',
         dismissLabel: 'Back to booking',
         summaryTitle:
             '${state.selectedCourt?.name ?? 'Court'} · ${state.venue?.sport ?? ''}',

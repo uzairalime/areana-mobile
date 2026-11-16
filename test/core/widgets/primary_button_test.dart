@@ -7,7 +7,7 @@ import 'package:arana360/core/widgets/primary_button.dart';
 import 'package:arana360/core/widgets/primary_outline_button.dart';
 import 'package:arana360/features/auth/cubit/splash_cubit.dart';
 import 'package:arana360/features/auth/screen/splash_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';

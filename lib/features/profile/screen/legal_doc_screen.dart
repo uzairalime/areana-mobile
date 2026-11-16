@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/extensions/extensions.dart';
@@ -31,9 +31,7 @@ class LegalDocScreen extends StatelessWidget {
           for (final section in doc.sections) ...[
             Text(
               section.heading,
-              style: context.textTheme.titleSmall?.copyWith(
-                fontWeight: .w800,
-              ),
+              style: context.textTheme.titleSmall?.copyWith(fontWeight: .w800),
             ),
             8.h,
             Text(

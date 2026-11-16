@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -53,8 +53,7 @@ class PickSlotScreen extends StatelessWidget {
                                 onSave: () => showBookingAuthSheet(
                                   context,
                                   title: 'Save your favourite venues',
-                                  body:
-                                      'Log in to save venues and get alerts when your usual courts open up.',
+                                  body: 'Log in to save venues and get alerts when your usual courts open up.',
                                   onLogin: () => context.push(
                                     '${AppRoutes.login}?next=home',
                                   ),

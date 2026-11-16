@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 
@@ -17,13 +17,13 @@ class SportGame extends Equatable {
     final preset = byId(id);
     return SportGame(
       id: id,
-      label: json['label'] as String? ??
+      label:
+          json['label'] as String? ??
           json['name'] as String? ??
           preset?.label ??
           '',
-      icon: _iconFromKey(json['icon'] as String?) ??
-          preset?.icon ??
-          Icons.sports,
+      icon:
+          _iconFromKey(json['icon'] as String?) ?? preset?.icon ?? Icons.sports,
       background:
           _colorFromHex(json['background'] as String?) ??
           preset?.background ??

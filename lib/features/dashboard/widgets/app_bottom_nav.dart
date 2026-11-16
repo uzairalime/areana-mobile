@@ -1,6 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -28,18 +28,12 @@ class AppBottomNav extends StatelessWidget {
   static const accountIndex = 4;
 
   static const _items = <_NavItem>[
-    _NavItem(
-      icon: Icons.stadium_outlined,
-      selectedIcon: Icons.stadium_rounded,
-    ),
+    _NavItem(icon: Icons.stadium_outlined, selectedIcon: Icons.stadium_rounded),
     _NavItem(
       icon: Icons.event_available_outlined,
       selectedIcon: Icons.event_available_rounded,
     ),
-    _NavItem(
-      icon: Icons.explore_outlined,
-      selectedIcon: Icons.explore_rounded,
-    ),
+    _NavItem(icon: Icons.explore_outlined, selectedIcon: Icons.explore_rounded),
     _NavItem(
       icon: Icons.sports_soccer_outlined,
       selectedIcon: Icons.sports_soccer_rounded,
@@ -56,11 +50,7 @@ class AppBottomNav extends StatelessWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 10, 20, bottom == 0 ? 12 : bottom),
-      child: _NavTrack(
-        currentIndex: currentIndex,
-        items: _items,
-        onTap: onTap,
-      ),
+      child: _NavTrack(currentIndex: currentIndex, items: _items, onTap: onTap),
     );
   }
 }
@@ -280,9 +270,7 @@ class _NavIcon extends StatelessWidget {
             backgroundColor: selected
                 ? AppColors.accent
                 : AppColors.primarySoft,
-            foregroundColor: selected
-                ? AppColors.onAccent
-                : AppColors.primary,
+            foregroundColor: selected ? AppColors.onAccent : AppColors.primary,
           ).center();
         },
       );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,11 +28,7 @@ class _PaymentPreferenceScreenState extends State<PaymentPreferenceScreen> {
       title: 'Pay at ground',
       sub: 'Pay when you arrive — no advance needed',
     ),
-    (
-      id: 'online',
-      title: 'Pay online',
-      sub: 'Card or wallet before you play',
-    ),
+    (id: 'online', title: 'Pay online', sub: 'Card or wallet before you play'),
   ];
 
   @override

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,9 +34,7 @@ class GamesScreen extends StatelessWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          ok ? 'Your game is posted' : 'Could not post your game',
-        ),
+        content: Text(ok ? 'Your game is posted' : 'Could not post your game'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -87,8 +85,7 @@ class GamesScreen extends StatelessWidget {
                 AppSizes.pagePadding,
                 110,
               ),
-              itemCount:
-                  state.games.length + (state.hasMore ? 1 : 0),
+              itemCount: state.games.length + (state.hasMore ? 1 : 0),
               separatorBuilder: (_, _) => 12.h,
               itemBuilder: (context, index) {
                 if (index >= state.games.length) {
@@ -105,13 +102,9 @@ class GamesScreen extends StatelessWidget {
                 return GamePostCard(
                   game: game,
                   managing: state.isManaging(game.id),
-                  onTap: () => context.push(
-                    '/games/detail/${game.id}',
-                    extra: game,
-                  ),
-                  onJoin: game.canJoin
-                      ? () => cubit.joinGame(game.id)
-                      : null,
+                  onTap: () =>
+                      context.push('/games/detail/${game.id}', extra: game),
+                  onJoin: game.canJoin ? () => cubit.joinGame(game.id) : null,
                   onLeave: game.canLeave
                       ? () => cubit.leaveGame(game.id)
                       : null,
@@ -143,9 +136,7 @@ class _EmptyView extends StatelessWidget {
         Text(
           'No open games yet',
           textAlign: .center,
-          style: context.textTheme.titleMedium?.copyWith(
-            fontWeight: .w800,
-          ),
+          style: context.textTheme.titleMedium?.copyWith(fontWeight: .w800),
         ),
         8.h,
         Text(

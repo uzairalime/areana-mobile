@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -37,8 +37,7 @@ Future<CreateGameResult?> showCreateGameSheet(
     backgroundColor: Colors.transparent,
     barrierColor: AppColors.scrim,
     isScrollControlled: true,
-    builder: (sheetContext) =>
-        _CreateGameSheetBody(bookings: postableBookings),
+    builder: (sheetContext) => _CreateGameSheetBody(bookings: postableBookings),
   );
 }
 
@@ -52,8 +51,9 @@ class _CreateGameSheetBody extends StatefulWidget {
 }
 
 class _CreateGameSheetBodyState extends State<_CreateGameSheetBody> {
-  late String _bookingId =
-      widget.bookings.isEmpty ? '' : widget.bookings.first.id;
+  late String _bookingId = widget.bookings.isEmpty
+      ? ''
+      : widget.bookings.first.id;
   final _playersNeededController = TextEditingController(text: '4');
   final _squadController = TextEditingController(text: '6');
   final _levelController = TextEditingController();
@@ -128,7 +128,7 @@ class _CreateGameSheetBodyState extends State<_CreateGameSheetBody> {
                 )
               else
                 DropdownButtonFormField<String>(
-                  value: _bookingId,
+                  initialValue: _bookingId,
                   items: [
                     for (final booking in widget.bookings)
                       DropdownMenuItem(
@@ -141,9 +141,7 @@ class _CreateGameSheetBodyState extends State<_CreateGameSheetBody> {
                   onChanged: (value) {
                     if (value != null) setState(() => _bookingId = value);
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Booking',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Booking'),
                 ),
               16.h,
               AppTextField(

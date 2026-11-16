@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -252,19 +252,19 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
                                           AppSizes.radiusPill,
                                         ),
                                       ),
-                                      child: Text(
-                                        user.memberSinceLabel,
-                                        style: context
-                                            .textTheme.labelSmall
-                                            ?.copyWith(
-                                          color: AppColors.accent,
-                                          fontWeight: .w700,
-                                          fontSize: 11,
-                                        ),
-                                      ).paddingSymmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
-                                      ),
+                                      child:
+                                          Text(
+                                            user.memberSinceLabel,
+                                            style: context.textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: AppColors.accent,
+                                                  fontWeight: .w700,
+                                                  fontSize: 11,
+                                                ),
+                                          ).paddingSymmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -345,34 +345,29 @@ class _StickyAvatar extends StatelessWidget {
       tag: profileAvatarHeroTag(userId),
       createRectTween: (begin, end) =>
           MaterialRectArcTween(begin: begin, end: end),
-      flightShuttleBuilder: (
-        flightContext,
-        animation,
-        direction,
-        fromContext,
-        toContext,
-      ) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (context, _) {
-            final curved = Curves.easeInOutCubic.transform(animation.value);
-            final s = direction == .push
-                ? lerpDouble(size, 96, curved)!
-                : lerpDouble(96, size, curved)!;
-            return Center(
-              child: Material(
-                type: .transparency,
-                child: _AvatarShell(
-                  name: name,
-                  url: url,
-                  size: s,
-                  ringWidth: ringWidth,
-                ),
-              ),
+      flightShuttleBuilder:
+          (flightContext, animation, direction, fromContext, toContext) {
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, _) {
+                final curved = Curves.easeInOutCubic.transform(animation.value);
+                final s = direction == .push
+                    ? lerpDouble(size, 96, curved)!
+                    : lerpDouble(96, size, curved)!;
+                return Center(
+                  child: Material(
+                    type: .transparency,
+                    child: _AvatarShell(
+                      name: name,
+                      url: url,
+                      size: s,
+                      ringWidth: ringWidth,
+                    ),
+                  ),
+                );
+              },
             );
           },
-        );
-      },
       child: Material(
         type: .transparency,
         child: _AvatarShell(
@@ -484,9 +479,7 @@ class _HeroButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           side: filled
               ? BorderSide.none
-              : BorderSide(
-                  color: AppColors.onPrimary.withValues(alpha: 0.55),
-                ),
+              : BorderSide(color: AppColors.onPrimary.withValues(alpha: 0.55)),
         ),
         child: InkWell(
           onTap: () {

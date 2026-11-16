@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -102,11 +102,7 @@ class _ReviewCardShimmer extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const ShimmerBox(
-                    width: 160,
-                    height: 15,
-                    radius: 7,
-                  ).expand(),
+                  const ShimmerBox(width: 160, height: 15, radius: 7).expand(),
                   10.w,
                   const ShimmerBox(width: 78, height: 12, radius: 6),
                 ],

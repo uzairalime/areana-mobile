@@ -19,7 +19,7 @@ class NotificationsClient {
         ApiEndpoints.notifications,
         queryParameters: {
           'limit': 30,
-          if (cursor != null) 'cursor': cursor,
+          'cursor': ?cursor,
         },
       );
       final page = parseCursorPage(

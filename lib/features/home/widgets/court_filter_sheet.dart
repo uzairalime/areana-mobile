@@ -1,6 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -328,10 +328,7 @@ class _SportCard extends StatelessWidget {
 }
 
 class _LocationsSection extends StatelessWidget {
-  const _LocationsSection({
-    required this.selectedId,
-    required this.onSelected,
-  });
+  const _LocationsSection({required this.selectedId, required this.onSelected});
 
   final String? selectedId;
   final ValueChanged<String> onSelected;
@@ -578,10 +575,7 @@ class _FilterChip extends StatelessWidget {
           child: Row(
             mainAxisSize: .min,
             children: [
-              if (icon != null) ...[
-                Icon(icon, size: 14, color: fg),
-                6.w,
-              ],
+              if (icon != null) ...[Icon(icon, size: 14, color: fg), 6.w],
               Text(
                 label,
                 maxLines: 1,

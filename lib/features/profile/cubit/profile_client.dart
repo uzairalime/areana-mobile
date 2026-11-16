@@ -67,7 +67,7 @@ class ProfileClient {
           ApiEndpoints.favorites,
           queryParameters: {
             'limit': 50,
-            if (cursor != null) 'cursor': cursor,
+            'cursor': ?cursor,
           },
         );
         final page = parseCursorPage<Map<String, dynamic>>(

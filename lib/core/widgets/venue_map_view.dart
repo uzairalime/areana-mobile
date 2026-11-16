@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -102,12 +102,14 @@ class _VenueMapViewState extends State<VenueMapView> {
     if (venues.length <= 1) return 14;
     final lats = venues.map((v) => v.latitude);
     final lngs = venues.map((v) => v.longitude);
-    final latSpan = (lats.reduce((a, b) => a > b ? a : b) -
-            lats.reduce((a, b) => a < b ? a : b))
-        .abs();
-    final lngSpan = (lngs.reduce((a, b) => a > b ? a : b) -
-            lngs.reduce((a, b) => a < b ? a : b))
-        .abs();
+    final latSpan =
+        (lats.reduce((a, b) => a > b ? a : b) -
+                lats.reduce((a, b) => a < b ? a : b))
+            .abs();
+    final lngSpan =
+        (lngs.reduce((a, b) => a > b ? a : b) -
+                lngs.reduce((a, b) => a < b ? a : b))
+            .abs();
     if (latSpan > 2 || lngSpan > 2) return 5.8;
     if (latSpan > 0.3 || lngSpan > 0.3) return 11;
     return 12.5;
@@ -117,7 +119,8 @@ class _VenueMapViewState extends State<VenueMapView> {
 
   List<Venue> _viewportVenues() {
     final bounds = _visibleBounds;
-    if (bounds == null || _mapped.length <= VenueMapClustering.clusterThreshold) {
+    if (bounds == null ||
+        _mapped.length <= VenueMapClustering.clusterThreshold) {
       return _mapped;
     }
     // Pad bounds slightly so edge markers don't pop in/out.
@@ -180,8 +183,7 @@ class _VenueMapViewState extends State<VenueMapView> {
       final cam = event.camera;
       final nextZoom = cam.zoom;
       final nextBounds = cam.visibleBounds;
-      if ((nextZoom - _zoom).abs() < 0.01 &&
-          _visibleBounds == nextBounds) {
+      if ((nextZoom - _zoom).abs() < 0.01 && _visibleBounds == nextBounds) {
         return;
       }
       setState(() {
@@ -235,16 +237,12 @@ class _VenueMapViewState extends State<VenueMapView> {
             cluster.isSingle
                 ? 'v-${cluster.first.id}'
                 : 'c-${cluster.center.latitude.toStringAsFixed(4)}-'
-                    '${cluster.center.longitude.toStringAsFixed(4)}-'
-                    '${cluster.count}',
+                      '${cluster.center.longitude.toStringAsFixed(4)}-'
+                      '${cluster.count}',
           ),
           point: cluster.center,
-          width: cluster.isSingle
-              ? (widget.showPriceMarkers ? 112 : 36)
-              : 44,
-          height: cluster.isSingle
-              ? (widget.showPriceMarkers ? 44 : 36)
-              : 44,
+          width: cluster.isSingle ? (widget.showPriceMarkers ? 112 : 36) : 44,
+          height: cluster.isSingle ? (widget.showPriceMarkers ? 44 : 36) : 44,
           alignment: .topCenter,
           child: cluster.isSingle
               ? (widget.showPriceMarkers

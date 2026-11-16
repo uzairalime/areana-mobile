@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../home/model/venue.dart';
@@ -96,8 +96,9 @@ class UserBooking extends Equatable {
     final court = json['court'];
     final courtMap = court is Map ? Map<String, dynamic>.from(court) : const {};
     final gamePost = json['gamePost'];
-    final gameMap =
-        gamePost is Map ? Map<String, dynamic>.from(gamePost) : const {};
+    final gameMap = gamePost is Map
+        ? Map<String, dynamic>.from(gamePost)
+        : const {};
     final images = venueMap['images'];
     final imageList = images is List
         ? images.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
@@ -140,8 +141,7 @@ class UserBooking extends Equatable {
       status: UserBookingStatusX.fromJson(json['status'] as String?),
       heroColor: AppColors.primary,
       imageUrl: imageList.isEmpty ? '' : imageList.first,
-      reviewStatus:
-          hasReviewed ? BookingReviewStatus.recommended : .none,
+      reviewStatus: hasReviewed ? BookingReviewStatus.recommended : .none,
       occurredAt: occurred,
       courtId: json['courtId']?.toString() ?? '',
       shareCode: json['shareCode'] as String?,

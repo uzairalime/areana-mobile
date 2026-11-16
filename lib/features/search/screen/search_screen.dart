@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -160,10 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   cubit.onQueryChanged('');
                                   _focusNode.requestFocus();
                                 },
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  size: 18,
-                                ),
+                                icon: const Icon(Icons.close_rounded, size: 18),
                               );
                             },
                           ),

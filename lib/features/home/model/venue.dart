@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 
@@ -45,7 +45,10 @@ class Venue extends Equatable {
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
       imageUrls: imagesRaw is List
-          ? imagesRaw.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+          ? imagesRaw
+                .map((e) => e.toString())
+                .where((e) => e.isNotEmpty)
+                .toList()
           : const [],
     );
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,9 +57,7 @@ class NotificationsScreen extends StatelessWidget {
                   12.h,
                   BuildLabels<NotificationFilterTab>(
                     expanded: true,
-                    padding: const .symmetric(
-                      horizontal: AppSizes.pagePadding,
-                    ),
+                    padding: const .symmetric(horizontal: AppSizes.pagePadding),
                     labels: NotificationFilterTab.values,
                     label: state.tab,
                     textOf: (value) => value.label,
@@ -107,12 +105,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const .fromLTRB(
-        AppSizes.pagePadding,
-        8,
-        8,
-        0,
-      ),
+      padding: const .fromLTRB(AppSizes.pagePadding, 8, 8, 0),
       child: Row(
         crossAxisAlignment: .start,
         children: [
@@ -215,7 +208,10 @@ class _NotificationsBody extends StatelessWidget {
                 final entry = entries[index];
                 return switch (entry) {
                   NotificationGroupHeader(:final title) => Padding(
-                    padding: EdgeInsets.only(top: index == 0 ? 0 : 14, bottom: 8),
+                    padding: EdgeInsets.only(
+                      top: index == 0 ? 0 : 14,
+                      bottom: 8,
+                    ),
                     child: Text(
                       title,
                       style: context.textTheme.labelLarge?.copyWith(

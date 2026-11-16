@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,8 +30,7 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GuestGate(
       title: 'Account required',
-      message:
-          'Log in to open your profile. Save your details once and book faster every time you play.',
+      message: 'Log in to open your profile. Save your details once and book faster every time you play.',
       child: BlocBuilder<SessionCubit, SessionState>(
         buildWhen: (p, c) => p.user?.id != c.user?.id,
         builder: (context, session) {

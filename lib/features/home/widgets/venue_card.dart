@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -251,10 +251,7 @@ class _VenueHero extends StatelessWidget {
 }
 
 class _FavoriteButton extends StatelessWidget {
-  const _FavoriteButton({
-    required this.isFavorite,
-    required this.onTap,
-  });
+  const _FavoriteButton({required this.isFavorite, required this.onTap});
 
   final bool isFavorite;
   final VoidCallback onTap;
@@ -283,7 +280,6 @@ class _FavoriteButton extends StatelessWidget {
     );
   }
 }
-
 
 class _PillBadge extends StatelessWidget {
   const _PillBadge({
@@ -322,4 +318,3 @@ class _PillBadge extends StatelessWidget {
     );
   }
 }
-

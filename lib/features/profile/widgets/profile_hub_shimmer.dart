@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/consts/app_colors.dart';
@@ -212,11 +212,7 @@ class _MenuCardShimmer extends StatelessWidget {
                 children: [
                   const ShimmerBox(width: 22, height: 22, radius: 6),
                   12.w,
-                  const ShimmerBox(
-                    width: 140,
-                    height: 14,
-                    radius: 7,
-                  ).expand(),
+                  const ShimmerBox(width: 140, height: 14, radius: 7).expand(),
                   const ShimmerBox(width: 16, height: 16, radius: 4),
                 ],
               ),
