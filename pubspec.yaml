@@ -55,6 +55,7 @@ dependencies:
   in_app_review: ^2.0.12
   upgrader: ^13.7.0
   url_launcher: ^6.3.3
+  material_ui: ^1.11.0
 
 dev_dependencies:
   flutter_test:
