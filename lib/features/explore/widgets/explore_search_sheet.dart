@@ -89,9 +89,8 @@ class _ExploreSearchSheetState extends State<ExploreSearchSheet> {
             height: height * 0.86,
             child: Column(
               children: [
-                Center(
-                  child: AppSheetHandle(width: 44, height: 5),
-                ).paddingOnly(top: 12, bottom: 8),
+                Center(child: AppSheetHandle(width: 44, height: 5))
+                    .paddingOnly(top: 12, bottom: 8),
                 Expanded(
                   child: ListView(
                     padding: const .fromLTRB(16, 4, 16, 12),

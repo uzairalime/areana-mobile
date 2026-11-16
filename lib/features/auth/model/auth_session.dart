@@ -15,7 +15,10 @@ class AuthSession extends Equatable {
         json['refresh_token'] as String? ?? json['refreshToken'] as String?;
     return AuthSession(
       accessToken:
-          json['access_token'] as String? ?? json['token'] as String? ?? '',
+          json['accessToken'] as String? ??
+          json['access_token'] as String? ??
+          json['token'] as String? ??
+          '',
       refreshToken: refresh != null && refresh.isNotEmpty ? refresh : null,
       user: userJson is Map
           ? UserModel.fromJson(Map<String, dynamic>.from(userJson))

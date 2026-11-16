@@ -84,23 +84,23 @@ class BookingState extends Equatable {
     final start = selectedStartMinutes;
     if (start == null) return const [];
     final result = <AvailabilitySlot>[];
+    final slotMinutes = selectedCourt?.slotMinutes ?? 60;
+    final byStart = <int, AvailabilitySlot>{};
+    for (final slot in slots) {
+      byStart.putIfAbsent(slot.startMinutes, () => slot);
+    }
     for (var i = 0; i < slotCount; i++) {
-      AvailabilitySlot? found;
-      for (final slot in slots) {
-        if (slot.startMinutes == start + i * (selectedCourt?.slotMinutes ?? 60)) {
-          found = slot;
-          break;
-        }
-      }
+      final found = byStart[start + i * slotMinutes];
       if (found == null) return const [];
       result.add(found);
     }
     return result;
   }
 
-  bool get selectedSlotsAvailable =>
-      selectedSlots.length == slotCount &&
-      selectedSlots.every((s) => s.available);
+  bool get selectedSlotsAvailable {
+    final selected = selectedSlots;
+    return selected.length == slotCount && selected.every((slot) => slot.available);
+  }
 
   bool get canContinue =>
       selectedCourt != null &&
@@ -113,7 +113,10 @@ class BookingState extends Equatable {
 
   int get discount => promo?.discount ?? 0;
 
-  int get total => grossTotal - discount < 0 ? 0 : grossTotal - discount;
+  int get total {
+    final amount = grossTotal - discount;
+    return amount < 0 ? 0 : amount;
+  }
 
   String get summaryLine {
     final date = selectedDate ?? '';

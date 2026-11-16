@@ -12,20 +12,28 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   final NotificationsRepository _repository;
   var _requestId = 0;
+  bool _isRefreshing = false;
 
-  Future<void> load() async {
+  Future<void> load() => _loadFirstPage(showLoading: true);
+
+  Future<void> refresh() => _loadFirstPage(showLoading: false);
+
+  Future<void> _loadFirstPage({required bool showLoading}) async {
     final id = ++_requestId;
+    _isRefreshing = true;
     emit(
       state.copyWith(
-        status: AppLoading.loading,
+        status: showLoading ? AppLoading.loading : state.status,
         errorMessage: '',
-        items: const [],
-        clearCursor: true,
-        hasMore: true,
+        items: showLoading ? const [] : state.items,
+        clearCursor: showLoading,
+        hasMore: showLoading ? true : state.hasMore,
+        isLoadingMore: false,
       ),
     );
     final result = await _repository.fetchNotifications();
     if (isClosed || id != _requestId) return;
+    _isRefreshing = false;
     result.when(
       success: (page) {
         emit(
@@ -33,6 +41,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
             status: AppLoading.success,
             items: page.items,
             nextCursor: page.nextCursor,
+            clearCursor: page.nextCursor == null,
             hasMore: page.hasMore,
             errorMessage: '',
           ),
@@ -41,7 +50,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       failure: (error) {
         emit(
           state.copyWith(
-            status: AppLoading.error,
+            status: showLoading ? AppLoading.error : state.status,
             errorMessage: error.message,
           ),
         );
@@ -49,41 +58,21 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
   }
 
-  Future<void> refresh() async {
-    final id = ++_requestId;
-    final result = await _repository.fetchNotifications();
-    if (isClosed || id != _requestId) return;
-    result.when(
-      success: (page) {
-        emit(
-          state.copyWith(
-            status: AppLoading.success,
-            items: page.items,
-            nextCursor: page.nextCursor,
-            hasMore: page.hasMore,
-            errorMessage: '',
-          ),
-        );
-      },
-      failure: (error) {
-        emit(state.copyWith(errorMessage: error.message));
-      },
-    );
-  }
-
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
+    final requestId = _requestId;
     emit(state.copyWith(isLoadingMore: true));
     final result = await _repository.fetchNotifications(
       cursor: state.nextCursor,
     );
-    if (isClosed) return;
+    if (isClosed || requestId != _requestId) return;
     result.when(
       success: (page) {
         emit(
           state.copyWith(
             items: [...state.items, ...page.items],
             nextCursor: page.nextCursor,
+            clearCursor: page.nextCursor == null,
             hasMore: page.hasMore,
             isLoadingMore: false,
           ),

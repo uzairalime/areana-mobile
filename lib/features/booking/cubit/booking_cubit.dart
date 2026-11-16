@@ -104,7 +104,9 @@ class BookingCubit extends Cubit<BookingState> {
 
   Future<void> selectCourt(String id) async {
     if (state.confirmStatus.isLoading || id == state.selectedCourtId ||
-        !state.courts.any((court) => court.id == id)) return;
+        !state.courts.any((court) => court.id == id)) {
+      return;
+    }
     AppHaptics.selection();
     emit(state.copyWith(selectedCourtId: id, clearSlot: true));
     await _loadAvailability();

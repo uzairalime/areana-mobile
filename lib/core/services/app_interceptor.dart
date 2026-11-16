@@ -32,7 +32,7 @@ import 'token_store.dart';
 ///   and public auth endpoints are never refreshed (a 401 there means
 ///   a wrong code/password, not an expired access token).
 class AppInterceptor extends Interceptor {
-  AppInterceptor({Dio? refreshDio}) : _refreshDio = refreshDio;
+  AppInterceptor({this._refreshDio});
 
   final Dio? _refreshDio;
 

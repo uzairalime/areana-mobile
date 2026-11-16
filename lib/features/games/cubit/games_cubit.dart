@@ -11,16 +11,23 @@ class GamesCubit extends Cubit<GamesState> {
 
   final GamesRepository _repository;
   var _requestId = 0;
+  bool _isRefreshing = false;
 
-  Future<void> load() async {
+  Future<void> load() => _loadFirstPage(showLoading: true);
+
+  Future<void> refresh() => _loadFirstPage(showLoading: false);
+
+  Future<void> _loadFirstPage({required bool showLoading}) async {
     final id = ++_requestId;
+    _isRefreshing = true;
     emit(
       state.copyWith(
-        status: AppLoading.loading,
+        status: showLoading ? AppLoading.loading : state.status,
         errorMessage: '',
-        games: const [],
-        page: 1,
-        hasMore: true,
+        games: showLoading ? const [] : state.games,
+        page: showLoading ? 1 : state.page,
+        hasMore: showLoading ? true : state.hasMore,
+        isLoadingMore: false,
       ),
     );
     final result = await _repository.fetchGames(
@@ -29,6 +36,7 @@ class GamesCubit extends Cubit<GamesState> {
       date: state.date,
     );
     if (isClosed || id != _requestId) return;
+    _isRefreshing = false;
     result.when(
       success: (page) {
         emit(
@@ -44,7 +52,7 @@ class GamesCubit extends Cubit<GamesState> {
       failure: (error) {
         emit(
           state.copyWith(
-            status: AppLoading.error,
+            status: showLoading ? AppLoading.error : state.status,
             errorMessage: error.message,
           ),
         );
@@ -52,34 +60,9 @@ class GamesCubit extends Cubit<GamesState> {
     );
   }
 
-  Future<void> refresh() async {
-    final id = ++_requestId;
-    final result = await _repository.fetchGames(
-      sport: state.sport,
-      city: state.city,
-      date: state.date,
-    );
-    if (isClosed || id != _requestId) return;
-    result.when(
-      success: (page) {
-        emit(
-          state.copyWith(
-            status: AppLoading.success,
-            games: page.items,
-            page: page.page,
-            hasMore: page.hasMore,
-            errorMessage: '',
-          ),
-        );
-      },
-      failure: (error) {
-        emit(state.copyWith(errorMessage: error.message));
-      },
-    );
-  }
-
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
+    final requestId = _requestId;
     emit(state.copyWith(isLoadingMore: true));
     final result = await _repository.fetchGames(
       sport: state.sport,
@@ -87,7 +70,7 @@ class GamesCubit extends Cubit<GamesState> {
       date: state.date,
       page: state.page + 1,
     );
-    if (isClosed) return;
+    if (isClosed || requestId != _requestId) return;
     result.when(
       success: (page) {
         emit(

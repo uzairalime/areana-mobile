@@ -139,9 +139,8 @@ class _Handle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: const AppSheetHandle(width: 44, height: 5),
-    ).paddingOnly(top: 12, bottom: 8);
+    return Center(child: const AppSheetHandle(width: 44, height: 5))
+        .paddingOnly(top: 12, bottom: 8);
   }
 }
 

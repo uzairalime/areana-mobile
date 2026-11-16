@@ -12,6 +12,7 @@ import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/app_loading_handler.dart';
 import '../../../core/widgets/guest_gate.dart';
 import '../../../core/widgets/labels_builder.dart';
+import '../../../core/widgets/pagination_loader.dart';
 import '../cubit/notifications_cubit.dart';
 import '../cubit/notifications_state.dart';
 import '../model/app_notification.dart';
@@ -43,6 +44,9 @@ class NotificationsScreen extends StatelessWidget {
                 p.errorMessage != c.errorMessage ||
                 p.tab != c.tab ||
                 p.items != c.items ||
+                p.nextCursor != c.nextCursor ||
+                p.hasMore != c.hasMore ||
+                p.isLoadingMore != c.isLoadingMore ||
                 p.markingAllRead != c.markingAllRead,
             builder: (context, state) {
               final cubit = context.read<NotificationsCubit>();
@@ -75,6 +79,8 @@ class NotificationsScreen extends StatelessWidget {
                         tab: state.tab,
                         entries: state.listEntries,
                         hasMore: state.hasMore,
+                        nextCursor: state.nextCursor,
+                        isLoadingMore: state.isLoadingMore,
                         onLoadMore: cubit.loadMore,
                         onRefresh: cubit.refresh,
                         onOpen: (n) => _openNotification(context, n),
@@ -168,6 +174,8 @@ class _NotificationsBody extends StatelessWidget {
     required this.tab,
     required this.entries,
     required this.hasMore,
+    required this.nextCursor,
+    required this.isLoadingMore,
     required this.onLoadMore,
     required this.onRefresh,
     required this.onOpen,
@@ -176,6 +184,8 @@ class _NotificationsBody extends StatelessWidget {
   final NotificationFilterTab tab;
   final List<NotificationListEntry> entries;
   final bool hasMore;
+  final String? nextCursor;
+  final bool isLoadingMore;
   final VoidCallback onLoadMore;
   final Future<void> Function() onRefresh;
   final ValueChanged<AppNotification> onOpen;
@@ -186,7 +196,7 @@ class _NotificationsBody extends StatelessWidget {
       color: AppColors.primary,
       backgroundColor: AppColors.surface,
       onRefresh: onRefresh,
-      child: entries.isEmpty
+      child: entries.isEmpty && !hasMore
           ? _NotificationsEmpty(tab: tab)
           : ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -199,10 +209,10 @@ class _NotificationsBody extends StatelessWidget {
               itemCount: entries.length + (hasMore ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= entries.length) {
-                  onLoadMore();
-                  return const Padding(
-                    padding: .symmetric(vertical: 12),
-                    child: Center(child: CircularProgressIndicator()),
+                  return PaginationLoader(
+                    pageKey: nextCursor,
+                    enabled: !isLoadingMore,
+                    onLoadMore: onLoadMore,
                   );
                 }
                 final entry = entries[index];

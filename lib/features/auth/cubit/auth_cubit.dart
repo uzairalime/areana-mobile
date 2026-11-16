@@ -189,9 +189,9 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) {
       return;
     }
-    result.when(
+    await result.when<Future<void>>(
       success: (response) => _finishLogin(response, referralEntered: false),
-      failure: (error) {
+      failure: (error) async {
         if (_isSignupError(error)) {
           // New account, code still live (server does not consume it
           // on this error). Show the signup form, keep the code.
@@ -257,10 +257,10 @@ class AuthCubit extends Cubit<AuthState> {
     if (isClosed) {
       return;
     }
-    result.when(
+    await result.when<Future<void>>(
       success: (response) =>
           _finishLogin(response, referralEntered: referral.isNotEmpty),
-      failure: (error) {
+      failure: (error) async {
         if (_isSignupError(error)) {
           emit(
             state.copyWith(
@@ -282,8 +282,17 @@ class AuthCubit extends Cubit<AuthState> {
     OtpVerifyResponse response, {
     required bool referralEntered,
   }) async {
-    await _repository.persistVerify(response);
+    final persisted = await _repository.persistVerify(response);
     if (isClosed) {
+      return;
+    }
+    final error = persisted.errorOrNull;
+    if (error != null) {
+      emit(state.copyWith(
+        status: AppLoading.error,
+        errorMessage: error.message,
+        errorTitle: 'Could not sign in',
+      ));
       return;
     }
     _stopOtpTimer();

@@ -92,7 +92,8 @@ class BookingConfirmation extends Equatable {
   // Confirmed-screen compatibility (derived, never invented).
   String get code => checkInCode;
   String get dateLabel => date;
-  String get timeLabel => '${_fmtMinutes(startMinutes)} – ${_fmtMinutes(endMinutes)}';
+  String get timeLabel =>
+      '${_fmtMinutes(startMinutes)} – ${_fmtMinutes(endMinutes)}';
   String get courtLabel => courtName;
   String get durationLabel => '$slotCount slot${slotCount == 1 ? '' : 's'}';
   int get amountDue => totalPrice;

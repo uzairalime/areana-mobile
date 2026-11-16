@@ -121,10 +121,11 @@ class PastBookingTile extends StatelessWidget {
                               fontSize: 12,
                             ),
                           ),
-                          if (booking.status == .cancelled) ...[
+                          if (booking.status == .cancelled ||
+                              booking.status == .noShow) ...[
                             6.h,
                             Text(
-                              'Cancelled',
+                              booking.status.label,
                               style: context.textTheme.labelMedium?.copyWith(
                                 color: AppColors.error,
                                 fontWeight: .w700,

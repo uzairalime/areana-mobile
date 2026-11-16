@@ -7,6 +7,7 @@ import '../../../core/consts/app_sizes.dart';
 import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/widgets/app_loading_handler.dart';
+import '../../../core/widgets/pagination_loader.dart';
 import '../cubit/games_cubit.dart';
 import '../cubit/games_state.dart';
 import '../widgets/create_game_sheet.dart';
@@ -79,6 +80,7 @@ class GamesScreen extends StatelessWidget {
           return RefreshIndicator(
             onRefresh: () => context.read<GamesCubit>().refresh(),
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const .fromLTRB(
                 AppSizes.pagePadding,
                 12,
@@ -89,12 +91,10 @@ class GamesScreen extends StatelessWidget {
               separatorBuilder: (_, _) => 12.h,
               itemBuilder: (context, index) {
                 if (index >= state.games.length) {
-                  if (!state.isLoadingMore) {
-                    context.read<GamesCubit>().loadMore();
-                  }
-                  return const Padding(
-                    padding: .symmetric(vertical: 12),
-                    child: Center(child: CircularProgressIndicator()),
+                  return PaginationLoader(
+                    pageKey: state.page,
+                    enabled: !state.isLoadingMore,
+                    onLoadMore: context.read<GamesCubit>().loadMore,
                   );
                 }
                 final game = state.games[index];

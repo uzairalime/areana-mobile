@@ -16,6 +16,9 @@ class ProfileCubit extends Cubit<ProfileState> {
   final ProfileRepository _repository;
   final SessionCubit _session;
   var _savedIdsHydrated = false;
+  String? _savedIdsUserId;
+  String? _savedIdsLoadingFor;
+  int _savedIdsRequestId = 0;
 
   final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
@@ -205,12 +208,19 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   Future<void> loadSavedVenues() async {
+    final userId = _session.state.user?.id;
+    final requestId = ++_savedIdsRequestId;
+    _savedIdsLoadingFor = null;
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.fetchSavedVenues();
-    if (isClosed) return;
+    if (isClosed || requestId != _savedIdsRequestId ||
+        _session.state.user?.id != userId) {
+      return;
+    }
     result.when(
       success: (venues) {
         _savedIdsHydrated = true;
+        _savedIdsUserId = userId;
         emit(
           state.copyWith(
             status: AppLoading.success,
@@ -230,16 +240,43 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   /// Hydrates heart state for venue cards without loading full venue objects.
   Future<void> ensureSavedVenueIds() async {
-    if (_savedIdsHydrated || !_session.state.isAuthenticated) return;
-    final result = await _repository.fetchSavedVenueIds();
-    if (isClosed) return;
-    result.when(
-      success: (ids) {
-        _savedIdsHydrated = true;
-        emit(state.copyWith(savedVenueIds: ids, errorMessage: ''));
-      },
-      failure: (_) {},
-    );
+    final userId = _session.state.user?.id;
+    if (!_session.state.isAuthenticated || userId == null) return;
+    if (_savedIdsUserId != userId) {
+      _savedIdsHydrated = false;
+      _savedIdsUserId = userId;
+      emit(state.copyWith(savedVenueIds: const [], savedVenues: const []));
+    }
+    if (_savedIdsHydrated || _savedIdsLoadingFor == userId) return;
+    final requestId = ++_savedIdsRequestId;
+    final snapshot = state.savedVenueIds.toSet();
+    _savedIdsLoadingFor = userId;
+    try {
+      final result = await _repository.fetchSavedVenueIds();
+      if (isClosed || requestId != _savedIdsRequestId ||
+          !_session.state.isAuthenticated || _session.state.user?.id != userId) {
+        return;
+      }
+      result.when(
+        success: (ids) {
+          final current = state.savedVenueIds.toSet();
+          final removed = snapshot.difference(current);
+          final merged = {
+            ...ids.where((id) => !removed.contains(id)),
+            ...current.difference(snapshot),
+          }.toList();
+          _savedIdsHydrated = true;
+          emit(state.copyWith(
+            savedVenueIds: merged,
+            overview: _overviewWithSavedCount(merged.length),
+            errorMessage: '',
+          ));
+        },
+        failure: (_) {},
+      );
+    } finally {
+      if (requestId == _savedIdsRequestId) _savedIdsLoadingFor = null;
+    }
   }
 
   /// Toggles save. Returns `true` when the venue is saved after the call.

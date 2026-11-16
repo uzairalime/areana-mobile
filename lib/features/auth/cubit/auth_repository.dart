@@ -96,9 +96,17 @@ class AuthRepository {
     OtpVerifyResponse verify,
   ) async {
     final session = AuthClient.sessionFromVerify(verify);
-    if (session.accessToken.isNotEmpty) {
-      await _session.applySession(session);
+    if (session.accessToken.isEmpty) {
+      return const ApiError(message: 'The server did not return a valid session.');
     }
-    return ApiSuccess(session);
+    try {
+      await _session.applySession(session);
+      return ApiSuccess(session);
+    } catch (error) {
+      return ApiError(
+        message: 'Could not save your session. Please sign in again.',
+        error: error,
+      );
+    }
   }
 }

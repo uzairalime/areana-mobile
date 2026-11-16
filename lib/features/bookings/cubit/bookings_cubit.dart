@@ -12,23 +12,31 @@ class BookingsCubit extends Cubit<BookingsState> {
 
   final BookingsRepository _repository;
   var _requestId = 0;
+  bool _isRefreshing = false;
 
   String get _filter =>
       state.tab == .upcoming ? 'upcoming' : 'past';
 
-  Future<void> load() async {
+  Future<void> load() => _loadFirstPage(showLoading: true);
+
+  Future<void> refresh() => _loadFirstPage(showLoading: false);
+
+  Future<void> _loadFirstPage({required bool showLoading}) async {
     final id = ++_requestId;
+    _isRefreshing = true;
     emit(
       state.copyWith(
-        status: AppLoading.loading,
+        status: showLoading ? AppLoading.loading : state.status,
         errorMessage: '',
-        bookings: const [],
-        page: 1,
-        hasMore: true,
+        bookings: showLoading ? const [] : state.bookings,
+        page: showLoading ? 1 : state.page,
+        hasMore: showLoading ? true : state.hasMore,
+        isLoadingMore: false,
       ),
     );
     final result = await _repository.fetchBookings(filter: _filter);
     if (isClosed || id != _requestId) return;
+    _isRefreshing = false;
     result.when(
       success: (page) {
         emit(
@@ -44,7 +52,7 @@ class BookingsCubit extends Cubit<BookingsState> {
       failure: (error) {
         emit(
           state.copyWith(
-            status: AppLoading.error,
+            status: showLoading ? AppLoading.error : state.status,
             errorMessage: error.message,
           ),
         );
@@ -52,37 +60,16 @@ class BookingsCubit extends Cubit<BookingsState> {
     );
   }
 
-  Future<void> refresh() async {
-    final id = ++_requestId;
-    final result = await _repository.fetchBookings(filter: _filter);
-    if (isClosed || id != _requestId) return;
-    result.when(
-      success: (page) {
-        emit(
-          state.copyWith(
-            status: AppLoading.success,
-            bookings: page.items,
-            page: page.page,
-            hasMore: page.hasMore,
-            errorMessage: '',
-          ),
-        );
-      },
-      failure: (error) {
-        emit(state.copyWith(errorMessage: error.message));
-      },
-    );
-  }
-
   Future<void> loadMore() async {
-    if (state.isLoadingMore || !state.hasMore) return;
+    if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
+    final requestId = _requestId;
     final nextPage = state.page + 1;
     emit(state.copyWith(isLoadingMore: true));
     final result = await _repository.fetchBookings(
       filter: _filter,
       page: nextPage,
     );
-    if (isClosed) return;
+    if (isClosed || requestId != _requestId) return;
     result.when(
       success: (page) {
         emit(
@@ -130,7 +117,10 @@ class BookingsCubit extends Cubit<BookingsState> {
     return result.when(
       success: (_) {
         final next = [...state.bookings];
-        next[index] = current.copyWith(hasReviewed: true);
+        final currentIndex = next.indexWhere((booking) => booking.id == bookingId);
+        if (currentIndex >= 0) {
+          next[currentIndex] = next[currentIndex].copyWith(hasReviewed: true);
+        }
         emit(
           state.copyWith(
             bookings: next,
@@ -168,7 +158,8 @@ class BookingsCubit extends Cubit<BookingsState> {
     return result.when(
       success: (updated) {
         final next = [...state.bookings];
-        next[index] = updated;
+        final currentIndex = next.indexWhere((booking) => booking.id == bookingId);
+        if (currentIndex >= 0) next[currentIndex] = updated;
         emit(
           state.copyWith(
             bookings: next,

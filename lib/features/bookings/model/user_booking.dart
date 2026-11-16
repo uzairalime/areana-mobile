@@ -7,7 +7,7 @@ import '../../home/model/venue.dart';
 import 'booking_review_status.dart';
 
 /// Upcoming tab: [confirmed], [pending]
-/// Past tab: [completed], [cancelled]
+/// Past tab: [completed], [cancelled], [noShow]
 enum UserBookingStatus { confirmed, pending, completed, cancelled, noShow }
 
 extension UserBookingStatusX on UserBookingStatus {
@@ -38,7 +38,8 @@ extension UserBookingStatusX on UserBookingStatus {
 
   bool get isUpcomingTab => this == .confirmed || this == .pending;
 
-  bool get isPastTab => this == .completed || this == .cancelled || this == .noShow;
+  bool get isPastTab =>
+      this == .completed || this == .cancelled || this == .noShow;
 }
 
 String _fmtMinutes(int minutes) {
@@ -104,12 +105,12 @@ class UserBooking extends Equatable {
     final occurred = calendarDate == null
         ? DateTime.now()
         : DateTime(
-        calendarDate.year,
-        calendarDate.month,
-        calendarDate.day,
-        start ~/ 60,
-        start % 60,
-      );
+            calendarDate.year,
+            calendarDate.month,
+            calendarDate.day,
+            start ~/ 60,
+            start % 60,
+          );
     final hasReviewed = json['hasReviewed'] as bool? ?? false;
     return UserBooking(
       id: json['id']?.toString() ?? '',

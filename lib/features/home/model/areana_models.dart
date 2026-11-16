@@ -270,7 +270,8 @@ class AreanaVenueDetail extends Equatable {
     return AreanaVenueDetail(
       venue: AreanaVenue.fromJson(json),
       maxAdvanceDays: JsonParsing.doubleOrNull(json['maxAdvanceDays'])?.toInt(),
-      minAdvanceMinutes: JsonParsing.doubleOrNull(json['minAdvanceMinutes'])?.toInt(),
+      minAdvanceMinutes: JsonParsing.doubleOrNull(json['minAdvanceMinutes'])
+          ?.toInt(),
       courts: (json['courts'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((e) => AreanaCourt.fromJson(Map<String, dynamic>.from(e)))
@@ -497,10 +498,7 @@ class AreanaBanner extends Equatable {
 }
 
 class SlotSearchCourt extends Equatable {
-  const SlotSearchCourt({
-    required this.court,
-    this.availableSlots = const [],
-  });
+  const SlotSearchCourt({required this.court, this.availableSlots = const []});
 
   factory SlotSearchCourt.fromJson(Map<String, dynamic> json) {
     return SlotSearchCourt(

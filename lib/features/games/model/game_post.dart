@@ -75,8 +75,9 @@ class GamePost extends Equatable {
     final venue = json['venue'];
     final venueMap = venue is Map ? Map<String, dynamic>.from(venue) : const {};
     final creator = json['creator'];
-    final creatorMap =
-        creator is Map ? Map<String, dynamic>.from(creator) : const {};
+    final creatorMap = creator is Map
+        ? Map<String, dynamic>.from(creator)
+        : const {};
     final count = json['_count'];
     final countMap = count is Map ? Map<String, dynamic>.from(count) : const {};
     final squadNames = json['squadNames'];
@@ -90,7 +91,9 @@ class GamePost extends Equatable {
       status: GamePostStatusX.fromJson(json['status'] as String?),
       creatorId: json['creatorId']?.toString(),
       creatorName: creatorMap['name']?.toString(),
-      squadSize: json['squadSize'] == null ? null : JsonParsing.intValue(json['squadSize']),
+      squadSize: json['squadSize'] == null
+          ? null
+          : JsonParsing.intValue(json['squadSize']),
       level: json['level'] as String?,
       note: json['note'] as String?,
       courtName: json['courtName'] as String?,
@@ -222,13 +225,11 @@ class GamePostDetail extends Equatable {
       post: GamePost.fromJson(json),
       participants: raw is List
           ? raw
-              .whereType<Map>()
-              .map(
-                (e) => GameParticipant.fromJson(
-                  Map<String, dynamic>.from(e),
-                ),
-              )
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) => GameParticipant.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
     );
   }
