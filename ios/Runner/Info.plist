@@ -107,5 +107,7 @@
     <string>Pitchside needs photo library access so you can choose a profile photo.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>Pitchside may save photos you take for your profile.</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
   </dict>
 </plist>
