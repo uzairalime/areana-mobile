@@ -2,18 +2,25 @@ import 'package:latlong2/latlong.dart';
 
 import '../../features/home/model/venue.dart';
 
-/// Grid clustering for map markers. Always clusters overlapping cells,
-/// then merges closest groups so at most [maxMarkers] are drawn.
-/// Zoom in uses a finer grid (clusters expand); zoom out coarsens them.
+/// Grid clustering for map markers.
+///
+/// Up to [maxMarkers] venues stay as individual price chips. Above that,
+/// overlapping cells merge, then closest groups collapse so at most
+/// [maxMarkers] pins are drawn. Zoom in uses a finer grid (clusters
+/// expand back into chips); zoom out coarsens them.
 abstract final class VenueMapClustering {
-  static const int maxMarkers = 15;
+  static const int maxMarkers = 20;
+  static const double searchZoom = 12.5;
+  static const double myLocationZoom = 15;
 
   static List<VenueCluster> build({
     required List<Venue> venues,
     required double zoom,
   }) {
     if (venues.isEmpty) return const [];
-    if (venues.length == 1) return [VenueCluster.single(venues.first)];
+    if (venues.length <= maxMarkers) {
+      return [for (final venue in venues) VenueCluster.single(venue)];
+    }
 
     var clusters = _bucket(venues, _cellDegrees(zoom));
     if (clusters.length > maxMarkers) {
@@ -120,6 +127,11 @@ class MapViewport {
         lat > maxLat + latPad ||
         lng < minLng - lngPad ||
         lng > maxLng + lngPad;
+  }
+
+  /// True after a real pan away from the searched pin (~1.3 km).
+  bool movedFromOrigin(double lat, double lng) {
+    return (centerLat - lat).abs() > 0.012 || (centerLng - lng).abs() > 0.012;
   }
 
   /// ~100m buckets so camera jitter does not refetch.

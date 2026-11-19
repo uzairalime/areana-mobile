@@ -26,7 +26,7 @@ class AuthSession extends Equatable {
       user: userJson is Map
           ? UserModel.fromJson({
               ...Map<String, dynamic>.from(userJson),
-              if (complete != null) 'isComplete': complete,
+              'isComplete': ?complete,
             })
           : const UserModel(id: '', name: '', email: ''),
     );

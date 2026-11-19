@@ -8,7 +8,7 @@
 PRODUCT_NAME = arana360
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.arana360
+PRODUCT_BUNDLE_IDENTIFIER = com.zorixsolutions.arana
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.

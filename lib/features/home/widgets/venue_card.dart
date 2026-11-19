@@ -4,6 +4,7 @@ import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/media_slider/cache_image.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
@@ -207,10 +208,16 @@ class _VenueHero extends StatelessWidget {
         child: Stack(
           fit: .expand,
           children: [
-            CourtHeroCanvas(
-              color: venue.heroColor,
+            CacheImage(
+              url: venue.coverUrl,
               height: 170,
-              showGradient: false,
+              width: double.infinity,
+              memCacheWidth: 800,
+              errorWidget: CourtHeroCanvas(
+                color: venue.heroColor,
+                height: 170,
+                showGradient: false,
+              ),
             ),
             Positioned(
               top: 14,

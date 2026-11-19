@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,10 +9,13 @@ import '../../../core/services/api_result.dart';
 import '../model/otp_models.dart';
 import 'auth_repository.dart';
 import 'auth_state.dart';
+import 'social_auth.dart';
 
 /// Email OTP authenticates the player; profile completion uses that session.
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(this._repository) : super(const AuthState()) {
+  AuthCubit(this._repository, {SocialAuth? socialAuth})
+    : _social = socialAuth,
+      super(const AuthState()) {
     final user = _repository.currentUser;
     if (user != null && !user.isProfileCompleted) {
       emailController.text = user.email;
@@ -23,6 +27,13 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   final AuthRepository _repository;
+  final SocialAuth? _social;
+
+  bool get showGoogleSignIn => _social?.googleAvailable ?? true;
+
+  bool get showAppleSignIn =>
+      _social?.appleAvailable ??
+      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS);
 
   final emailFormKey = GlobalKey<FormState>();
   final otpFormKey = GlobalKey<FormState>();
@@ -163,6 +174,88 @@ class AuthCubit extends Cubit<AuthState> {
         );
       },
     );
+  }
+
+  Future<void> continueWithGoogle() {
+    return _continueWithSocial(
+      title: 'Signing in with Google',
+      obtain: () => _requireSocial().signInGoogle(),
+    );
+  }
+
+  Future<void> continueWithApple() {
+    return _continueWithSocial(
+      title: 'Signing in with Apple',
+      obtain: () => _requireSocial().signInApple(),
+    );
+  }
+
+  SocialAuth _requireSocial() {
+    final social = _social;
+    if (social == null) {
+      throw const SocialAuthException('Social sign-in is unavailable.');
+    }
+    return social;
+  }
+
+  Future<void> _continueWithSocial({
+    required String title,
+    required Future<SocialCredential?> Function() obtain,
+  }) async {
+    if (state.status.isLoading) return;
+    emit(
+      state.copyWith(
+        status: AppLoading.loading,
+        errorMessage: '',
+        noticeMessage: '',
+        loaderTitle: title,
+        errorTitle: 'Could not sign in',
+      ),
+    );
+    try {
+      final credential = await obtain();
+      if (isClosed) return;
+      if (credential == null) {
+        emit(state.copyWith(status: AppLoading.initial, loaderTitle: ''));
+        return;
+      }
+      final result = await _repository.socialLogin(
+        provider: credential.provider,
+        idToken: credential.idToken,
+        name: credential.name,
+      );
+      if (isClosed) return;
+      await result.when<Future<void>>(
+        success: (response) => _finishLogin(response, referralEntered: false),
+        failure: (error) async => emit(
+          state.copyWith(
+            status: AppLoading.error,
+            errorMessage: error.message.isEmpty
+                ? 'Could not sign in. Please try again.'
+                : error.message,
+            errorTitle: 'Could not sign in',
+          ),
+        ),
+      );
+    } on SocialAuthException catch (error) {
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          status: AppLoading.error,
+          errorMessage: error.message,
+          errorTitle: 'Could not sign in',
+        ),
+      );
+    } catch (_) {
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          status: AppLoading.error,
+          errorMessage: 'Could not sign in. Please try again.',
+          errorTitle: 'Could not sign in',
+        ),
+      );
+    }
   }
 
   Future<void> verifyCode() async {

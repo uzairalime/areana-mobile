@@ -1,4 +1,4 @@
-package com.example.arana360
+package com.zorixsolutions.arana
 
 import io.flutter.embedding.android.FlutterActivity
 

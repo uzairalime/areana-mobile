@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
-import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/profile_avatar.dart';

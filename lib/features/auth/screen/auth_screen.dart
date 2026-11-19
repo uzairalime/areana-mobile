@@ -20,10 +20,8 @@ import '../widgets/auth_signup_step.dart';
 import '../widgets/auth_widgets.dart';
 import '../widgets/otp_verify_panel.dart';
 
-/// Areana player auth, same flow as user-web `/auth`:
-/// email → code → signup (new accounts only) → done / home.
-/// All text fields are the custom [AppTextField]; the code field is
-/// the custom [AppOtpField]. No password, no social, no forgot flow.
+/// Player auth: email OTP, Google (Android + iOS), Apple (iOS only).
+/// New accounts complete name + phone after the first verified session.
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
 

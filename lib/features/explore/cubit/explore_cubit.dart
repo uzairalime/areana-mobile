@@ -197,9 +197,14 @@ class ExploreCubit extends Cubit<ExploreState> {
   /// Camera settled. List tab stays on the search result; map refetches
   /// the visible box after the first paint.
   void onMapViewport(MapViewport viewport) {
+    final originLat = state.search.lat;
+    final originLng = state.search.lng;
     final away =
         state.search.hasCoordinates &&
-        viewport.leftOrigin(state.search.lat!, state.search.lng!);
+        originLat != null &&
+        originLng != null &&
+        (viewport.movedFromOrigin(originLat, originLng) ||
+            viewport.leftOrigin(originLat, originLng));
     emit(
       state.copyWith(
         mapViewport: viewport,

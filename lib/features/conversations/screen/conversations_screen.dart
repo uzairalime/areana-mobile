@@ -170,7 +170,12 @@ class _ThreadList extends StatelessWidget {
                     separatorBuilder: (_, _) => 10.h,
                     itemBuilder: (context, index) {
                       if (index >= state.visibleThreads.length) {
-                        return PaginationLoader(onLoadMore: cubit.loadMore);
+                        return PaginationLoader(
+                          pageKey: state.nextCursor,
+                          enabled: !state.isLoadingMore,
+                          errorMessage: state.errorMessage,
+                          onLoadMore: cubit.loadMore,
+                        );
                       }
                       final thread = state.visibleThreads[index];
                       return _ThreadTile(

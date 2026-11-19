@@ -66,6 +66,35 @@ class AuthClient {
     }
   }
 
+  Future<ApiResult<OtpVerifyResponse>> socialLogin({
+    required String provider,
+    required String idToken,
+    String? name,
+    String? referralCode,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.social,
+        data: {
+          'provider': provider,
+          'idToken': idToken,
+          'name': ?name,
+          'referralCode': ?referralCode,
+        },
+      );
+      final data = response.data;
+      if (data is! Map || data['success'] == false) {
+        return const ApiError(message: 'Unexpected response');
+      }
+      return ApiSuccess(
+        OtpVerifyResponse.fromJson(Map<String, dynamic>.from(data)),
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (error) {
+      return ApiError.fromDio(error);
+    }
+  }
+
   Future<ApiResult<ProfileCompletionResponse>> completeProfile({
     required String name,
     required String phone,
@@ -126,6 +155,7 @@ class AuthClient {
         phone: response.userPhone,
         city: response.userCity,
         avatarUrl: response.userProfileImage,
+        provider: response.userProvider,
         isProfileCompleted: response.isProfileCompleted,
       ),
     );

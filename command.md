@@ -11,8 +11,8 @@ decision, not part of the API migration.
 |---|-------------|------------|
 | Flavor | `development` | `production` |
 | Config file | `config.development.json` | `config.production.json` |
-| Android applicationId | `com.example.arana360.dev` | `com.example.arana360` |
-| iOS bundleId | `com.example.arana360.dev` | `com.example.arana360` |
+| Android applicationId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
+| iOS bundleId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
 | App name | Pitchside Dev | Pitchside |
 | API | `http://<Mac LAN IP>:3000/api/` | placeholder, mock on — not for live testing |
 | Mock | off | on |

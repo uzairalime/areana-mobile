@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import '../../features/auth/cubit/auth_client.dart';
 import '../../features/auth/cubit/auth_cubit.dart';
 import '../../features/auth/cubit/auth_repository.dart';
+import '../../features/auth/cubit/social_auth.dart';
 import '../../features/auth/cubit/splash_cubit.dart';
 import '../../features/booking/cubit/booking_client.dart';
 import '../../features/booking/cubit/booking_cubit.dart';
@@ -118,7 +119,10 @@ void setupLocator() {
     ..registerLazySingleton<ProfileRepository>(
       () => ProfileRepository(getIt<ProfileClient>(), getIt<SessionCubit>()),
     )
-    ..registerFactory<AuthCubit>(() => AuthCubit(getIt<AuthRepository>()))
+    ..registerLazySingleton<SocialAuth>(DeviceSocialAuth.new)
+    ..registerFactory<AuthCubit>(
+      () => AuthCubit(getIt<AuthRepository>(), socialAuth: getIt<SocialAuth>()),
+    )
     ..registerFactory<SplashCubit>(() => SplashCubit(getIt<SessionCubit>()))
     ..registerFactory<HomeCubit>(() => HomeCubit(getIt<HomeRepository>()))
     ..registerLazySingleton<ExploreSessionStore>(ExploreSessionStore.new)

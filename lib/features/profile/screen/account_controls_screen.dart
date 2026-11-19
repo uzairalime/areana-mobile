@@ -49,7 +49,11 @@ class AccountControlsScreen extends StatelessWidget {
                   ProfileMenuTile(
                     icon: Icons.link_rounded,
                     label: 'Linked accounts',
-                    trailing: user?.provider == 'google' ? 'Google' : null,
+                    trailing: switch (user?.provider) {
+                      'google' => 'Google',
+                      'apple' => 'Apple',
+                      _ => null,
+                    },
                     onTap: () {},
                   ),
                 ],

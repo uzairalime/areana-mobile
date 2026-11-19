@@ -45,12 +45,7 @@ class Venue extends Equatable {
       courtsLabel: json['courts_label'] as String? ?? '',
       latitude: JsonParsing.doubleValue(json['latitude']),
       longitude: JsonParsing.doubleValue(json['longitude']),
-      imageUrls: imagesRaw is List
-          ? imagesRaw
-                .map((e) => e.toString())
-                .where((e) => e.isNotEmpty)
-                .toList()
-          : const [],
+      imageUrls: _imageUrls(imagesRaw),
     );
   }
 
@@ -73,6 +68,16 @@ class Venue extends Equatable {
 
   bool get hasCoordinates => latitude != 0 && longitude != 0;
 
+  String get coverUrl {
+    for (final url in imageUrls) {
+      final trimmed = url.trim();
+      if (trimmed.isNotEmpty) return trimmed;
+    }
+    return '';
+  }
+
+  bool get hasCover => coverUrl.isNotEmpty;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -92,6 +97,21 @@ class Venue extends Equatable {
     'longitude': longitude,
     'image_urls': imageUrls,
   };
+
+  static List<String> _imageUrls(dynamic value) {
+    if (value is! List) return const [];
+    final urls = <String>[];
+    for (final item in value) {
+      if (item is String) {
+        final trimmed = item.trim();
+        if (trimmed.isNotEmpty) urls.add(trimmed);
+      } else if (item is Map) {
+        final trimmed = (item['url'] ?? item['src'])?.toString().trim() ?? '';
+        if (trimmed.isNotEmpty) urls.add(trimmed);
+      }
+    }
+    return urls;
+  }
 
   static Color? _colorFromHex(String? value) {
     if (value == null || value.isEmpty) {

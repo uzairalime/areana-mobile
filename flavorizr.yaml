@@ -7,17 +7,17 @@ flavors:
     app:
       name: "Pitchside Dev"
     android:
-      applicationId: "com.example.arana360.dev"
+      applicationId: "com.zorixsolutions.arana.dev"
     ios:
-      bundleId: "com.example.arana360.dev"
+      bundleId: "com.zorixsolutions.arana.dev"
 
   production:
     app:
       name: "Pitchside"
     android:
-      applicationId: "com.example.arana360"
+      applicationId: "com.zorixsolutions.arana"
     ios:
-      bundleId: "com.example.arana360"
+      bundleId: "com.zorixsolutions.arana"
 
 ide: vscode
 

@@ -145,6 +145,13 @@ void main() {
     expect(cubit.state.showBackToOrigin, isFalse);
     expect(cubit.state.mapVenues.single.id, 'lahore');
     expect(cubit.state.venues.single.id, 'lahore');
+
+    cubit.setPageTab(ExplorePageTab.map);
+    cubit.setPageTab(ExplorePageTab.venues);
+    expect(cubit.state.search.location, 'Lahore');
+    expect(cubit.state.search.lat, 31.5204);
+    expect(cubit.state.venues.single.id, 'lahore');
+    expect(cubit.state.showBackToOrigin, isFalse);
   });
 
   test('plain recent labels round-trip without searching the idle screen', () {

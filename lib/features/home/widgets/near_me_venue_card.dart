@@ -50,7 +50,7 @@ class NearMeVenueCard extends StatelessWidget {
                       fit: .expand,
                       children: [
                         CacheImage(
-                          url: venue.imageUrls.firstOrNull ?? '',
+                          url: venue.coverUrl,
                           height: 96,
                           width: 168,
                           memCacheWidth: 360,

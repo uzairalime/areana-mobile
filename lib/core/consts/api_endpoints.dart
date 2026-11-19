@@ -10,6 +10,7 @@ class ApiEndpoints {
   // Areana player auth — passwordless email OTP, same as user-web /auth.
   static const String requestOtp = 'auth/request-otp';
   static const String verifyOtp = 'auth/verify-otp';
+  static const String social = 'auth/social';
   static const String completeProfile = 'auth/complete-profile';
   static const String refresh = 'auth/refresh';
   static const String logout = 'auth/logout';

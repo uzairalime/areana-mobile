@@ -49,6 +49,8 @@
     </dict>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
+    <key>GIDClientID</key>
+    <string>$(GOOGLE_IOS_CLIENT_ID)</string>
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
@@ -59,6 +61,16 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>pitchside</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>google-sign-in</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>$(GOOGLE_IOS_REVERSED_CLIENT_ID)</string>
         </array>
       </dict>
     </array>

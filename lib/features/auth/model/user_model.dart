@@ -34,7 +34,7 @@ class UserModel extends Equatable {
         json['profileImage'] as String? ??
         json['avatar_url'] as String? ??
         json['avatarUrl'] as String?;
-    final rawProvider = json['provider'] as String?;
+    final rawProvider = json['provider'] as String? ?? json['authProvider'] as String?;
     final sportsRaw = json['favourite_sports'] ?? json['favorite_sports'];
     return UserModel(
       isProfileCompleted: readProfileComplete(json),

@@ -66,6 +66,32 @@ class AuthRepository {
     );
   }
 
+  Future<ApiResult<OtpVerifyResponse>> socialLogin({
+    required String provider,
+    required String idToken,
+    String? name,
+    String? referralCode,
+  }) async {
+    if (AppConfig.useMockApi) {
+      return MockDelay.run(
+        () => ApiSuccess(
+          MockAuthData.verifyOtp(
+            email: provider == 'apple'
+                ? 'apple.player@privaterelay.appleid.com'
+                : 'google.player@example.com',
+            name: name,
+          ),
+        ),
+      );
+    }
+    return _client.socialLogin(
+      provider: provider,
+      idToken: idToken,
+      name: name,
+      referralCode: referralCode,
+    );
+  }
+
   Future<ApiResult<ProfileCompletionResponse>> completeProfile({
     required String name,
     required String phone,

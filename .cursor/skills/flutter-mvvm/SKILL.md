@@ -238,12 +238,12 @@ Two flavors only: `development` and `production`. One entrypoint: `lib/main.dart
 | --- | --- | --- |
 | Flavor | `development` | `production` |
 | Config | `config.development.json` | `config.production.json` |
-| Android applicationId | `com.example.arana360.dev` | `com.example.arana360` |
-| iOS bundleId | `com.example.arana360.dev` | `com.example.arana360` |
+| Android applicationId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
+| iOS bundleId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
 | App name | Pitchside Dev | Pitchside |
 | Xcode scheme | `development` | `production` |
 
-Config keys are `FLAVOR`, `API_BASE_URL`, and `USE_MOCK_API`. `API_BASE_URL` ends with `/api/`. `AppConfig` reads them with `String.fromEnvironment` / `bool.fromEnvironment`. The default flavor is `production`. `ApiEndpoints.baseUrl` is `AppConfig.apiBaseUrl`. Dio uses that base URL. Do not hardcode a host in a client. Config is compiled in via `--dart-define-from-file`, so changing it needs a full rebuild, not hot reload.
+Config keys are `FLAVOR`, `APPLICATION_ID`, `API_BASE_URL`, and `USE_MOCK_API`. `API_BASE_URL` ends with `/api/`. `AppConfig` reads them with `String.fromEnvironment` / `bool.fromEnvironment`. The default flavor is `production`. `ApiEndpoints.baseUrl` is `AppConfig.apiBaseUrl`. Dio uses that base URL. Do not hardcode a host in a client. Config is compiled in via `--dart-define-from-file`, so changing it needs a full rebuild, not hot reload.
 
 Every run and build passes both flags. Store uploads use `production` only.
 

@@ -78,6 +78,20 @@ void main() {
     expect(card.hasCoordinates, isTrue);
     expect(card.courtsLabel, '2 courts');
     expect(card.location, 'DHA, Lahore');
+    expect(card.hasCover, isFalse);
+
+    final withPhotos = AreanaVenue.fromJson({
+      'id': 'venue-2',
+      'name': 'Padel Club',
+      'address': 'Gulberg',
+      'city': 'Lahore',
+      'images': [
+        'https://cdn.example.com/a.jpg',
+        {'url': 'https://cdn.example.com/b.jpg'},
+      ],
+    }).toVenue();
+    expect(withPhotos.coverUrl, 'https://cdn.example.com/a.jpg');
+    expect(withPhotos.hasCover, isTrue);
     expect(AreanaVenue.fromJson(venue.toJson()), venue);
 
     final court = AreanaCourt.fromJson({

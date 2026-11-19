@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../features/home/model/venue.dart';
+import '../config/app_config.dart';
 import '../consts/app_colors.dart';
 import '../consts/app_sizes.dart';
 import '../extensions/extensions.dart';
@@ -32,6 +33,9 @@ class VenueMapView extends StatefulWidget {
     this.onViewportChanged,
     this.borderRadius,
     this.controlsBottom = 16,
+    this.selectedVenueId,
+    this.onBackgroundTap,
+    this.resolveMyLocation,
   });
 
   final List<Venue> venues;
@@ -54,6 +58,9 @@ class VenueMapView extends StatefulWidget {
   final ValueChanged<MapViewport>? onViewportChanged;
   final BorderRadius? borderRadius;
   final double controlsBottom;
+  final String? selectedVenueId;
+  final VoidCallback? onBackgroundTap;
+  final Future<LatLng?> Function()? resolveMyLocation;
 
   @override
   State<VenueMapView> createState() => _VenueMapViewState();
@@ -68,12 +75,13 @@ class _VenueMapViewState extends State<VenueMapView> {
   LatLngBounds? _visibleBounds;
   List<Venue>? _mappedCache;
   List<Venue> _mapped = const [];
+  var _locating = false;
 
   @override
   void initState() {
     super.initState();
-    _zoom = widget.initialZoom ?? _autoZoomFor(_resolveMapped());
     _mapped = _resolveMapped();
+    _zoom = _fitZoom;
   }
 
   List<Venue> _resolveMapped() {
@@ -124,7 +132,11 @@ class _VenueMapViewState extends State<VenueMapView> {
     return 12.5;
   }
 
-  double get _fitZoom => widget.initialZoom ?? _autoZoomFor(_mapped);
+  double get _fitZoom {
+    if (widget.initialZoom != null) return widget.initialZoom!;
+    if (widget.focus != null) return VenueMapClustering.searchZoom;
+    return _autoZoomFor(_mapped);
+  }
 
   List<Venue> _viewportVenues() {
     final bounds = _visibleBounds;
@@ -233,11 +245,34 @@ class _VenueMapViewState extends State<VenueMapView> {
     }
     if (!widget.interactive) return;
     final nextZoom = (_zoom + 1.8).clamp(4.0, 18.0);
-    _mapController.move(cluster.center, nextZoom);
+    _moveCamera(cluster.center, nextZoom);
+  }
+
+  Future<void> _goToMyLocation() async {
+    if (_locating) return;
+    AppHaptics.selection();
+    final resolve = widget.resolveMyLocation;
+    if (resolve == null) {
+      _moveCamera(_fitTarget, _fitZoom);
+      return;
+    }
+    setState(() => _locating = true);
+    try {
+      final here = await resolve();
+      if (!mounted || here == null) return;
+      _moveCamera(here, VenueMapClustering.myLocationZoom);
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  void _moveCamera(LatLng target, double zoom) {
+    _mapController.move(target, zoom);
     setState(() {
-      _zoom = nextZoom;
+      _zoom = zoom;
       _visibleBounds = _mapController.camera.visibleBounds;
     });
+    _publishViewport();
   }
 
   void _openDirections() {
@@ -280,6 +315,8 @@ class _VenueMapViewState extends State<VenueMapView> {
               ? (widget.showPriceMarkers
                     ? _PriceMarker(
                         label: MoneyFormat.pkr(cluster.first.priceFrom),
+                        selected:
+                            cluster.first.id == widget.selectedVenueId,
                         onTap: openDirections
                             ? _openDirections
                             : () => _onClusterTap(cluster),
@@ -312,13 +349,15 @@ class _VenueMapViewState extends State<VenueMapView> {
               _publishViewport();
             },
             onMapEvent: lockGestures ? null : _onMapEvent,
-            onTap: openDirections ? (_, _) => _openDirections() : null,
+            onTap: openDirections
+                ? (_, _) => _openDirections()
+                : (_, _) => widget.onBackgroundTap?.call(),
             interactionOptions: InteractionOptions(flags: _interactionFlags),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.arana360',
+              userAgentPackageName: AppConfig.applicationId,
               maxNativeZoom: 19,
               keepBuffer: 2,
               panBuffer: 1,
@@ -334,15 +373,8 @@ class _VenueMapViewState extends State<VenueMapView> {
               children: [
                 _MapFab(
                   icon: Icons.my_location_rounded,
-                  onTap: () {
-                    AppHaptics.selection();
-                    _mapController.move(_fitTarget, _fitZoom);
-                    setState(() {
-                      _zoom = _fitZoom;
-                      _visibleBounds = _mapController.camera.visibleBounds;
-                    });
-                    _publishViewport();
-                  },
+                  busy: _locating,
+                  onTap: _goToMyLocation,
                 ),
                 8.h,
                 _MapFab(
@@ -483,10 +515,15 @@ class _ClusterMarker extends StatelessWidget {
 }
 
 class _PriceMarker extends StatelessWidget {
-  const _PriceMarker({required this.label, required this.onTap});
+  const _PriceMarker({
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final String label;
   final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -496,26 +533,29 @@ class _PriceMarker extends StatelessWidget {
         mainAxisSize: .min,
         children: [
           Material(
-            color: AppColors.surface,
-            elevation: 4,
+            color: selected ? AppColors.primary : AppColors.surface,
+            elevation: selected ? 6 : 4,
             shadowColor: AppColors.shadow.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(AppSizes.radiusPill),
             child: Padding(
-            padding: const .symmetric(horizontal: 8, vertical: 6),
-            child: Text(
+              padding: const .symmetric(horizontal: 8, vertical: 6),
+              child: Text(
                 label,
                 maxLines: 1,
                 overflow: .ellipsis,
                 style: context.textTheme.labelLarge?.copyWith(
                   fontWeight: .w800,
                   fontSize: 11,
+                  color: selected ? AppColors.accent : AppColors.text,
                 ),
               ),
             ),
           ),
           CustomPaint(
             size: const Size(12, 8),
-            painter: _MarkerTipPainter(color: AppColors.surface),
+            painter: _MarkerTipPainter(
+              color: selected ? AppColors.primary : AppColors.surface,
+            ),
           ),
         ],
       ),
@@ -575,10 +615,15 @@ class _MarkerTipPainter extends CustomPainter {
 }
 
 class _MapFab extends StatelessWidget {
-  const _MapFab({required this.icon, required this.onTap});
+  const _MapFab({
+    required this.icon,
+    required this.onTap,
+    this.busy = false,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -593,7 +638,12 @@ class _MapFab extends StatelessWidget {
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Icon(icon, size: 18, color: AppColors.text),
+          child: busy
+              ? const Padding(
+                  padding: .all(10),
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(icon, size: 18, color: AppColors.text),
         ),
       ),
     );

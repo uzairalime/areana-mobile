@@ -158,7 +158,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           onTap: (venue) => _openDetail(context, venue),
                         ),
                       ),
-                      // Mount map only on Map tab — avoids tile/marker load on Venues.
+                      // Map mounts once, then stays offstage on Venues so the camera is kept.
                       _LazyMapPage(
                         active: state.pageTab == .map,
                         status: state.status,
@@ -170,7 +170,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         backToOriginLabel: state.backToOriginLabel,
                         onViewportChanged: cubit.onMapViewport,
                         onBackToOrigin: cubit.returnToOrigin,
-                        onVenueTap: (venue) => _openDetail(context, venue),
+                        onViewVenue: (venue) => _openDetail(context, venue),
                       ),
                     ],
                   );
@@ -184,8 +184,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-/// Disposes the heavy map when user leaves Map tab (tiles + markers freed).
-class _LazyMapPage extends StatelessWidget {
+/// Mounts the map on first Map-tab visit, then keeps it alive so a
+/// Venues ↔ Map switch does not reset the searched camera.
+class _LazyMapPage extends StatefulWidget {
   const _LazyMapPage({
     required this.active,
     required this.status,
@@ -197,7 +198,7 @@ class _LazyMapPage extends StatelessWidget {
     required this.backToOriginLabel,
     required this.onViewportChanged,
     required this.onBackToOrigin,
-    required this.onVenueTap,
+    required this.onViewVenue,
   });
 
   final bool active;
@@ -210,22 +211,45 @@ class _LazyMapPage extends StatelessWidget {
   final String backToOriginLabel;
   final ValueChanged<MapViewport> onViewportChanged;
   final VoidCallback onBackToOrigin;
-  final ValueChanged<Venue> onVenueTap;
+  final ValueChanged<Venue> onViewVenue;
+
+  @override
+  State<_LazyMapPage> createState() => _LazyMapPageState();
+}
+
+class _LazyMapPageState extends State<_LazyMapPage> {
+  var _mountedOnce = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _mountedOnce = widget.active;
+  }
+
+  @override
+  void didUpdateWidget(covariant _LazyMapPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !_mountedOnce) {
+      _mountedOnce = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!active) {
+
+    if (!_mountedOnce) {
       return const ColoredBox(color: AppColors.background);
     }
 
-    if (status == .loading || status == .initial) {
+    if ((widget.status == .loading || widget.status == .initial) &&
+        widget.venues.isEmpty) {
       return const ColoredBox(
         color: AppColors.background,
         child: Center(child: Text('Loading venues…')),
       );
     }
 
-    if (status == .error) {
+    if (widget.status == .error && widget.venues.isEmpty) {
       return const ColoredBox(
         color: AppColors.background,
         child: Center(child: Text('Couldn’t load venues')),
@@ -233,23 +257,35 @@ class _LazyMapPage extends StatelessWidget {
     }
 
     final mapped = [
-      for (final v in venues)
+      for (final v in widget.venues)
         if (v.hasCoordinates) v,
     ];
 
-    return ExploreMapPanel(
-      venues: mapped,
-      focus: focus,
-      initialCenter: viewport == null
-          ? null
-          : LatLng(viewport!.centerLat, viewport!.centerLng),
-      initialZoom: viewport?.zoom,
-      cameraFitNonce: cameraFitNonce,
-      onViewportChanged: onViewportChanged,
-      showBackToOrigin: showBackToOrigin,
-      backToOriginLabel: backToOriginLabel,
-      onBackToOrigin: onBackToOrigin,
-      onVenueTap: onVenueTap,
+    return IgnorePointer(
+      ignoring: !widget.active,
+      child: TickerMode(
+        enabled: widget.active,
+        child: Offstage(
+          offstage: !widget.active,
+          child: ExploreMapPanel(
+            venues: mapped,
+            focus: widget.focus,
+            initialCenter: widget.viewport == null
+                ? null
+                : LatLng(
+                    widget.viewport!.centerLat,
+                    widget.viewport!.centerLng,
+                  ),
+            initialZoom: widget.viewport?.zoom,
+            cameraFitNonce: widget.cameraFitNonce,
+            onViewportChanged: widget.onViewportChanged,
+            showBackToOrigin: widget.showBackToOrigin,
+            backToOriginLabel: widget.backToOriginLabel,
+            onBackToOrigin: widget.onBackToOrigin,
+            onViewVenue: widget.onViewVenue,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -8,12 +8,12 @@ android.apply {
     productFlavors {
         create("development") {
             dimension = "flavor-type"
-            applicationId = "com.example.arana360.dev"
+            applicationId = "com.zorixsolutions.arana.dev"
             resValue(type = "string", name = "app_name", value = "Pitchside Dev")
         }
         create("production") {
             dimension = "flavor-type"
-            applicationId = "com.example.arana360"
+            applicationId = "com.zorixsolutions.arana"
             resValue(type = "string", name = "app_name", value = "Pitchside")
         }
     }

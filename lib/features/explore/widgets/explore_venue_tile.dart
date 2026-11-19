@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
+import '../../../core/media_slider/cache_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money_format.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
@@ -39,10 +40,16 @@ class ExploreVenueTile extends StatelessWidget {
                 child: Stack(
                   fit: .expand,
                   children: [
-                    CourtHeroCanvas(
-                      color: venue.heroColor,
+                    CacheImage(
+                      url: venue.coverUrl,
+                      width: 118,
                       height: 118,
-                      showGradient: false,
+                      memCacheWidth: 280,
+                      errorWidget: CourtHeroCanvas(
+                        color: venue.heroColor,
+                        height: 118,
+                        showGradient: false,
+                      ),
                     ),
                     Positioned(
                       left: 8,

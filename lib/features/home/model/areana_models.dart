@@ -9,9 +9,16 @@ import 'venue.dart';
 /// and detail; the existing UI models ([Venue] etc.) are filled from
 /// them so current widgets keep working without invented fields.
 
-List<String> _stringList(dynamic value) => value is List
-    ? value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
-    : const [];
+List<String> _stringList(dynamic value) {
+  if (value is! List) return const [];
+  return [
+    for (final item in value)
+      if (item is String && item.trim().isNotEmpty)
+        item.trim()
+      else if (item is Map)
+        _str(item['url']).isEmpty ? _str(item['src']) : _str(item['url']),
+  ].where((item) => item.isNotEmpty).toList();
+}
 
 String _str(dynamic value) => value?.toString() ?? '';
 

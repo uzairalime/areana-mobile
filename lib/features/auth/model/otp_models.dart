@@ -77,6 +77,7 @@ class OtpVerifyResponse extends Equatable {
     this.userPhone = '',
     this.userCity = '',
     this.userProfileImage,
+    this.userProvider,
     this._isProfileCompleted,
     this.welcomePromoCode,
     this.referralStatus = ReferralStatus.unknown,
@@ -94,6 +95,7 @@ class OtpVerifyResponse extends Equatable {
           readProfileComplete(json) ??
           (userMap == null ? null : readProfileComplete(userMap)),
       userProfileImage: userMap?['profileImage'] as String? ?? userMap?['avatarUrl'] as String?,
+      userProvider: userMap?['provider'] as String?,
       accessToken: json['accessToken'] as String? ?? '',
       refreshToken: json['refreshToken'] as String? ?? '',
       userId: userMap?['id']?.toString() ?? '',
@@ -116,6 +118,7 @@ class OtpVerifyResponse extends Equatable {
   final String userPhone;
   final String userCity;
   final String? userProfileImage;
+  final String? userProvider;
   final bool? _isProfileCompleted;
 
   bool get isProfileCompleted =>
@@ -136,6 +139,7 @@ class OtpVerifyResponse extends Equatable {
     userPhone,
     userCity,
     userProfileImage,
+    userProvider,
     isProfileCompleted,
     welcomePromoCode,
     referralStatus,
@@ -159,7 +163,7 @@ class ProfileCompletionResponse extends Equatable {
     return ProfileCompletionResponse(
       user: UserModel.fromJson({
         if (rawUser is Map) ...Map<String, dynamic>.from(rawUser),
-        if (complete != null) 'isComplete': complete,
+        'isComplete': ?complete,
       }),
       welcomePromoCode: json['welcomePromoCode'] as String?,
       referralStatus: referralStatusFromJson(json['referralStatus']),

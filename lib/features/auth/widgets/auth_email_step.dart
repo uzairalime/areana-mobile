@@ -10,9 +10,9 @@ import '../../../core/widgets/app_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import 'auth_widgets.dart';
 
-/// Step 1 of user-web `/auth`: email only. A new account is created
-/// automatically on first verify — there is no separate signup form
-/// before the code step, and no password anywhere.
+/// Email OTP plus native social buttons. Android is Google-only; iOS
+/// also offers Sign in with Apple. New accounts finish name + phone
+/// after the first verified session.
 class AuthEmailStep extends StatelessWidget {
   const AuthEmailStep({super.key, required this.onGuestContinue});
 
@@ -21,6 +21,8 @@ class AuthEmailStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<AuthCubit>();
+    final showGoogle = cubit.showGoogleSignIn;
+    final showApple = cubit.showAppleSignIn;
     return Form(
       key: cubit.emailFormKey,
       child: ListView(
@@ -32,7 +34,9 @@ class AuthEmailStep extends StatelessWidget {
           ),
           8.h,
           Text(
-            "Enter your email and we'll send you a login code — no password needed. New here? Your account is created automatically when you verify — we'll just ask your name and phone once.",
+            showApple
+                ? 'Use Google, Apple, or an email login code. New here? We only ask for your name and phone once.'
+                : 'Use Google or an email login code. New here? We only ask for your name and phone once.',
             style: context.textTheme.titleSmall?.copyWith(
               color: AppColors.textSecondary,
               fontWeight: .w500,
@@ -40,6 +44,28 @@ class AuthEmailStep extends StatelessWidget {
             ),
           ),
           AppSizes.spaceMd.h,
+          if (showGoogle) ...[
+            SocialAuthButton.google(
+              onPressed: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                cubit.continueWithGoogle();
+              },
+            ),
+            AppSizes.spaceMd.h,
+          ],
+          if (showApple) ...[
+            SocialAuthButton.apple(
+              onPressed: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                cubit.continueWithApple();
+              },
+            ),
+            AppSizes.spaceMd.h,
+          ],
+          if (showGoogle || showApple) ...[
+            const AuthOrDivider(),
+            AppSizes.spaceMd.h,
+          ],
           AppTextField(
             label: 'Email',
             controller: cubit.emailController,
