@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'user_model.dart';
+
 /// Referral outcome from `POST /auth/verify-otp`, same wording rules as
 /// user-web: `none` shows no message, every other status has its own copy.
 enum ReferralStatus { none, applied, self, invalid, failed, unknown }
@@ -74,6 +76,8 @@ class OtpVerifyResponse extends Equatable {
     required this.userEmail,
     this.userPhone = '',
     this.userCity = '',
+    this.userProfileImage,
+    this._isProfileCompleted,
     this.welcomePromoCode,
     this.referralStatus = ReferralStatus.unknown,
     this.expiresAt,
@@ -81,9 +85,15 @@ class OtpVerifyResponse extends Equatable {
   });
 
   factory OtpVerifyResponse.fromJson(Map<String, dynamic> json) {
+    final payload = json['data'];
+    if (payload is Map) json = Map<String, dynamic>.from(payload);
     final user = json['user'];
     final userMap = user is Map ? Map<String, dynamic>.from(user) : null;
     return OtpVerifyResponse(
+      isProfileCompleted:
+          readProfileComplete(json) ??
+          (userMap == null ? null : readProfileComplete(userMap)),
+      userProfileImage: userMap?['profileImage'] as String? ?? userMap?['avatarUrl'] as String?,
       accessToken: json['accessToken'] as String? ?? '',
       refreshToken: json['refreshToken'] as String? ?? '',
       userId: userMap?['id']?.toString() ?? '',
@@ -105,6 +115,12 @@ class OtpVerifyResponse extends Equatable {
   final String userEmail;
   final String userPhone;
   final String userCity;
+  final String? userProfileImage;
+  final bool? _isProfileCompleted;
+
+  bool get isProfileCompleted =>
+      _isProfileCompleted ??
+      (userName.trim().isNotEmpty && userPhone.trim().isNotEmpty);
   final String? welcomePromoCode;
   final ReferralStatus referralStatus;
   final String? expiresAt;
@@ -119,9 +135,41 @@ class OtpVerifyResponse extends Equatable {
     userEmail,
     userPhone,
     userCity,
+    userProfileImage,
+    isProfileCompleted,
     welcomePromoCode,
     referralStatus,
     expiresAt,
     ttlSeconds,
   ];
+}
+
+class ProfileCompletionResponse extends Equatable {
+  const ProfileCompletionResponse({
+    required this.user,
+    this.welcomePromoCode,
+    this.referralStatus = ReferralStatus.none,
+  });
+
+  factory ProfileCompletionResponse.fromJson(Map<String, dynamic> json) {
+    final payload = json['data'];
+    if (payload is Map) json = Map<String, dynamic>.from(payload);
+    final rawUser = json['user'];
+    final complete = readProfileComplete(json);
+    return ProfileCompletionResponse(
+      user: UserModel.fromJson({
+        if (rawUser is Map) ...Map<String, dynamic>.from(rawUser),
+        if (complete != null) 'isComplete': complete,
+      }),
+      welcomePromoCode: json['welcomePromoCode'] as String?,
+      referralStatus: referralStatusFromJson(json['referralStatus']),
+    );
+  }
+
+  final UserModel user;
+  final String? welcomePromoCode;
+  final ReferralStatus referralStatus;
+
+  @override
+  List<Object?> get props => [user, welcomePromoCode, referralStatus];
 }

@@ -6,9 +6,7 @@ import '../model/court_filter.dart';
 import '../model/sport_game.dart';
 import '../model/venue.dart';
 
-/// Home/discovery state. `venues` are the UI-mapped rows (see
-/// [AreanaVenue.toVenue]) so existing cards keep working; `courts`
-/// are the raw Areana court list items for the Courts tab.
+/// Home discovery state. `venues` are the public `GET /venues` rows.
 class HomeState extends Equatable {
   const HomeState({
     this.status = AppLoading.initial,
@@ -18,13 +16,11 @@ class HomeState extends Equatable {
     this.venues = const [],
     this.sports = const [],
     this.filter = const CourtFilterDraft(),
-    this.courts = const [],
     this.cities = const [],
     this.selectedCity,
     this.sort,
     this.lat,
     this.lng,
-    this.showingCourts = false,
     this.page = 1,
     this.hasMore = false,
     this.isLoadingMore = false,
@@ -40,16 +36,14 @@ class HomeState extends Equatable {
   final List<Venue> venues;
   final List<SportGame> sports;
   final CourtFilterDraft filter;
-  final List<AreanaCourtListItem> courts;
   final List<String> cities;
   final String? selectedCity;
 
   /// Server sort: `rating` (default), `price_asc`, `price_desc`,
-  /// `name`, `distance` (requires lat+lng).
+  /// `name`, `distance` (requires lat+lng), `newest`.
   final String? sort;
   final double? lat;
   final double? lng;
-  final bool showingCourts;
   final int page;
   final bool hasMore;
   final bool isLoadingMore;
@@ -75,13 +69,11 @@ class HomeState extends Equatable {
     List<Venue>? venues,
     List<SportGame>? sports,
     CourtFilterDraft? filter,
-    List<AreanaCourtListItem>? courts,
     List<String>? cities,
     String? selectedCity,
     String? sort,
     double? lat,
     double? lng,
-    bool? showingCourts,
     int? page,
     bool? hasMore,
     bool? isLoadingMore,
@@ -97,13 +89,11 @@ class HomeState extends Equatable {
       venues: venues ?? this.venues,
       sports: sports ?? this.sports,
       filter: filter ?? this.filter,
-      courts: courts ?? this.courts,
       cities: cities ?? this.cities,
       selectedCity: clearCity ? null : selectedCity ?? this.selectedCity,
       sort: sort ?? this.sort,
       lat: clearLocation ? null : lat ?? this.lat,
       lng: clearLocation ? null : lng ?? this.lng,
-      showingCourts: showingCourts ?? this.showingCourts,
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
@@ -120,13 +110,11 @@ class HomeState extends Equatable {
     venues,
     sports,
     filter,
-    courts,
     cities,
     selectedCity,
     sort,
     lat,
     lng,
-    showingCourts,
     page,
     hasMore,
     isLoadingMore,

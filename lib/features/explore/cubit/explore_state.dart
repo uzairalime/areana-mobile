@@ -24,36 +24,7 @@ class ExploreState extends Equatable {
   final ExploreSearchCriteria search;
   final CourtFilterDraft filter;
 
-  List<Venue> get visibleVenues {
-    Iterable<Venue> list = venues;
-    // Near me keeps the full catalog (sorted elsewhere / map uses GPS).
-    if (!search.isNearby) {
-      final location = search.location.trim().toLowerCase();
-      if (location.isNotEmpty) {
-        final city = location.split(',').first.trim();
-        list = list.where((v) {
-          final loc = v.location.toLowerCase();
-          return loc.contains(city) || loc.contains(location);
-        });
-      }
-    }
-    final sportId = selectedSportId;
-    if (sportId != null) {
-      final needle = _sportNeedle(sportId);
-      if (needle.isNotEmpty) {
-        list = list.where((v) => v.sport.toLowerCase().contains(needle));
-      }
-    }
-    return list.toList();
-  }
-
-  static String _sportNeedle(String id) => switch (id) {
-    'football' => 'football',
-    'padel' => 'padel',
-    'indoor_cricket' => 'cricket',
-    'courts' => '',
-    _ => id,
-  };
+  List<Venue> get visibleVenues => venues;
 
   ExploreState copyWith({
     AppLoading? status,

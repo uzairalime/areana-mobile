@@ -8,9 +8,7 @@ class MockAuthData {
 
   static bool isValidOtp(String otp) => otp.trim() == validOtp;
 
-  /// Mock verify, mirroring the Areana response shape. The repository
-  /// decides signup vs returning: only `alex@pitchside.app` is a
-  /// returning account; every other email needs name + phone first.
+  /// New mock accounts authenticate first, then complete their profile.
   static OtpVerifyResponse verifyOtp({
     required String email,
     String? name,
@@ -20,6 +18,8 @@ class MockAuthData {
   }) {
     final isReturning = email == 'alex@pitchside.app';
     return OtpVerifyResponse(
+      isProfileCompleted: isReturning ||
+          ((name?.trim().isNotEmpty ?? false) && (phone?.trim().isNotEmpty ?? false)),
       accessToken: 'mock_access_token',
       refreshToken: 'mock_refresh_token',
       userId: 'user_1',

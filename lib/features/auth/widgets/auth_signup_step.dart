@@ -7,14 +7,9 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/app_otp_field.dart';
 import '../cubit/auth_cubit.dart';
 
-/// Step 3 of user-web `/auth`, shown only when verify reports a missing
-/// account. The code from step 2 is kept (and shown read-only here for
-/// context) — it is NOT cleared, because the server does not consume
-/// it on the missing-account error, so the same code verifies again
-/// with these fields attached.
+/// Profile details are saved with the verified session; no OTP is replayed.
 class AuthSignupStep extends StatelessWidget {
   const AuthSignupStep({super.key});
 
@@ -26,7 +21,7 @@ class AuthSignupStep extends StatelessWidget {
       child: ListView(
         padding: const .fromLTRB(24, 12, 24, 24),
         children: [
-          Text('Create your account', style: context.textTheme.headlineLarge),
+          Text('Complete your profile', style: context.textTheme.headlineLarge),
           8.h,
           Text(
             "Just a few details and you're in.",
@@ -90,22 +85,9 @@ class AuthSignupStep extends StatelessWidget {
             onChanged: (_) => cubit.clearError(),
           ),
           AppSizes.spaceMd.h,
-          Text(
-            'Your login code',
-            style: context.textTheme.labelMedium?.copyWith(
-              color: AppColors.textBody,
-              fontWeight: .w700,
-            ),
-          ),
-          6.h,
-          AppOtpField(
-            controller: cubit.otpController,
-            onChanged: (_) => cubit.clearError(),
-            validator: AppValidators.otp,
-          ),
           AppSizes.spaceLg.h,
           AppButton(
-            label: 'Create account',
+            label: 'Complete profile',
             showArrow: false,
             onPressed: () {
               FocusManager.instance.primaryFocus?.unfocus();
@@ -116,9 +98,9 @@ class AuthSignupStep extends StatelessWidget {
           TextButton(
             onPressed: () {
               FocusManager.instance.primaryFocus?.unfocus();
-              cubit.backStep();
+              cubit.switchAccount();
             },
-            child: const Text('Back to code'),
+            child: const Text('Sign in with a different account'),
           ).center(),
         ],
       ),

@@ -6,10 +6,7 @@ import '../model/auth_session.dart';
 import '../model/otp_models.dart';
 import '../model/user_model.dart';
 
-/// Areana player auth client — passwordless email OTP, same endpoints
-/// as user-web `/auth`. No password, social, or forgot-password calls:
-/// players have no password to forget, and a new account is created by
-/// the first successful verify that carries name + phone.
+/// Passwordless authentication followed by authenticated profile completion.
 class AuthClient {
   const AuthClient(this._dio);
 
@@ -57,13 +54,45 @@ class AuthClient {
         },
       );
       final data = response.data;
-      if (data is! Map) {
+      if (data is! Map || data['success'] == false) {
         return const ApiError(message: 'Unexpected response');
       }
       return ApiSuccess(
         OtpVerifyResponse.fromJson(Map<String, dynamic>.from(data)),
         statusCode: response.statusCode,
       );
+    } on DioException catch (error) {
+      return ApiError.fromDio(error);
+    }
+  }
+
+  Future<ApiResult<ProfileCompletionResponse>> completeProfile({
+    required String name,
+    required String phone,
+    String? city,
+    String? referralCode,
+  }) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.completeProfile,
+        data: {
+          'name': name,
+          'phone': phone,
+          'city': ?city,
+          'referralCode': ?referralCode,
+        },
+      );
+      final data = response.data;
+      if (data is! Map || data['success'] == false) {
+        return const ApiError(message: 'Could not complete your profile.');
+      }
+      final completion = ProfileCompletionResponse.fromJson(
+        Map<String, dynamic>.from(data),
+      );
+      if (completion.user.id.isEmpty || !completion.user.isProfileCompleted) {
+        return const ApiError(message: 'The server did not return a complete profile.');
+      }
+      return ApiSuccess(completion, statusCode: response.statusCode);
     } on DioException catch (error) {
       return ApiError.fromDio(error);
     }
@@ -96,6 +125,8 @@ class AuthClient {
         email: response.userEmail,
         phone: response.userPhone,
         city: response.userCity,
+        avatarUrl: response.userProfileImage,
+        isProfileCompleted: response.isProfileCompleted,
       ),
     );
   }

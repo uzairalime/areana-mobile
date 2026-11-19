@@ -10,6 +10,7 @@ class ApiEndpoints {
   // Areana player auth — passwordless email OTP, same as user-web /auth.
   static const String requestOtp = 'auth/request-otp';
   static const String verifyOtp = 'auth/verify-otp';
+  static const String completeProfile = 'auth/complete-profile';
   static const String refresh = 'auth/refresh';
   static const String logout = 'auth/logout';
   static const String authSessions = 'auth/sessions';
@@ -34,6 +35,9 @@ class ApiEndpoints {
   static const String amenities = 'amenities';
   static const String banners = 'banners';
   static const String searchSlots = 'search/slots';
+  static const String placesAutocomplete = 'places/autocomplete';
+  static const String placesDetails = 'places/details';
+  static const String placesReverse = 'places/reverse';
 
   // Bookings (authenticated) — user-web /bookings.
   static const String bookings = 'bookings';

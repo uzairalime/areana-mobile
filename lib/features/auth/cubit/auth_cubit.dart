@@ -9,14 +9,18 @@ import '../model/otp_models.dart';
 import 'auth_repository.dart';
 import 'auth_state.dart';
 
-/// Areana player auth ViewModel — same flow as user-web `/auth`:
-/// email → code → signup (new accounts only) → done / home.
-/// No password, no social, no forgot-password: a player account is
-/// created by the first verify that carries name + phone, and the
-/// backend does NOT consume the code when it reports the account as
-/// missing, so the same code is reused for the signup submit.
+/// Email OTP authenticates the player; profile completion uses that session.
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(this._repository) : super(const AuthState());
+  AuthCubit(this._repository) : super(const AuthState()) {
+    final user = _repository.currentUser;
+    if (user != null && !user.isProfileCompleted) {
+      emailController.text = user.email;
+      nameController.text = user.name;
+      phoneController.text = user.phone;
+      cityController.text = user.city;
+      emit(state.copyWith(step: AuthStep.signup));
+    }
+  }
 
   final AuthRepository _repository;
 
@@ -66,14 +70,8 @@ class AuthCubit extends Cubit<AuthState> {
           ),
         );
       case AuthStep.signup:
-        // Keep the code: the signup submit reuses it.
-        emit(
-          state.copyWith(
-            step: AuthStep.code,
-            status: AppLoading.initial,
-            errorMessage: '',
-          ),
-        );
+        // The code is already consumed; switching accounts starts a new login.
+        unawaited(switchAccount());
       case AuthStep.email:
       case AuthStep.done:
         break;
@@ -96,7 +94,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> requestOtp() async {
-    if (!_validate(emailFormKey)) {
+    if (state.status.isLoading || !_validate(emailFormKey)) {
       return;
     }
     final email = emailController.text.trim().toLowerCase();
@@ -105,7 +103,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> resendOtp() async {
-    if (!state.canResendOtp) {
+    if (state.status.isLoading || !state.canResendOtp) {
       return;
     }
     await _requestOtp(
@@ -168,7 +166,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> verifyCode() async {
-    if (_blockedByExpiryOrLock()) {
+    if (state.status.isLoading || _blockedByExpiryOrLock()) {
       return;
     }
     if (!_validate(otpFormKey)) {
@@ -191,90 +189,45 @@ class AuthCubit extends Cubit<AuthState> {
     }
     await result.when<Future<void>>(
       success: (response) => _finishLogin(response, referralEntered: false),
-      failure: (error) async {
-        if (_isSignupError(error)) {
-          // New account, code still live (server does not consume it
-          // on this error). Show the signup form, keep the code.
-          emit(
-            state.copyWith(
-              status: AppLoading.initial,
-              errorMessage: '',
-              noticeMessage: 'No account found for this email yet — finish creating it below.',
-              step: AuthStep.signup,
-            ),
-          );
-          return;
-        }
-        _noteVerifyFailure(error);
-      },
+      failure: (error) async => _noteVerifyFailure(error),
     );
   }
 
   Future<void> verifySignup() async {
-    if (_blockedByExpiryOrLock()) {
-      return;
-    }
-    if (!_validate(signupFormKey)) {
-      return;
-    }
-    // The OTP form is not mounted on the signup step, so the code is
-    // checked directly here instead of through its Form key. It was
-    // already form-validated on the code step and is kept unchanged
-    // across the code → signup transition.
-    if (otpController.text.replaceAll(RegExp(r'\D'), '').length != 6) {
-      emit(
-        state.copyWith(
-          status: AppLoading.error,
-          errorMessage: 'Enter the 6-digit code from your email.',
-          errorTitle: 'Could not create account',
-        ),
-      );
-      return;
-    }
+    if (state.status.isLoading || !_validate(signupFormKey)) return;
     final cleanName = nameController.text
         .replaceAll(RegExp(r'[\r\n]+'), ' ')
         .trim();
     final cleanPhone = phoneController.text.trim();
     final city = cityController.text.trim();
     final referral = referralController.text.trim().toUpperCase();
-    emit(
-      state.copyWith(
-        status: AppLoading.loading,
-        errorMessage: '',
-        noticeMessage: '',
-        loaderTitle: 'Creating account',
-        errorTitle: 'Could not create account',
-      ),
-    );
-    final result = await _repository.verifyOtp(
-      email: emailController.text.trim().toLowerCase(),
-      code: otpController.text.trim(),
+    emit(state.copyWith(
+      status: AppLoading.loading,
+      errorMessage: '',
+      noticeMessage: '',
+      loaderTitle: 'Completing profile',
+      errorTitle: 'Could not complete profile',
+    ));
+    final result = await _repository.completeProfile(
       name: cleanName,
       phone: cleanPhone,
       city: city.isEmpty ? null : city,
       referralCode: referral.isEmpty ? null : referral,
     );
-    if (isClosed) {
-      return;
-    }
-    await result.when<Future<void>>(
-      success: (response) =>
-          _finishLogin(response, referralEntered: referral.isNotEmpty),
-      failure: (error) async {
-        if (_isSignupError(error)) {
-          emit(
-            state.copyWith(
-              status: AppLoading.error,
-              errorMessage: error.message.isEmpty
-                  ? 'Please complete the missing fields.'
-                  : error.message,
-              errorTitle: 'Could not create account',
-            ),
-          );
-          return;
-        }
-        _noteVerifyFailure(error);
-      },
+    if (isClosed) return;
+    result.when(
+      success: (response) => _finishProfile(
+        welcomePromoCode: response.welcomePromoCode,
+        referralStatus: response.referralStatus,
+        referralEntered: referral.isNotEmpty,
+      ),
+      failure: (error) => emit(state.copyWith(
+        status: AppLoading.error,
+        errorMessage: error.message.isEmpty
+            ? 'Could not complete your profile. Please try again.'
+            : error.message,
+        errorTitle: 'Could not complete profile',
+      )),
     );
   }
 
@@ -298,43 +251,64 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
     _stopOtpTimer();
-    if (response.welcomePromoCode != null &&
-        response.welcomePromoCode!.isNotEmpty) {
-      emit(
-        state.copyWith(
+    otpController.clear();
+    if (!response.isProfileCompleted) {
+      nameController.text = response.userName;
+      phoneController.text = response.userPhone;
+      cityController.text = response.userCity;
+      emit(state.copyWith(
+        status: AppLoading.initial,
+        step: AuthStep.signup,
+        noticeMessage: 'Email verified. Complete your profile below.',
+        errorMessage: '',
+        failedAttempts: 0,
+        otpResendSeconds: 0,
+        clearOtpExpiry: true,
+      ));
+      return;
+    }
+    _finishProfile(
+      welcomePromoCode: response.welcomePromoCode,
+      referralStatus: response.referralStatus,
+      referralEntered: referralEntered,
+    );
+  }
+
+  void _finishProfile({
+    required String? welcomePromoCode,
+    required ReferralStatus referralStatus,
+    required bool referralEntered,
+  }) {
+    if (welcomePromoCode != null && welcomePromoCode.isNotEmpty) {
+      emit(state.copyWith(
+        status: AppLoading.initial,
+        errorMessage: '',
+        noticeMessage: '',
+        step: AuthStep.done,
+        welcomePromoCode: welcomePromoCode,
+        clearOtpExpiry: true,
+      ));
+      return;
+    }
+    if (referralEntered) {
+      final notice = _referralNoticeFor(referralStatus);
+      if (notice.isNotEmpty) {
+        emit(state.copyWith(
           status: AppLoading.initial,
           errorMessage: '',
           noticeMessage: '',
           step: AuthStep.done,
-          welcomePromoCode: response.welcomePromoCode,
+          referralNotice: notice,
           clearOtpExpiry: true,
-        ),
-      );
-      return;
-    }
-    if (referralEntered) {
-      final notice = _referralNoticeFor(response.referralStatus);
-      if (notice.isNotEmpty) {
-        emit(
-          state.copyWith(
-            status: AppLoading.initial,
-            errorMessage: '',
-            noticeMessage: '',
-            step: AuthStep.done,
-            referralNotice: notice,
-            clearOtpExpiry: true,
-          ),
-        );
+        ));
         return;
       }
     }
-    emit(
-      state.copyWith(
-        status: AppLoading.success,
-        errorMessage: '',
-        clearOtpExpiry: true,
-      ),
-    );
+    emit(state.copyWith(
+      status: AppLoading.success,
+      errorMessage: '',
+      clearOtpExpiry: true,
+    ));
   }
 
   bool _blockedByExpiryOrLock() {
@@ -359,11 +333,6 @@ class AuthCubit extends Cubit<AuthState> {
       return true;
     }
     return false;
-  }
-
-  bool _isSignupError(ApiError<OtpVerifyResponse> error) {
-    final message = error.message.toLowerCase();
-    return message.contains('name') || message.contains('phone');
   }
 
   void _noteVerifyFailure(ApiError<OtpVerifyResponse> error) {

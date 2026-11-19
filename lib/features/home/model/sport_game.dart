@@ -13,17 +13,14 @@ class SportGame extends Equatable {
   });
 
   factory SportGame.fromJson(Map<String, dynamic> json) {
-    final id = json['id']?.toString() ?? '';
-    final preset = byId(id);
+    final name = (json['name'] ?? json['label'] ?? '').toString().trim();
+    final rawId = json['id']?.toString() ?? '';
+    final preset = match(name) ?? match(rawId);
+    final label = name.isNotEmpty ? (preset?.label ?? name) : (preset?.label ?? '');
     return SportGame(
-      id: id,
-      label:
-          json['label'] as String? ??
-          json['name'] as String? ??
-          preset?.label ??
-          '',
-      icon:
-          _iconFromKey(json['icon'] as String?) ?? preset?.icon ?? Icons.sports,
+      id: preset?.id ?? (name.isNotEmpty ? _slug(name) : rawId),
+      label: label,
+      icon: _iconFromKey(json['icon'] as String?) ?? preset?.icon ?? Icons.sports,
       background:
           _colorFromHex(json['background'] as String?) ??
           preset?.background ??
@@ -52,42 +49,22 @@ class SportGame extends Equatable {
     foreground: AppColors.primary,
   );
 
-  static const List<SportGame> catalog = [
-    all,
-    SportGame(
-      id: 'football',
-      label: 'Football',
-      icon: Icons.sports_soccer,
-      background: AppColors.footballSoft,
-      foreground: AppColors.football,
-    ),
-    SportGame(
-      id: 'padel',
-      label: 'Padel',
-      icon: Icons.sports_tennis,
-      background: AppColors.padelSoft,
-      foreground: AppColors.padel,
-    ),
-    SportGame(
-      id: 'indoor_cricket',
-      label: 'Indoor Cricket',
-      icon: Icons.sports_cricket,
-      background: AppColors.cricketSoft,
-      foreground: AppColors.cricket,
-    ),
-    SportGame(
-      id: 'courts',
-      label: 'Courts',
-      icon: Icons.grid_view_rounded,
-      background: AppColors.courtsSoft,
-      foreground: AppColors.courts,
-    ),
-  ];
+  static const football = SportGame(
+    id: 'football',
+    label: 'Football',
+    icon: Icons.sports_soccer,
+    background: AppColors.footballSoft,
+    foreground: AppColors.football,
+  );
 
-  /// Fallback while API loads / mock.
-  static List<SportGame> get defaults => List<SportGame>.unmodifiable(catalog);
+  static const futsal = SportGame(
+    id: 'futsal',
+    label: 'Futsal',
+    icon: Icons.sports_soccer,
+    background: Color(0xFFE5F6EE),
+    foreground: Color(0xFF0E7A4B),
+  );
 
-  /// Profile favourite chips (matches product edit-profile set).
   static const cricket = SportGame(
     id: 'cricket',
     label: 'Cricket',
@@ -96,41 +73,99 @@ class SportGame extends Equatable {
     foreground: AppColors.cricket,
   );
 
+  static const padel = SportGame(
+    id: 'padel',
+    label: 'Padel',
+    icon: Icons.sports_tennis,
+    background: AppColors.padelSoft,
+    foreground: AppColors.padel,
+  );
+
   static const tennis = SportGame(
     id: 'tennis',
     label: 'Tennis',
+    icon: Icons.sports_tennis,
+    background: Color(0xFFE7F8D8),
+    foreground: Color(0xFF3D7A12),
+  );
+
+  static const badminton = SportGame(
+    id: 'badminton',
+    label: 'Badminton',
     icon: Icons.sports_tennis,
     background: AppColors.courtsSoft,
     foreground: AppColors.courts,
   );
 
-  static List<SportGame> get profileFavourites => List.unmodifiable([
-    catalog.firstWhere((s) => s.id == 'padel'),
-    catalog.firstWhere((s) => s.id == 'football'),
-    cricket,
-    tennis,
-  ]);
+  static const basketball = SportGame(
+    id: 'basketball',
+    label: 'Basketball',
+    icon: Icons.sports_basketball,
+    background: Color(0xFFFBE8D8),
+    foreground: Color(0xFFC2410C),
+  );
 
-  static SportGame? byId(String? id) {
-    if (id == null || id.isEmpty) return null;
+  static const volleyball = SportGame(
+    id: 'volleyball',
+    label: 'Volleyball',
+    icon: Icons.sports_volleyball,
+    background: Color(0xFFFFF4D6),
+    foreground: Color(0xFFA16207),
+  );
+
+  static const hockey = SportGame(
+    id: 'hockey',
+    label: 'Hockey',
+    icon: Icons.sports_hockey,
+    background: Color(0xFFE4F4F1),
+    foreground: Color(0xFF0F766E),
+  );
+
+  static const squash = SportGame(
+    id: 'squash',
+    label: 'Squash',
+    icon: Icons.sports_handball,
+    background: Color(0xFFF3E8FF),
+    foreground: Color(0xFF7E22CE),
+  );
+
+  static const List<SportGame> catalog = [
+    all,
+    football,
+    futsal,
+    cricket,
+    padel,
+    tennis,
+    badminton,
+    basketball,
+    volleyball,
+    hockey,
+    squash,
+  ];
+
+  /// Fallback while the sports API is loading.
+  static List<SportGame> get defaults => List<SportGame>.unmodifiable(catalog);
+
+  static List<SportGame> get profileFavourites =>
+      List<SportGame>.unmodifiable([padel, football, cricket, tennis]);
+
+  static SportGame? byId(String? id) => match(id);
+
+  static SportGame? match(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final key = _slug(raw).replaceAll('_', '');
+    if (key == 'indoorcricket') return cricket;
     for (final sport in catalog) {
-      if (sport.id == id) return sport;
+      if (_slug(sport.id).replaceAll('_', '') == key) return sport;
+      if (_slug(sport.label).replaceAll('_', '') == key) return sport;
     }
-    if (id == cricket.id) return cricket;
-    if (id == tennis.id) return tennis;
     return null;
   }
 
-  /// Maps venue.sport display names to catalog ids for local filter.
-  static String? idForVenueSport(String sport) {
-    final key = sport.trim().toLowerCase();
-    return switch (key) {
-      'football' || 'soccer' => 'football',
-      'padel' => 'padel',
-      'indoor cricket' || 'cricket' => 'indoor_cricket',
-      'courts' || 'tennis' || 'badminton' => 'courts',
-      _ => null,
-    };
+  /// Display name the venues API expects (`Football`, not `football`).
+  static String? apiName(String? id) {
+    if (id == null || id.isEmpty || id == all.id) return null;
+    return match(id)?.label ?? id;
   }
 
   Map<String, dynamic> toJson() => {
@@ -141,12 +176,21 @@ class SportGame extends Equatable {
     'foreground': _colorToHex(foreground),
   };
 
+  static String _slug(String raw) => raw
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
+
   static IconData? _iconFromKey(String? key) => switch (key) {
     'all' || 'apps' => Icons.apps_rounded,
-    'football' || 'soccer' => Icons.sports_soccer,
-    'padel' || 'tennis' => Icons.sports_tennis,
+    'football' || 'soccer' || 'futsal' => Icons.sports_soccer,
+    'padel' || 'tennis' || 'badminton' => Icons.sports_tennis,
     'cricket' || 'indoor_cricket' => Icons.sports_cricket,
-    'courts' || 'grid' => Icons.grid_view_rounded,
+    'basketball' => Icons.sports_basketball,
+    'volleyball' => Icons.sports_volleyball,
+    'hockey' => Icons.sports_hockey,
+    'squash' => Icons.sports_handball,
     _ => null,
   };
 
@@ -154,8 +198,11 @@ class SportGame extends Equatable {
     if (icon == Icons.apps_rounded) return 'all';
     if (icon == Icons.sports_soccer) return 'football';
     if (icon == Icons.sports_tennis) return 'padel';
-    if (icon == Icons.sports_cricket) return 'indoor_cricket';
-    if (icon == Icons.grid_view_rounded) return 'courts';
+    if (icon == Icons.sports_cricket) return 'cricket';
+    if (icon == Icons.sports_basketball) return 'basketball';
+    if (icon == Icons.sports_volleyball) return 'volleyball';
+    if (icon == Icons.sports_hockey) return 'hockey';
+    if (icon == Icons.sports_handball) return 'squash';
     return 'sports';
   }
 

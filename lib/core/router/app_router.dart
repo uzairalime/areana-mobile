@@ -87,8 +87,19 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
   return GoRouter(
     navigatorKey: navigatorKey,
     initialLocation: session.isAuthenticated
-        ? AppRoutes.home
+        ? (session.user!.isProfileCompleted ? AppRoutes.home : AppRoutes.auth)
         : AppRoutes.splash,
+    redirect: (context, state) {
+      if (session.isAuthenticated &&
+          !session.user!.isProfileCompleted &&
+          state.uri.path != AppRoutes.auth) {
+        return Uri(
+          path: AppRoutes.auth,
+          queryParameters: {'next': state.uri.toString()},
+        ).toString();
+      }
+      return null;
+    },
     routes: [
       GoRoute(
         path: AppRoutes.splash,

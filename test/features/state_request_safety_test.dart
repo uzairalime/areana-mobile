@@ -304,20 +304,19 @@ void main() {
     addTearDown(cubit.close);
     cubit.onQueryChanged('old');
     final search = cubit.search('old');
-    final request = await api.take('venues');
+    final request = await api.take('places/autocomplete');
     cubit.onQueryChanged('');
     request.respond(
       _page([
         {
           'id': 'old',
-          'name': 'Old',
-          'sports': ['Football'],
+          'primaryText': 'Old',
         },
       ]),
     );
     await search;
     expect(cubit.state.query, isEmpty);
-    expect(cubit.state.venues, isEmpty);
+    expect(cubit.state.places, isEmpty);
     expect(cubit.state.showIdle, isTrue);
   });
 
@@ -330,16 +329,16 @@ void main() {
       );
       addTearDown(cubit.close);
       final search = cubit.search('old');
-      final request = await api.take('venues');
+      final request = await api.take('places/autocomplete');
       cubit.onQueryChanged('new');
       request.respond(
         _page([
-          {'id': 'old', 'name': 'Old'},
+          {'id': 'old', 'primaryText': 'Old'},
         ]),
       );
       await search;
       expect(cubit.state.query, 'new');
-      expect(cubit.state.venues, isEmpty);
+      expect(cubit.state.places, isEmpty);
     },
   );
 

@@ -71,6 +71,19 @@ class CourtFilterDraft extends Equatable {
       minPrice <= CourtFilterPresets.priceMin &&
       maxPrice >= CourtFilterPresets.priceMax;
 
+  /// Server sort for `GET /venues`. Recommended is rating.
+  String get apiSort => switch (sort) {
+    .recommended => 'rating',
+    .priceHighLow => 'price_desc',
+    .priceLowHigh => 'price_asc',
+    .newest => 'newest',
+  };
+
+  /// Omitted when the slider is still the full range.
+  int? get apiMinPrice => isFullPriceRange ? null : minPrice;
+
+  int? get apiMaxPrice => isFullPriceRange ? null : maxPrice;
+
   bool get isEmpty =>
       sort == .recommended &&
       sportId == null &&

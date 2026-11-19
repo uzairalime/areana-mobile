@@ -9,14 +9,22 @@ class SearchRepository {
   final SearchClient _client;
   final RecentSearchStore _recent;
 
-  Future<ApiResult<SearchBundle>> search(String query) =>
-      _client.search(query);
+  Future<ApiResult<SearchBundle>> search(String query) => _client.search(query);
 
-  Future<List<String>> loadRecent() => _recent.read();
+  Future<ApiResult<PlaceSuggestion>> details(String placeId) =>
+      _client.details(placeId);
 
-  Future<List<String>> remember(String query) => _recent.add(query);
+  Future<ApiResult<PlaceSuggestion>> reverse({
+    required double lat,
+    required double lng,
+  }) => _client.reverse(lat: lat, lng: lng);
 
-  Future<List<String>> removeRecent(String query) => _recent.remove(query);
+  Future<List<RecentPlace>> loadRecent() => _recent.read();
+
+  Future<List<RecentPlace>> remember(RecentPlace place) => _recent.add(place);
+
+  Future<List<RecentPlace>> removeRecent(RecentPlace place) =>
+      _recent.remove(place);
 
   Future<void> clearRecent() => _recent.clear();
 }

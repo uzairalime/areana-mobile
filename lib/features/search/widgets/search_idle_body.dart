@@ -19,10 +19,10 @@ class SearchIdleBody extends StatelessWidget {
     this.nearbyLoading = false,
   });
 
-  final List<String> recents;
+  final List<RecentPlace> recents;
   final VoidCallback onNearby;
-  final ValueChanged<String> onRecentTap;
-  final ValueChanged<String> onRecentRemove;
+  final ValueChanged<RecentPlace> onRecentTap;
+  final ValueChanged<RecentPlace> onRecentRemove;
   final VoidCallback onClearRecents;
   final bool nearbyLoading;
 
@@ -87,7 +87,7 @@ class SearchIdleBody extends StatelessWidget {
               icon: Icons.history_rounded,
               iconBg: AppColors.accentSoft,
               iconColor: AppColors.payBadgeText,
-              title: item,
+              title: item.label,
               subtitle: 'Recent search',
               trailing: IconButton(
                 onPressed: () {

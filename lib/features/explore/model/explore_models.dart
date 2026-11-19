@@ -14,23 +14,26 @@ class ExploreSearchCriteria extends Equatable {
   const ExploreSearchCriteria({
     this.location = '',
     this.placeId = '',
+    this.lat,
+    this.lng,
+    this.radiusKm = defaultRadiusKm,
     this.dateLabel = '',
     this.players,
   });
 
+  static const defaultRadiusKm = 50.0;
+
   final String location;
   final String placeId;
+  final double? lat;
+  final double? lng;
+  final double radiusKm;
   final String dateLabel;
   final int? players;
 
   bool get hasLocation => location.trim().isNotEmpty;
 
-  bool get isNearby {
-    final id = placeId.trim().toLowerCase();
-    if (id == 'nearby') return true;
-    final label = location.trim().toLowerCase();
-    return label == 'nearby' || label == 'near me';
-  }
+  bool get hasCoordinates => lat != null && lng != null;
 
   String get playersLabel {
     final count = players;
@@ -41,7 +44,7 @@ class ExploreSearchCriteria extends Equatable {
   /// Compact pill text — never invents placeholder cities.
   String get pillSummary {
     if (!hasLocation) return '';
-    final parts = <String>[location.split(',').first.trim()];
+    final parts = <String>[location.trim()];
     if (players != null) parts.add(playersLabel);
     if (dateLabel.trim().isNotEmpty) parts.add(dateLabel.trim());
     return parts.join(' · ');
@@ -50,18 +53,33 @@ class ExploreSearchCriteria extends Equatable {
   ExploreSearchCriteria copyWith({
     String? location,
     String? placeId,
+    double? lat,
+    double? lng,
+    double? radiusKm,
     String? dateLabel,
     int? players,
     bool clearPlayers = false,
+    bool clearCoordinates = false,
   }) {
     return ExploreSearchCriteria(
       location: location ?? this.location,
       placeId: placeId ?? this.placeId,
+      lat: clearCoordinates ? null : (lat ?? this.lat),
+      lng: clearCoordinates ? null : (lng ?? this.lng),
+      radiusKm: radiusKm ?? this.radiusKm,
       dateLabel: dateLabel ?? this.dateLabel,
       players: clearPlayers ? null : (players ?? this.players),
     );
   }
 
   @override
-  List<Object?> get props => [location, placeId, dateLabel, players];
+  List<Object?> get props => [
+    location,
+    placeId,
+    lat,
+    lng,
+    radiusKm,
+    dateLabel,
+    players,
+  ];
 }

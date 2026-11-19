@@ -20,7 +20,17 @@ abstract final class AuthNavigation {
       case 'home':
         context.go(AppRoutes.home);
       default:
-        context.go(AppRoutes.home);
+        final uri = target == null ? null : Uri.tryParse(target);
+        if (uri != null &&
+            !uri.hasScheme &&
+            !uri.hasAuthority &&
+            uri.path.startsWith('/') &&
+            uri.path != AppRoutes.auth &&
+            uri.path != AppRoutes.splash) {
+          context.go(uri.toString());
+        } else {
+          context.go(AppRoutes.home);
+        }
     }
   }
 }

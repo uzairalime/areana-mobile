@@ -11,11 +11,8 @@ import '../../../core/router/app_router.dart';
 import '../../../core/services/locator.dart';
 import '../../../core/services/location/location_cubit.dart';
 import '../../../core/utils/app_haptics.dart';
-import '../../../core/utils/venue_navigation.dart';
 import '../../../core/widgets/app_shimmer.dart';
 import '../../explore/cubit/explore_cubit.dart';
-import '../../explore/widgets/explore_venue_tile.dart';
-import '../../home/model/venue.dart';
 import '../cubit/search_cubit.dart';
 import '../cubit/search_state.dart';
 import '../model/search_models.dart';
@@ -48,15 +45,46 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _pickPlace(PlaceSuggestion place) async {
-    final outcome = await context.read<SearchCubit>().pickPlace(place);
-    if (!mounted || outcome == null) return;
+  Future<void> _openExplore(PlaceSuggestion place) async {
     AppHaptics.medium();
-    getIt<ExploreCubit>().applyPlace(
-      location: outcome.place.displayLabel,
-      placeId: outcome.place.id,
+    await getIt<ExploreCubit>().applyArea(
+      location: place.displayLabel,
+      placeId: place.id,
+      lat: place.lat,
+      lng: place.lng,
     );
+    if (!mounted) return;
     context.go(AppRoutes.explore);
+  }
+
+  Future<void> _pickPlace(PlaceSuggestion place) async {
+    final resolved = await context.read<SearchCubit>().resolvePlace(place);
+    if (!mounted || resolved == null || !resolved.hasCoordinates) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Couldn’t load that place. Try another search.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await _openExplore(resolved);
+  }
+
+  Future<void> _pickRecent(RecentPlace recent) async {
+    final resolved = await context.read<SearchCubit>().resolveRecent(recent);
+    if (!mounted || resolved == null || !resolved.hasCoordinates) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Couldn’t open that search. Try it again.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await _openExplore(resolved);
   }
 
   Future<void> _pickNearby() async {
@@ -84,23 +112,29 @@ class _SearchScreenState extends State<SearchScreen> {
         );
         return;
       }
-      AppHaptics.medium();
-      getIt<ExploreCubit>().applyNearby();
-      context.go(AppRoutes.explore);
+      final position = location.state.position!;
+      final named = await context.read<SearchCubit>().reverseGeocode(
+        lat: position.latitude,
+        lng: position.longitude,
+      );
+      if (!mounted) return;
+      final label = (named?.displayLabel.trim().isNotEmpty ?? false)
+          ? named!.displayLabel
+          : 'Current location';
+      await _openExplore(
+        PlaceSuggestion(
+          id: named?.id.isNotEmpty == true ? named!.id : 'nearby',
+          primaryText: label,
+          label: label,
+          lat: position.latitude,
+          lng: position.longitude,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _nearbyLoading = false);
     }
   }
 
-  Future<void> _openVenue(Venue venue) async {
-    final cubit = context.read<SearchCubit>();
-    final query = cubit.state.query.trim().isEmpty
-        ? venue.name
-        : cubit.state.query;
-    await cubit.rememberSelection(query);
-    if (!mounted) return;
-    VenueNavigation.openDetail(context, venue);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +255,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       recents: state.recents,
                       nearbyLoading: _nearbyLoading,
                       onNearby: _pickNearby,
-                      onRecentTap: cubit.selectRecent,
+                      onRecentTap: _pickRecent,
                       onRecentRemove: cubit.removeRecent,
                       onClearRecents: cubit.clearRecents,
                     );
@@ -254,26 +288,6 @@ class _SearchScreenState extends State<SearchScreen> {
                             place: place,
                             onTap: () => _pickPlace(place),
                           ),
-                        16.h,
-                      ],
-                      if (state.venues.isNotEmpty) ...[
-                        Text(
-                          'Arenas',
-                          style: context.textTheme.titleSmall?.copyWith(
-                            fontWeight: .w800,
-                          ),
-                        ),
-                        8.h,
-                        for (final venue in state.venues) ...[
-                          SizedBox(
-                            height: 118,
-                            child: ExploreVenueTile(
-                              venue: venue,
-                              onTap: () => _openVenue(venue),
-                            ),
-                          ),
-                          12.h,
-                        ],
                       ],
                     ],
                   );

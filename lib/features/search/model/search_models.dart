@@ -1,13 +1,16 @@
+import 'dart:convert';
+
 import 'package:equatable/equatable.dart';
 
-import '../../home/model/venue.dart';
-
-/// Place suggestion (mock Google Places / real Places later).
+/// Place suggestion from `GET /places/autocomplete` / details / reverse.
 class PlaceSuggestion extends Equatable {
   const PlaceSuggestion({
     required this.id,
     required this.primaryText,
-    required this.secondaryText,
+    this.secondaryText = '',
+    this.label = '',
+    this.lat,
+    this.lng,
   });
 
   /// Idle-row for GPS search — never written to recent history.
@@ -18,68 +21,130 @@ class PlaceSuggestion extends Equatable {
   );
 
   factory PlaceSuggestion.fromJson(Map<String, dynamic> json) {
+    final primary =
+        json['primaryText'] as String? ??
+        json['primary_text'] as String? ??
+        json['name'] as String? ??
+        json['label'] as String? ??
+        '';
+    final secondary =
+        json['secondaryText'] as String? ??
+        json['secondary_text'] as String? ??
+        json['address'] as String? ??
+        '';
+    final rawLabel = (json['label'] as String?)?.trim() ?? '';
     return PlaceSuggestion(
-      id: json['id']?.toString() ?? '',
-      primaryText: json['primary_text'] as String? ?? '',
-      secondaryText: json['secondary_text'] as String? ?? '',
+      id: json['id']?.toString() ?? json['placeId']?.toString() ?? '',
+      primaryText: primary,
+      secondaryText: secondary,
+      label: rawLabel.isNotEmpty
+          ? rawLabel
+          : (secondary.isEmpty
+                ? primary
+                : '$primary, ${secondary.split(',').first.trim()}'),
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
     );
   }
 
   final String id;
   final String primaryText;
   final String secondaryText;
+  final String label;
+  final double? lat;
+  final double? lng;
 
   bool get isNearby => id == nearby.id;
 
-  String get displayLabel => secondaryText.isEmpty
-      ? primaryText
-      : '$primaryText, $secondaryText';
+  bool get hasCoordinates => lat != null && lng != null;
+
+  String get displayLabel {
+    final named = label.trim();
+    if (named.isNotEmpty) return named;
+    if (secondaryText.isEmpty) return primaryText;
+    return '$primaryText, ${secondaryText.split(',').first.trim()}';
+  }
+
+  RecentPlace toRecent() => RecentPlace(
+    label: displayLabel,
+    placeId: id,
+    lat: lat,
+    lng: lng,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'primary_text': primaryText,
-    'secondary_text': secondaryText,
+    'primaryText': primaryText,
+    'secondaryText': secondaryText,
+    'label': displayLabel,
+    'lat': lat,
+    'lng': lng,
   };
 
   @override
-  List<Object?> get props => [id, primaryText, secondaryText];
+  List<Object?> get props => [id, primaryText, secondaryText, label, lat, lng];
 }
 
-class SearchBundle extends Equatable {
-  const SearchBundle({
-    this.places = const [],
-    this.venues = const [],
+class RecentPlace extends Equatable {
+  const RecentPlace({
+    required this.label,
+    this.placeId = '',
+    this.lat,
+    this.lng,
   });
 
-  factory SearchBundle.fromJson(Map<String, dynamic> json) {
-    final placesRaw = json['places'];
-    final venuesRaw = json['venues'];
-    return SearchBundle(
-      places: placesRaw is List
-          ? placesRaw
-                .whereType<Map>()
-                .map((e) => PlaceSuggestion.fromJson(Map<String, dynamic>.from(e)))
-                .toList()
-          : const [],
-      venues: venuesRaw is List
-          ? venuesRaw
-                .whereType<Map>()
-                .map((e) => Venue.fromJson(Map<String, dynamic>.from(e)))
-                .toList()
-          : const [],
+  factory RecentPlace.fromStored(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is Map) {
+          return RecentPlace.fromJson(Map<String, dynamic>.from(decoded));
+        }
+      } catch (_) {}
+    }
+    return RecentPlace(label: trimmed);
+  }
+
+  factory RecentPlace.fromJson(Map<String, dynamic> json) {
+    return RecentPlace(
+      label: (json['label'] as String? ?? json['primaryText'] as String? ?? '')
+          .trim(),
+      placeId: json['placeId']?.toString() ?? json['id']?.toString() ?? '',
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
     );
   }
 
-  final List<PlaceSuggestion> places;
-  final List<Venue> venues;
+  final String label;
+  final String placeId;
+  final double? lat;
+  final double? lng;
 
-  bool get isEmpty => places.isEmpty && venues.isEmpty;
+  bool get hasCoordinates => lat != null && lng != null;
+
+  String get encoded => jsonEncode({
+    'label': label,
+    'placeId': placeId,
+    'lat': lat,
+    'lng': lng,
+  });
 
   @override
-  List<Object?> get props => [places, venues];
+  List<Object?> get props => [label, placeId, lat, lng];
 }
 
-/// Returned to Explore when a city/area is picked on the search page.
+class SearchBundle extends Equatable {
+  const SearchBundle({this.places = const []});
+
+  final List<PlaceSuggestion> places;
+
+  bool get isEmpty => places.isEmpty;
+
+  @override
+  List<Object?> get props => [places];
+}
+
 class PlaceSearchResult extends Equatable {
   const PlaceSearchResult(this.place);
 

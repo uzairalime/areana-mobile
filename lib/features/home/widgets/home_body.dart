@@ -16,8 +16,9 @@ import '../../profile/cubit/profile_cubit.dart';
 import '../../profile/cubit/profile_state.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
+import '../../../core/widgets/pagination_loader.dart';
+import '../model/sport_game.dart';
 import '../model/venue.dart';
-import 'court_card.dart';
 import 'court_filter_sheet.dart';
 import 'home_near_me_section.dart';
 import 'home_sticky_search.dart';
@@ -77,8 +78,8 @@ class _HomeBodyState extends State<HomeBody> {
           buildWhen: (previous, current) =>
               previous.status != current.status ||
               previous.venues != current.venues ||
-              previous.courts != current.courts ||
-              previous.showingCourts != current.showingCourts ||
+              previous.hasMore != current.hasMore ||
+              previous.isLoadingMore != current.isLoadingMore ||
               previous.errorMessage != current.errorMessage ||
               previous.sports != current.sports ||
               previous.selectedSportId != current.selectedSportId ||
@@ -137,12 +138,20 @@ class _HomeBodyState extends State<HomeBody> {
                       context.push(AppRoutes.search);
                     },
                     onFilter: () async {
+                      final catalog = state.sports
+                          .where((sport) => !sport.isAll)
+                          .toList();
                       final next = await showCourtFilterSheet(
                         context,
                         initial: state.filter,
+                        sports: catalog.isEmpty
+                            ? SportGame.defaults
+                                .where((sport) => !sport.isAll)
+                                .toList()
+                            : catalog,
                       );
                       if (next == null || !context.mounted) return;
-                      cubit.applyFilter(next);
+                      await cubit.applyFilter(next);
                     },
                   ),
                 ),
@@ -158,32 +167,6 @@ class _HomeBodyState extends State<HomeBody> {
                       sports: state.sports,
                       selectedId: state.selectedSportId,
                       onSelected: (sport) => cubit.selectSport(sport.id),
-                    ),
-                  ),
-                ),
-                // Discovery tabs, like user-web Venues | Courts.
-                SliverPadding(
-                  padding: const .fromLTRB(
-                    AppSizes.pagePadding,
-                    AppSizes.spaceSm,
-                    AppSizes.pagePadding,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Row(
-                      children: [
-                        ChoiceChip(
-                          label: const Text('Arenas'),
-                          selected: !state.showingCourts,
-                          onSelected: (_) => cubit.setShowingCourts(false),
-                        ),
-                        8.w,
-                        ChoiceChip(
-                          label: const Text('Courts'),
-                          selected: state.showingCourts,
-                          onSelected: (_) => cubit.setShowingCourts(true),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -224,33 +207,7 @@ class _HomeBodyState extends State<HomeBody> {
                       ),
                     ),
                   )
-                else if (state.showingCourts) ...[
-                  SliverPadding(
-                    padding: const .fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.spaceLg,
-                      AppSizes.pagePadding,
-                      110,
-                    ),
-                    sliver: SliverList.separated(
-                      itemCount: state.courts.length,
-                      separatorBuilder: (_, _) => AppSizes.spaceMd.h,
-                      itemBuilder: (context, index) {
-                        final item = state.courts[index];
-                        return CourtCard(
-                          item: item,
-                          onOpen: () => context.push(
-                            '${AppRoutes.courtDetail}/${item.court.id}',
-                          ),
-                          onBook: () => VenueNavigation.openBookSlot(
-                            context,
-                            item.toVenue(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ] else ...[
+                else ...[
                   SliverPadding(
                     padding: const .fromLTRB(
                       AppSizes.pagePadding,
@@ -286,9 +243,18 @@ class _HomeBodyState extends State<HomeBody> {
                       110,
                     ),
                     sliver: SliverList.separated(
-                      itemCount: state.venues.length,
+                      itemCount:
+                          state.venues.length + (state.hasMore ? 1 : 0),
                       separatorBuilder: (_, _) => AppSizes.spaceMd.h,
                       itemBuilder: (context, index) {
+                        if (index >= state.venues.length) {
+                          return PaginationLoader(
+                            pageKey: state.page,
+                            enabled: !state.isLoadingMore,
+                            errorMessage: state.errorMessage,
+                            onLoadMore: cubit.loadMore,
+                          );
+                        }
                         final venue = state.venues[index];
                         return BlocBuilder<ProfileCubit, ProfileState>(
                           buildWhen: (p, c) =>

@@ -10,9 +10,12 @@ class AuthSession extends Equatable {
   });
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
+    final payload = json['data'];
+    if (payload is Map) json = Map<String, dynamic>.from(payload);
     final userJson = json['user'];
     final refresh =
         json['refresh_token'] as String? ?? json['refreshToken'] as String?;
+    final complete = readProfileComplete(json);
     return AuthSession(
       accessToken:
           json['accessToken'] as String? ??
@@ -21,7 +24,10 @@ class AuthSession extends Equatable {
           '',
       refreshToken: refresh != null && refresh.isNotEmpty ? refresh : null,
       user: userJson is Map
-          ? UserModel.fromJson(Map<String, dynamic>.from(userJson))
+          ? UserModel.fromJson({
+              ...Map<String, dynamic>.from(userJson),
+              if (complete != null) 'isComplete': complete,
+            })
           : const UserModel(id: '', name: '', email: ''),
     );
   }

@@ -30,8 +30,22 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final next = AuthNavigation.nextOf(context);
-    return Scaffold(
+    final onProfileStep = context.select<AuthCubit, bool>(
+      (cubit) => cubit.state.step == AuthStep.signup,
+    );
+    return PopScope(
+      canPop: !onProfileStep,
+      child: Scaffold(
       body: BlocBuilder<AuthCubit, AuthState>(
+        buildWhen: (previous, current) =>
+            previous.status != current.status ||
+            previous.step != current.step ||
+            previous.errorMessage != current.errorMessage ||
+            previous.noticeMessage != current.noticeMessage ||
+            previous.loaderTitle != current.loaderTitle ||
+            previous.errorTitle != current.errorTitle ||
+            previous.welcomePromoCode != current.welcomePromoCode ||
+            previous.referralNotice != current.referralNotice,
         builder: (context, state) {
           final cubit = context.read<AuthCubit>();
           return AppFormListener(
@@ -51,7 +65,11 @@ class AuthScreen extends StatelessWidget {
                 AuthTopBar(
                   onBack: () {
                     if (state.step == AuthStep.email) {
-                      context.pop();
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(AppRoutes.home);
+                      }
                       return;
                     }
                     cubit.backStep();
@@ -76,6 +94,8 @@ class AuthScreen extends StatelessWidget {
                 BlocBuilder<SessionCubit, SessionState>(
                   builder: (context, sessionState) {
                     if (sessionState.isAuthenticated &&
+                        sessionState.user!.isProfileCompleted &&
+                        state.step != AuthStep.signup &&
                         state.step != AuthStep.done &&
                         !state.status.isSuccess) {
                       return AuthAlreadySignedIn(
@@ -110,6 +130,7 @@ class AuthScreen extends StatelessWidget {
           );
         },
       ).safeArea(),
-    ).annotatedRegion(.dark);
+      ).annotatedRegion(.dark),
+    );
   }
 }

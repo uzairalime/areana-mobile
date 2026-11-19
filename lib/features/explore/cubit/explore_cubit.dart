@@ -4,6 +4,7 @@ import '../../../core/enums/app_loading.dart';
 import '../../../core/services/explore_session_store.dart';
 import '../../home/cubit/home_repository.dart';
 import '../../home/model/court_filter.dart';
+import '../../home/model/sport_game.dart';
 import '../model/explore_models.dart';
 import 'explore_state.dart';
 
@@ -26,7 +27,19 @@ class ExploreCubit extends Cubit<ExploreState> {
   Future<void> load() async {
     final requestId = ++_requestId;
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
-    final result = await _repository.fetchVenues(page: 1, limit: 20);
+    final result = await _repository.fetchVenues(
+      sport: SportGame.apiName(state.selectedSportId),
+      sort: state.search.hasCoordinates && state.filter.sort == .recommended
+          ? 'distance'
+          : state.filter.apiSort,
+      minPrice: state.filter.apiMinPrice,
+      maxPrice: state.filter.apiMaxPrice,
+      lat: state.search.lat,
+      lng: state.search.lng,
+      radiusKm: state.search.hasCoordinates ? state.search.radiusKm : null,
+      page: 1,
+      limit: state.search.hasCoordinates ? 50 : 20,
+    );
     if (isClosed || requestId != _requestId) return;
     result.when(
       success: (page) {
@@ -34,7 +47,6 @@ class ExploreCubit extends Cubit<ExploreState> {
           state.copyWith(
             status: AppLoading.success,
             venues: page.items.map((v) => v.toVenue()).toList(),
-            // Re-apply session snapshot in case a remount raced load().
             search: _session.search,
             pageTab: _session.pageTab,
             selectedSportId: _session.selectedSportId,
@@ -55,14 +67,12 @@ class ExploreCubit extends Cubit<ExploreState> {
     );
   }
 
-  /// Courts / Map only — does not clear place search.
   void setPageTab(ExplorePageTab tab) {
     if (tab == state.pageTab) return;
     _session.savePageTab(tab);
     emit(state.copyWith(pageTab: tab));
   }
 
-  /// Called when user leaves Explore via bottom nav — back = default catalog.
   void resetAfterLeave() {
     if (!state.search.hasLocation &&
         state.selectedSportId == null &&
@@ -82,46 +92,55 @@ class ExploreCubit extends Cubit<ExploreState> {
     );
   }
 
-  void selectSport(String? sportId) {
-    if (sportId == null) {
+  Future<void> selectSport(String? sportId) async {
+    if (sportId == null || sportId == state.selectedSportId) {
       _session.saveSportId(null);
-      emit(state.copyWith(clearSport: true));
-      return;
+      emit(
+        state.copyWith(
+          clearSport: true,
+          filter: state.filter.copyWith(clearSport: true),
+        ),
+      );
+    } else {
+      _session.saveSportId(sportId);
+      emit(
+        state.copyWith(
+          selectedSportId: sportId,
+          filter: state.filter.copyWith(sportId: sportId),
+        ),
+      );
     }
-    if (sportId == state.selectedSportId) {
-      _session.saveSportId(null);
-      emit(state.copyWith(clearSport: true));
-      return;
-    }
-    _session.saveSportId(sportId);
-    emit(state.copyWith(selectedSportId: sportId));
+    await load();
   }
 
-  void applySearch(ExploreSearchCriteria search) {
-    if (search == state.search) return;
-    _session.saveSearch(search);
-    emit(state.copyWith(search: search));
-  }
-
-  void applyPlace({required String location, String placeId = ''}) {
-    final search = state.search.copyWith(location: location, placeId: placeId);
+  Future<void> applyArea({
+    required String location,
+    String placeId = '',
+    double? lat,
+    double? lng,
+    double radiusKm = ExploreSearchCriteria.defaultRadiusKm,
+  }) async {
+    final search = ExploreSearchCriteria(
+      location: location,
+      placeId: placeId,
+      lat: lat,
+      lng: lng,
+      radiusKm: radiusKm,
+    );
     _session
       ..saveSearch(search)
       ..savePageTab(.courts);
     emit(state.copyWith(search: search, pageTab: .courts));
-  }
-
-  /// GPS-based Explore filter — does not use a city string match.
-  void applyNearby() {
-    applyPlace(location: 'Nearby', placeId: 'nearby');
+    await load();
   }
 
   void clearPlace() {
     _session.clearSearch();
     emit(state.copyWith(search: const ExploreSearchCriteria()));
+    load();
   }
 
-  void applyFilter(CourtFilterDraft filter) {
+  Future<void> applyFilter(CourtFilterDraft filter) async {
     if (filter == state.filter) return;
     _session.saveSportId(filter.sportId);
     emit(
@@ -131,5 +150,6 @@ class ExploreCubit extends Cubit<ExploreState> {
         clearSport: filter.sportId == null,
       ),
     );
+    await load();
   }
 }

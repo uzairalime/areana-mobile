@@ -10,6 +10,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/venue_navigation.dart';
 import '../../../core/widgets/app_loading_handler.dart';
+import '../../home/model/sport_game.dart';
 import '../../home/model/venue.dart';
 import '../../home/widgets/court_filter_sheet.dart';
 import '../cubit/explore_cubit.dart';
@@ -52,6 +53,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final next = await showCourtFilterSheet(
       context,
       initial: cubit.state.filter,
+      sports: SportGame.defaults.where((sport) => !sport.isAll).toList(),
     );
     if (next == null || !mounted) return;
     cubit.applyFilter(next);

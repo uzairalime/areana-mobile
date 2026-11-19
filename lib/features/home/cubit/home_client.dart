@@ -24,6 +24,7 @@ class HomeClient {
     String? sort,
     double? lat,
     double? lng,
+    double? radiusKm,
     int? page,
     int? limit,
   }) {
@@ -35,6 +36,7 @@ class HomeClient {
       if (sort != null && sort.isNotEmpty) 'sort': sort,
       if (lat != null && lng != null) 'lat': lat,
       if (lat != null && lng != null) 'lng': lng,
+      'radiusKm': ?radiusKm,
       'page': ?page,
       'limit': ?limit,
     };
@@ -93,25 +95,35 @@ class HomeClient {
     String? sport,
     String? surface,
     String? sort,
+    String type = 'all',
+    int? minPrice,
+    int? maxPrice,
     double? lat,
     double? lng,
+    double? radiusKm,
     int page = 1,
     int limit = 20,
   }) async {
     try {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.venues,
-        queryParameters: _query(
-          q: q,
-          city: city,
-          sport: sport,
-          surface: surface,
-          sort: sort,
-          lat: lat,
-          lng: lng,
-          page: page,
-          limit: limit,
-        ),
+        queryParameters: {
+          ..._query(
+            q: q,
+            city: city,
+            sport: sport,
+            surface: surface,
+            sort: sort,
+            lat: lat,
+            lng: lng,
+            radiusKm: radiusKm,
+            page: page,
+            limit: limit,
+          ),
+          'type': type.trim().isEmpty ? 'all' : type.trim(),
+          'minPrice': ?minPrice,
+          'maxPrice': ?maxPrice,
+        },
       );
       return ApiSuccess(
         parseOffsetPage(response.data, AreanaVenue.fromJson),

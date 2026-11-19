@@ -6,17 +6,18 @@ import '../../../core/services/session_cubit.dart';
 import '../../../core/services/session_store.dart';
 import '../model/auth_session.dart';
 import '../model/otp_models.dart';
+import '../model/user_model.dart';
 import 'auth_client.dart';
 
-/// Areana player auth — same flow as user-web `/auth`:
-/// email → 6-digit code → (signup fields, only when the server says the
-/// account does not exist yet) → session. No password, no social.
+/// Authenticates with email OTP and saves profile details using the session.
 class AuthRepository {
   const AuthRepository(this._client, this._session, this._store);
 
   final AuthClient _client;
   final SessionCubit _session;
   final SessionStore _store;
+
+  UserModel? get currentUser => _store.isAuthenticated ? _store.user : null;
 
   Future<ApiResult<OtpRequestResponse>> requestOtp({required String email}) {
     if (AppConfig.useMockApi) {
@@ -44,15 +45,6 @@ class AuthRepository {
             message: 'Invalid or expired code',
           );
         }
-        // Mock rule, mirroring the web flow: the one mock account is
-        // alex@pitchside.app. Any other email without name + phone is
-        // a new account, so the Cubit must show the signup step.
-        if ((name == null || name.isEmpty || phone == null || phone.isEmpty) &&
-            email != 'alex@pitchside.app') {
-          return const ApiError<OtpVerifyResponse>(
-            message: 'name and phone are required for new accounts',
-          );
-        }
         return ApiSuccess(
           MockAuthData.verifyOtp(
             email: email,
@@ -74,6 +66,39 @@ class AuthRepository {
     );
   }
 
+  Future<ApiResult<ProfileCompletionResponse>> completeProfile({
+    required String name,
+    required String phone,
+    String? city,
+    String? referralCode,
+  }) async {
+    final current = currentUser;
+    if (current == null) {
+      return const ApiError(message: 'Please sign in again to complete your profile.');
+    }
+    final result = AppConfig.useMockApi
+        ? await MockDelay.run(() => ApiSuccess(ProfileCompletionResponse(
+            user: current.copyWith(
+              name: name, phone: phone, city: city, isProfileCompleted: true,
+            ),
+            referralStatus: referralCode == null ? ReferralStatus.none : ReferralStatus.applied,
+          )))
+        : await _client.completeProfile(
+            name: name, phone: phone, city: city, referralCode: referralCode,
+          );
+    final completion = result.dataOrNull;
+    if (completion == null) return result;
+    if (currentUser?.id != current.id || completion.user.id != current.id) {
+      return const ApiError(message: 'Your session changed. Please sign in again.');
+    }
+    try {
+      await _session.applyUser(completion.user);
+      return result;
+    } catch (error) {
+      return ApiError(message: 'Could not save your profile. Please try again.', error: error);
+    }
+  }
+
   /// Best-effort server logout, then local clear regardless — same as
   /// web `revokePlayerSession` + `clearPlayerTokens`.
   Future<void> logout() async {
@@ -89,7 +114,7 @@ class AuthRepository {
   /// persists a verify result, so a session is stored exactly once.
   Future<ApiResult<AuthSession>> persistVerify(OtpVerifyResponse verify) async {
     final session = AuthClient.sessionFromVerify(verify);
-    if (session.accessToken.isEmpty) {
+    if (session.accessToken.isEmpty || session.user.id.isEmpty) {
       return const ApiError(
         message: 'The server did not return a valid session.',
       );

@@ -1,5 +1,14 @@
 import 'package:equatable/equatable.dart';
 
+/// Server routing flag. `isComplete` is canonical; `isProfileCompleted` remains for older responses.
+bool? readProfileComplete(Map<String, dynamic> json) {
+  for (final key in ['isComplete', 'isProfileCompleted']) {
+    final value = json[key];
+    if (value is bool) return value;
+  }
+  return null;
+}
+
 class UserModel extends Equatable {
   const UserModel({
     required this.id,
@@ -17,14 +26,18 @@ class UserModel extends Equatable {
     this.paymentPreference = 'pay_at_ground',
     this.twoStepEnabled = false,
     this.passwordUpdatedLabel = '',
+    this._isProfileCompleted,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final rawAvatar =
-        json['avatar_url'] as String? ?? json['avatarUrl'] as String?;
+        json['profileImage'] as String? ??
+        json['avatar_url'] as String? ??
+        json['avatarUrl'] as String?;
     final rawProvider = json['provider'] as String?;
     final sportsRaw = json['favourite_sports'] ?? json['favorite_sports'];
     return UserModel(
+      isProfileCompleted: readProfileComplete(json),
       id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
@@ -69,6 +82,10 @@ class UserModel extends Equatable {
   final String paymentPreference;
   final bool twoStepEnabled;
   final String passwordUpdatedLabel;
+  final bool? _isProfileCompleted;
+
+  bool get isProfileCompleted =>
+      _isProfileCompleted ?? (name.trim().isNotEmpty && phone.trim().isNotEmpty);
 
   String get languageLabel => switch (languageCode) {
     'ur' => 'اردو',
@@ -97,8 +114,10 @@ class UserModel extends Equatable {
     bool? twoStepEnabled,
     String? passwordUpdatedLabel,
     bool clearAvatar = false,
+    bool? isProfileCompleted,
   }) {
     return UserModel(
+      isProfileCompleted: isProfileCompleted ?? _isProfileCompleted,
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
@@ -119,6 +138,7 @@ class UserModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
+    'isProfileCompleted': isProfileCompleted,
     'id': id,
     'name': name,
     'email': email,
@@ -153,5 +173,6 @@ class UserModel extends Equatable {
     paymentPreference,
     twoStepEnabled,
     passwordUpdatedLabel,
+    isProfileCompleted,
   ];
 }

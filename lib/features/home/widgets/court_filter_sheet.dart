@@ -15,6 +15,7 @@ import '../model/sport_game.dart';
 Future<CourtFilterDraft?> showCourtFilterSheet(
   BuildContext context, {
   CourtFilterDraft initial = const CourtFilterDraft(),
+  List<SportGame> sports = const [],
 }) {
   AppHaptics.light();
   return showModalBottomSheet<CourtFilterDraft>(
@@ -23,14 +24,19 @@ Future<CourtFilterDraft?> showCourtFilterSheet(
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     barrierColor: AppColors.scrim.withValues(alpha: 0.42),
-    builder: (_) => CourtFilterSheet(initial: initial),
+    builder: (_) => CourtFilterSheet(initial: initial, sports: sports),
   );
 }
 
 class CourtFilterSheet extends StatefulWidget {
-  const CourtFilterSheet({super.key, this.initial = const CourtFilterDraft()});
+  const CourtFilterSheet({
+    super.key,
+    this.initial = const CourtFilterDraft(),
+    this.sports = const [],
+  });
 
   final CourtFilterDraft initial;
+  final List<SportGame> sports;
 
   @override
   State<CourtFilterSheet> createState() => _CourtFilterSheetState();
@@ -103,12 +109,9 @@ class _CourtFilterSheetState extends State<CourtFilterSheet> {
                         onSelected: (sort) => _set(_draft.copyWith(sort: sort)),
                       ),
                       _SportsSection(
+                        sports: widget.sports,
                         selectedId: _draft.sportId,
                         onSelected: (id) => _set(_draft.toggleSport(id)),
-                      ),
-                      _LocationsSection(
-                        selectedId: _draft.areaId,
-                        onSelected: (id) => _set(_draft.toggleArea(id)),
                       ),
                       _BudgetSection(
                         range: _draft.priceRange,
@@ -217,14 +220,20 @@ class _SortSection extends StatelessWidget {
 }
 
 class _SportsSection extends StatelessWidget {
-  const _SportsSection({required this.selectedId, required this.onSelected});
+  const _SportsSection({
+    required this.sports,
+    required this.selectedId,
+    required this.onSelected,
+  });
 
+  final List<SportGame> sports;
   final String? selectedId;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final sports = CourtFilterPresets.sports;
+    final sports = this.sports.where((sport) => !sport.isAll).toList();
+    final cards = sports.isEmpty ? CourtFilterPresets.sports : sports;
     return Column(
       crossAxisAlignment: .start,
       children: [
@@ -234,10 +243,10 @@ class _SportsSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: .horizontal,
             padding: const .symmetric(horizontal: 20),
-            itemCount: sports.length,
+            itemCount: cards.length,
             separatorBuilder: (_, _) => 10.w,
             itemBuilder: (context, index) {
-              final sport = sports[index];
+              final sport = cards[index];
               return _SportCard(
                 sport: sport,
                 selected: selectedId == sport.id,
@@ -317,45 +326,6 @@ class _SportCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LocationsSection extends StatelessWidget {
-  const _LocationsSection({required this.selectedId, required this.onSelected});
-
-  final String? selectedId;
-  final ValueChanged<String> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final areas = CourtFilterPresets.areas;
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        const _SectionLabel('Locations'),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: .horizontal,
-            padding: const .symmetric(horizontal: 20),
-            itemCount: areas.length,
-            separatorBuilder: (_, _) => 8.w,
-            itemBuilder: (context, index) {
-              final area = areas[index];
-              return _FilterChip(
-                label: area.label,
-                icon: area.icon,
-                selected: selectedId == area.id,
-                onTap: () {
-                  AppHaptics.selection();
-                  onSelected(area.id);
-                },
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }
@@ -546,13 +516,11 @@ class _FilterChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.icon,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -569,7 +537,6 @@ class _FilterChip extends StatelessWidget {
           child: Row(
             mainAxisSize: .min,
             children: [
-              if (icon != null) ...[Icon(icon, size: 14, color: fg), 6.w],
               Text(
                 label,
                 maxLines: 1,

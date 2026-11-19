@@ -28,7 +28,6 @@ class SearchCubit extends Cubit<SearchState> {
   }
 
   void onQueryChanged(String value) {
-    // Invalidate immediately, including while the next query is debouncing.
     _requestId++;
     final trimmed = value.trim();
     emit(
@@ -36,12 +35,11 @@ class SearchCubit extends Cubit<SearchState> {
         query: value,
         errorMessage: '',
         places: trimmed.isEmpty ? const [] : state.places,
-        venues: trimmed.isEmpty ? const [] : state.venues,
         status: trimmed.isEmpty ? AppLoading.initial : state.status,
       ),
     );
     _debounce?.cancel();
-    if (trimmed.isEmpty) return;
+    if (trimmed.length < 2) return;
     _debounce = Timer(debounceDuration, () => search(trimmed));
   }
 
@@ -49,12 +47,11 @@ class SearchCubit extends Cubit<SearchState> {
     _debounce?.cancel();
     final id = ++_requestId;
     final trimmed = query.trim();
-    if (trimmed.isEmpty) {
+    if (trimmed.length < 2) {
       emit(
         state.copyWith(
           status: AppLoading.initial,
           places: const [],
-          venues: const [],
           errorMessage: '',
         ),
       );
@@ -71,7 +68,6 @@ class SearchCubit extends Cubit<SearchState> {
           state.copyWith(
             status: AppLoading.success,
             places: bundle.places,
-            venues: bundle.venues,
             errorMessage: '',
           ),
         );
@@ -82,7 +78,6 @@ class SearchCubit extends Cubit<SearchState> {
             status: AppLoading.error,
             errorMessage: error.message,
             places: const [],
-            venues: const [],
           ),
         );
       },
@@ -92,30 +87,76 @@ class SearchCubit extends Cubit<SearchState> {
   Future<void> submitCurrent() async {
     _debounce?.cancel();
     final query = queryController.text.trim();
-    if (query.isEmpty) return;
-    await _persistRecent(query);
+    if (query.length < 2) return;
     await search(query);
   }
 
-  Future<void> selectRecent(String query) async {
-    queryController
-      ..text = query
-      ..selection = TextSelection.collapsed(offset: query.length);
-    emit(state.copyWith(query: query));
-    _debounce?.cancel();
-    await _persistRecent(query);
-    await search(query);
-  }
-
-  Future<PlaceSearchResult?> pickPlace(PlaceSuggestion place) async {
-    if (!place.isNearby) {
-      await _persistRecent(place.primaryText);
+  Future<PlaceSuggestion?> resolvePlace(PlaceSuggestion place) async {
+    if (place.hasCoordinates) {
+      await _persistRecent(place.toRecent());
+      return place;
     }
-    return PlaceSearchResult(place);
+    if (place.id.isEmpty) return null;
+    final resolved = (await _repository.details(place.id)).dataOrNull;
+    if (resolved == null) return null;
+    await _persistRecent(resolved.toRecent());
+    return resolved;
   }
 
-  Future<void> removeRecent(String query) async {
-    final recents = await _repository.removeRecent(query);
+  Future<PlaceSuggestion?> resolveRecent(RecentPlace recent) async {
+    if (recent.hasCoordinates) {
+      await _persistRecent(recent);
+      return PlaceSuggestion(
+        id: recent.placeId,
+        primaryText: recent.label,
+        label: recent.label,
+        lat: recent.lat,
+        lng: recent.lng,
+      );
+    }
+    if (recent.placeId.isNotEmpty) {
+      final resolved = (await _repository.details(recent.placeId)).dataOrNull;
+      if (resolved != null) {
+        await _persistRecent(resolved.toRecent());
+        return resolved;
+      }
+    }
+    final bundle = (await _repository.search(recent.label)).dataOrNull;
+    if (bundle == null || bundle.places.isEmpty) return null;
+    return resolvePlace(bundle.places.first);
+  }
+
+  Future<PlaceSuggestion?> reverseGeocode({
+    required double lat,
+    required double lng,
+  }) async {
+    final result = await _repository.reverse(lat: lat, lng: lng);
+    return result.when(
+      success: (place) {
+        final label = place.displayLabel.trim();
+        final blocked = label.toLowerCase() == 'nearby' ||
+            label.toLowerCase() == 'near me';
+        if (!blocked) return place;
+        return PlaceSuggestion(
+          id: place.id.isEmpty ? 'nearby' : place.id,
+          primaryText: 'Current location',
+          label: 'Current location',
+          lat: lat,
+          lng: lng,
+        );
+      },
+      failure: (_) => PlaceSuggestion(
+        id: 'nearby',
+        primaryText: 'Current location',
+        label: 'Current location',
+        lat: lat,
+        lng: lng,
+      ),
+    );
+  }
+
+  Future<void> removeRecent(RecentPlace place) async {
+    final recents = await _repository.removeRecent(place);
     if (isClosed) return;
     emit(state.copyWith(recents: recents));
   }
@@ -126,10 +167,8 @@ class SearchCubit extends Cubit<SearchState> {
     emit(state.copyWith(recents: const []));
   }
 
-  Future<void> rememberSelection(String query) => _persistRecent(query);
-
-  Future<void> _persistRecent(String query) async {
-    final recents = await _repository.remember(query);
+  Future<void> _persistRecent(RecentPlace place) async {
+    final recents = await _repository.remember(place);
     if (isClosed) return;
     emit(state.copyWith(recents: recents));
   }

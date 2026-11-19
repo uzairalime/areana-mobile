@@ -8,11 +8,9 @@ import '../model/sport_game.dart';
 import 'home_repository.dart';
 import 'home_state.dart';
 
-/// Discovery cubit: user-web home/browse flow.
-/// `GET /venues` (offset paging) for arenas, `GET /courts` for the
-/// Courts tab, `GET /sports` + `GET /venues/cities` for filters.
-/// Server sort values are passed through unchanged; `distance`
-/// requires a location (lat+lng), otherwise the server 400s.
+/// Discovery cubit. One public list: `GET /venues?type=all`.
+/// Sport, sort, and budget from the filter sheet go on that query.
+/// `distance` still needs lat and lng together.
 class HomeCubit extends Cubit<HomeState> {
   HomeCubit(this._repository) : super(const HomeState()) {
     load();
@@ -57,7 +55,16 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future<void> selectSport(String sportId) async {
     if (sportId == state.selectedSportId) return;
-    emit(state.copyWith(selectedSportId: sportId));
+    final clear = sportId == SportGame.all.id;
+    emit(
+      state.copyWith(
+        selectedSportId: sportId,
+        filter: state.filter.copyWith(
+          sportId: clear ? null : sportId,
+          clearSport: clear,
+        ),
+      ),
+    );
     await _loadPage(page: 1);
   }
 
@@ -77,12 +84,6 @@ class HomeCubit extends Cubit<HomeState> {
     } else {
       emit(state.copyWith(lat: lat, lng: lng));
     }
-    await _loadPage(page: 1);
-  }
-
-  Future<void> setShowingCourts(bool value) async {
-    if (value == state.showingCourts) return;
-    emit(state.copyWith(showingCourts: value));
     await _loadPage(page: 1);
   }
 
@@ -112,48 +113,13 @@ class HomeCubit extends Cubit<HomeState> {
     }
     final sport = state.selectedSportName;
     final query = state.query.trim().isEmpty ? null : state.query.trim();
-    if (state.showingCourts) {
-      final result = await _repository.fetchCourts(
-        q: query,
-        city: state.selectedCity,
-        sport: sport,
-        sort: state.sort ?? 'price_asc',
-        lat: state.lat,
-        lng: state.lng,
-        page: page,
-        limit: 20,
-      );
-      if (isClosed || requestId != _pageRequestId) return;
-      result.when(
-        success: (data) {
-          emit(
-            state.copyWith(
-              status: AppLoading.success,
-              courts: append ? [...state.courts, ...data.items] : data.items,
-              page: data.page,
-              hasMore: data.hasMore,
-              isLoadingMore: false,
-              errorMessage: '',
-            ),
-          );
-        },
-        failure: (error) {
-          emit(
-            state.copyWith(
-              status: append ? AppLoading.success : AppLoading.error,
-              isLoadingMore: false,
-              errorMessage: error.message,
-            ),
-          );
-        },
-      );
-      return;
-    }
     final result = await _repository.fetchVenues(
       q: query,
       city: state.selectedCity,
       sport: sport,
-      sort: state.sort,
+      sort: state.sort ?? state.filter.apiSort,
+      minPrice: state.filter.apiMinPrice,
+      maxPrice: state.filter.apiMaxPrice,
       lat: state.lat,
       lng: state.lng,
       page: page,
@@ -193,9 +159,16 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future<void> submitQuery() => _loadPage(page: 1);
 
-  void applyFilter(CourtFilterDraft filter) {
+  Future<void> applyFilter(CourtFilterDraft filter) async {
     if (filter == state.filter) return;
-    emit(state.copyWith(filter: filter));
+    emit(
+      state.copyWith(
+        filter: filter,
+        selectedSportId: filter.sportId ?? SportGame.all.id,
+        sort: filter.apiSort,
+      ),
+    );
+    await _loadPage(page: 1);
   }
 
   Future<AreanaVenueDetail?> fetchVenueDetail(String id) async {
