@@ -8,16 +8,24 @@ flavors:
       name: "Pitchside Dev"
     android:
       applicationId: "com.zorixsolutions.arana.dev"
+      firebase:
+        config: "assets/firebase/development/google-services.json"
     ios:
       bundleId: "com.zorixsolutions.arana.dev"
+      firebase:
+        config: "assets/firebase/development/GoogleService-Info.plist"
 
   production:
     app:
       name: "Pitchside"
     android:
       applicationId: "com.zorixsolutions.arana"
+      firebase:
+        config: "assets/firebase/production/google-services.json"
     ios:
       bundleId: "com.zorixsolutions.arana"
+      firebase:
+        config: "assets/firebase/production/GoogleService-Info.plist"
 
 ide: vscode
 
@@ -31,3 +39,4 @@ instructions:
   - android:androidManifest
   - android:buildGradle
   - android:flavorizrGradle
+  - google:firebase

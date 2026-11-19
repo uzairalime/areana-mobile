@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "351886837361",
+    "project_id": "arena-b60be",
+    "storage_bucket": "arena-b60be.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351886837361:android:67af6b46cd30cba4e0bdd0",
+        "android_client_info": {
+          "package_name": "com.zorixsolutions.arana"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXWRnYu_mz2Vor02DBxbPM86eTZGvwsnw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351886837361:android:67af6b46cd30cba4e0bdd0",
+        "android_client_info": {
+          "package_name": "com.zorixsolutions.arana.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXWRnYu_mz2Vor02DBxbPM86eTZGvwsnw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
