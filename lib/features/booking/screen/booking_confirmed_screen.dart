@@ -12,6 +12,7 @@ import '../../../core/services/in_app_review_service.dart';
 import '../../../core/services/locator.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
+import '../../conversations/conversation_navigation.dart';
 import '../../../core/widgets/app_button.dart';
 import '../widgets/confirmed_share_card.dart';
 import '../cubit/booking_cubit.dart';
@@ -151,6 +152,23 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                                 ).expand(),
                               ],
                             ),
+                            if (confirmation != null) ...[
+                              10.h,
+                              AppButton(
+                                label: 'Chat with arena',
+                                showArrow: false,
+                                backgroundColor: AppColors.surface,
+                                foregroundColor: AppColors.primary,
+                                onPressed: () {
+                                  AppHaptics.selection();
+                                  ConversationNavigation.openArenaChat(
+                                    context,
+                                    venueId: confirmation.venueId,
+                                    bookingId: confirmation.id,
+                                  );
+                                },
+                              ),
+                            ],
                             10.h,
                             AppButton(
                               label: 'Back to home',

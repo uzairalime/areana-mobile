@@ -2,29 +2,33 @@ import 'package:latlong2/latlong.dart';
 
 import '../../features/home/model/venue.dart';
 
-/// Grid clustering for map markers. Pure / allocation-light.
+/// Grid clustering for map markers. Always clusters overlapping cells,
+/// then merges closest groups so at most [maxMarkers] are drawn.
+/// Zoom in uses a finer grid (clusters expand); zoom out coarsens them.
 abstract final class VenueMapClustering {
-  /// Below this count we never cluster — every venue is its own marker.
-  static const int clusterThreshold = 20;
+  static const int maxMarkers = 15;
 
   static List<VenueCluster> build({
     required List<Venue> venues,
     required double zoom,
   }) {
     if (venues.isEmpty) return const [];
+    if (venues.length == 1) return [VenueCluster.single(venues.first)];
 
-    if (venues.length <= clusterThreshold) {
-      return [for (final v in venues) VenueCluster.single(v)];
+    var clusters = _bucket(venues, _cellDegrees(zoom));
+    if (clusters.length > maxMarkers) {
+      clusters = _mergeClosest(clusters, maxMarkers);
     }
+    return clusters;
+  }
 
-    final cell = _cellDegrees(zoom);
+  static List<VenueCluster> _bucket(List<Venue> venues, double cell) {
     final buckets = <String, List<Venue>>{};
-    for (final v in venues) {
-      final gx = (v.latitude / cell).floor();
-      final gy = (v.longitude / cell).floor();
-      (buckets['$gx:$gy'] ??= <Venue>[]).add(v);
+    for (final venue in venues) {
+      final gx = (venue.latitude / cell).floor();
+      final gy = (venue.longitude / cell).floor();
+      (buckets['$gx:$gy'] ??= <Venue>[]).add(venue);
     }
-
     return [
       for (final group in buckets.values)
         if (group.length == 1)
@@ -34,16 +38,131 @@ abstract final class VenueMapClustering {
     ];
   }
 
+  static List<VenueCluster> _mergeClosest(
+    List<VenueCluster> input,
+    int max,
+  ) {
+    final clusters = List<VenueCluster>.of(input);
+    while (clusters.length > max) {
+      var bestI = 0;
+      var bestJ = 1;
+      var best = double.infinity;
+      for (var i = 0; i < clusters.length; i++) {
+        final a = clusters[i].center;
+        for (var j = i + 1; j < clusters.length; j++) {
+          final b = clusters[j].center;
+          final dLat = a.latitude - b.latitude;
+          final dLng = a.longitude - b.longitude;
+          final d = dLat * dLat + dLng * dLng;
+          if (d < best) {
+            best = d;
+            bestI = i;
+            bestJ = j;
+          }
+        }
+      }
+      final merged = VenueCluster.group([
+        ...clusters[bestI].venues,
+        ...clusters[bestJ].venues,
+      ]);
+      if (bestJ > bestI) {
+        clusters.removeAt(bestJ);
+        clusters.removeAt(bestI);
+      } else {
+        clusters.removeAt(bestI);
+        clusters.removeAt(bestJ);
+      }
+      clusters.add(merged);
+    }
+    return clusters;
+  }
+
   /// Coarser cells when zoomed out → more clustering.
   static double _cellDegrees(double zoom) {
-    if (zoom < 6) return 2.5;
     if (zoom < 8) return 1.2;
-    if (zoom < 10) return 0.45;
-    if (zoom < 12) return 0.18;
-    if (zoom < 14) return 0.06;
-    if (zoom < 16) return 0.02;
-    return 0.006;
+    if (zoom < 10) return 0.5;
+    if (zoom < 12) return 0.22;
+    if (zoom < 13) return 0.1;
+    if (zoom < 14) return 0.045;
+    if (zoom < 15) return 0.02;
+    if (zoom < 16) return 0.01;
+    return 0.004;
   }
+}
+
+class MapViewport {
+  const MapViewport({
+    required this.minLat,
+    required this.maxLat,
+    required this.minLng,
+    required this.maxLng,
+    required this.centerLat,
+    required this.centerLng,
+    required this.zoom,
+  });
+
+  final double minLat;
+  final double maxLat;
+  final double minLng;
+  final double maxLng;
+  final double centerLat;
+  final double centerLng;
+  final double zoom;
+
+  bool contains(double lat, double lng) =>
+      lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+
+  /// True when the origin is clearly off-screen (not a tiny pan).
+  bool leftOrigin(double lat, double lng) {
+    final latPad = (maxLat - minLat).abs() * 0.08;
+    final lngPad = (maxLng - minLng).abs() * 0.08;
+    return lat < minLat - latPad ||
+        lat > maxLat + latPad ||
+        lng < minLng - lngPad ||
+        lng > maxLng + lngPad;
+  }
+
+  /// ~100m buckets so camera jitter does not refetch.
+  String get quantizedKey =>
+      '${minLat.toStringAsFixed(3)},${maxLat.toStringAsFixed(3)},'
+      '${minLng.toStringAsFixed(3)},${maxLng.toStringAsFixed(3)}';
+
+  MapViewport padded(double fraction) {
+    final latPad = (maxLat - minLat).abs() * fraction;
+    final lngPad = (maxLng - minLng).abs() * fraction;
+    return MapViewport(
+      minLat: minLat - latPad,
+      maxLat: maxLat + latPad,
+      minLng: minLng - lngPad,
+      maxLng: maxLng + lngPad,
+      centerLat: centerLat,
+      centerLng: centerLng,
+      zoom: zoom,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MapViewport &&
+        minLat == other.minLat &&
+        maxLat == other.maxLat &&
+        minLng == other.minLng &&
+        maxLng == other.maxLng &&
+        centerLat == other.centerLat &&
+        centerLng == other.centerLng &&
+        zoom == other.zoom;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    minLat,
+    maxLat,
+    minLng,
+    maxLng,
+    centerLat,
+    centerLng,
+    zoom,
+  );
 }
 
 class VenueCluster {

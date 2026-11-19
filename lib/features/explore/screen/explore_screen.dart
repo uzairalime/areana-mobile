@@ -1,6 +1,7 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
@@ -8,6 +9,7 @@ import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
+import '../../../core/utils/venue_map_clustering.dart';
 import '../../../core/utils/venue_navigation.dart';
 import '../../../core/widgets/app_loading_handler.dart';
 import '../../home/model/sport_game.dart';
@@ -125,16 +127,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     p.status != c.status ||
                     p.errorMessage != c.errorMessage ||
                     p.venues != c.venues ||
+                    p.mapVenues != c.mapVenues ||
                     p.search != c.search ||
                     p.selectedSportId != c.selectedSportId ||
                     p.filter != c.filter ||
-                    p.pageTab != c.pageTab,
+                    p.pageTab != c.pageTab ||
+                    p.showBackToOrigin != c.showBackToOrigin ||
+                    p.cameraFitNonce != c.cameraFitNonce,
                 builder: (context, state) {
                   final cubit = context.read<ExploreCubit>();
                   final venues = state.visibleVenues;
 
                   // Keep PageView mounted so PageController stays attached
-                  // (Courts/Map taps during load must not crash).
+                  // (Venues/Map taps during load must not crash).
                   return PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
@@ -148,18 +153,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         onRetry: cubit.load,
                         loading: const ExploreVenueTileShimmerList()
                             .paddingSymmetric(horizontal: AppSizes.pagePadding),
-                        child: _CourtsList(
+                        child: _VenuesList(
                           venues: venues,
                           onTap: (venue) => _openDetail(context, venue),
                         ),
                       ),
-                      // Mount map only on Map tab — avoids tile/marker load on Courts.
+                      // Mount map only on Map tab — avoids tile/marker load on Venues.
                       _LazyMapPage(
                         active: state.pageTab == .map,
                         status: state.status,
-                        venues: venues,
-                        hasPlaceFilter: state.search.hasLocation,
-                        onClearPlace: cubit.clearPlace,
+                        venues: state.visibleMapVenues,
+                        focus: state.originFocus,
+                        viewport: state.mapViewport,
+                        cameraFitNonce: state.cameraFitNonce,
+                        showBackToOrigin: state.showBackToOrigin,
+                        backToOriginLabel: state.backToOriginLabel,
+                        onViewportChanged: cubit.onMapViewport,
+                        onBackToOrigin: cubit.returnToOrigin,
                         onVenueTap: (venue) => _openDetail(context, venue),
                       ),
                     ],
@@ -180,16 +190,26 @@ class _LazyMapPage extends StatelessWidget {
     required this.active,
     required this.status,
     required this.venues,
-    required this.hasPlaceFilter,
-    required this.onClearPlace,
+    required this.focus,
+    required this.viewport,
+    required this.cameraFitNonce,
+    required this.showBackToOrigin,
+    required this.backToOriginLabel,
+    required this.onViewportChanged,
+    required this.onBackToOrigin,
     required this.onVenueTap,
   });
 
   final bool active;
   final AppLoading status;
   final List<Venue> venues;
-  final bool hasPlaceFilter;
-  final VoidCallback onClearPlace;
+  final LatLng? focus;
+  final MapViewport? viewport;
+  final int cameraFitNonce;
+  final bool showBackToOrigin;
+  final String backToOriginLabel;
+  final ValueChanged<MapViewport> onViewportChanged;
+  final VoidCallback onBackToOrigin;
   final ValueChanged<Venue> onVenueTap;
 
   @override
@@ -201,14 +221,14 @@ class _LazyMapPage extends StatelessWidget {
     if (status == .loading || status == .initial) {
       return const ColoredBox(
         color: AppColors.background,
-        child: Center(child: Text('Loading courts…')),
+        child: Center(child: Text('Loading venues…')),
       );
     }
 
     if (status == .error) {
       return const ColoredBox(
         color: AppColors.background,
-        child: Center(child: Text('Couldn’t load courts')),
+        child: Center(child: Text('Couldn’t load venues')),
       );
     }
 
@@ -217,54 +237,25 @@ class _LazyMapPage extends StatelessWidget {
         if (v.hasCoordinates) v,
     ];
 
-    if (mapped.isEmpty) {
-      return ColoredBox(
-        color: AppColors.background,
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            const Icon(Icons.map_outlined, size: 40, color: AppColors.primary),
-            10.h,
-            Text(
-              hasPlaceFilter
-                  ? 'No courts in this area'
-                  : 'No courts on the map',
-              style: context.textTheme.titleSmall?.copyWith(fontWeight: .w800),
-            ),
-            if (hasPlaceFilter) ...[
-              8.h,
-              TextButton(
-                onPressed: () {
-                  AppHaptics.selection();
-                  onClearPlace();
-                },
-                child: Text(
-                  'Clear place filter',
-                  style: context.textTheme.labelLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: .w800,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    // Remount when venue set changes so markers always bind to fresh mock data.
     return ExploreMapPanel(
-      key: ValueKey(
-        'explore-map-${mapped.length}-${mapped.first.id}-${mapped.last.id}',
-      ),
       venues: mapped,
+      focus: focus,
+      initialCenter: viewport == null
+          ? null
+          : LatLng(viewport!.centerLat, viewport!.centerLng),
+      initialZoom: viewport?.zoom,
+      cameraFitNonce: cameraFitNonce,
+      onViewportChanged: onViewportChanged,
+      showBackToOrigin: showBackToOrigin,
+      backToOriginLabel: backToOriginLabel,
+      onBackToOrigin: onBackToOrigin,
       onVenueTap: onVenueTap,
     );
   }
 }
 
-class _CourtsList extends StatelessWidget {
-  const _CourtsList({required this.venues, required this.onTap});
+class _VenuesList extends StatelessWidget {
+  const _VenuesList({required this.venues, required this.onTap});
 
   final List<Venue> venues;
   final ValueChanged<Venue> onTap;
@@ -282,7 +273,7 @@ class _CourtsList extends StatelessWidget {
           ),
           12.h,
           Text(
-            'No courts match',
+            'No venues match',
             style: context.textTheme.titleMedium?.copyWith(fontWeight: .w800),
           ),
           6.h,

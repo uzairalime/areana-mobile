@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 
-enum ExplorePageTab { courts, map }
+enum ExplorePageTab { venues, map }
 
 extension ExplorePageTabX on ExplorePageTab {
   String get label => switch (this) {
-    .courts => 'Courts',
+    .venues => 'Venues',
     .map => 'Map',
   };
 }

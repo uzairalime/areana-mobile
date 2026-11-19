@@ -19,9 +19,9 @@ import 'package:arana360/features/booking/cubit/booking_repository.dart';
 import 'package:arana360/features/bookings/cubit/bookings_client.dart';
 import 'package:arana360/features/bookings/cubit/bookings_cubit.dart';
 import 'package:arana360/features/bookings/cubit/bookings_repository.dart';
-import 'package:arana360/features/games/cubit/games_client.dart';
-import 'package:arana360/features/games/cubit/games_cubit.dart';
-import 'package:arana360/features/games/cubit/games_repository.dart';
+import 'package:arana360/features/conversations/cubit/conversations_client.dart';
+import 'package:arana360/features/conversations/cubit/conversations_cubit.dart';
+import 'package:arana360/features/conversations/cubit/conversations_repository.dart';
 import 'package:arana360/features/home/cubit/home_client.dart';
 import 'package:arana360/features/home/cubit/home_cubit.dart';
 import 'package:arana360/features/home/cubit/home_repository.dart';
@@ -172,6 +172,15 @@ Map<String, dynamic> _page(
   'page': page,
   'limit': 20,
   'hasMore': more,
+};
+
+Map<String, dynamic> _cursor(
+  List<Map<String, dynamic>> items, {
+  bool more = false,
+}) => {
+  'items': items,
+  'nextCursor': more ? 'cursor-next' : null,
+  'total': items.length,
 };
 
 Future<void> _startBooking(_Api api, BookingCubit cubit) async {
@@ -378,34 +387,44 @@ void main() {
     },
   );
 
-  test('games discard an old appended page after refresh', () async {
+  test('chats discard an old appended page after refresh', () async {
     final api = _Api();
-    final cubit = GamesCubit(
-      GamesRepository(GamesClient(api.dio), BookingsClient(api.dio)),
+    final cubit = ConversationsCubit(
+      ConversationsRepository(ConversationsClient(api.dio)),
     );
     addTearDown(cubit.close);
-    (await api.take('game-posts')).respond(
-      _page([
-        {'id': 'old'},
+    (await api.take('conversations')).respond(
+      _cursor([
+        {'id': 'old', 'venueId': 'v', 'venueName': 'Old', 'title': 'Old'},
       ], more: true),
     );
     await _flush();
     final append = cubit.loadMore();
-    final stale = await api.take('game-posts');
+    final stale = await api.take('conversations');
     final refresh = cubit.refresh();
-    (await api.take('game-posts')).respond(
-      _page([
-        {'id': 'current'},
+    (await api.take('conversations')).respond(
+      _cursor([
+        {
+          'id': 'current',
+          'venueId': 'v',
+          'venueName': 'Arena',
+          'title': 'Arena',
+        },
       ]),
     );
     await refresh;
     stale.respond(
-      _page([
-        {'id': 'stale-page'},
-      ], page: 2),
+      _cursor([
+        {
+          'id': 'stale-page',
+          'venueId': 'v',
+          'venueName': 'Stale',
+          'title': 'Stale',
+        },
+      ], more: true),
     );
     await append;
-    expect(cubit.state.games.map((game) => game.id), ['current']);
+    expect(cubit.state.threads.map((thread) => thread.id), ['current']);
     expect(cubit.state.isLoadingMore, isFalse);
   });
 

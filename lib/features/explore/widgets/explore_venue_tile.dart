@@ -8,7 +8,7 @@ import '../../../core/utils/money_format.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
 import '../../home/model/venue.dart';
 
-/// Full-width list row (not a grid cell) for Explore Courts.
+/// Full-width list row (not a grid cell) for Explore Venues.
 class ExploreVenueTile extends StatelessWidget {
   const ExploreVenueTile({super.key, required this.venue, required this.onTap});
 

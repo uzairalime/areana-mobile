@@ -29,7 +29,7 @@ class ExploreHeader extends StatelessWidget {
   final ValueChanged<ExplorePageTab> onPageTabChanged;
   final ValueChanged<String?> onSportSelected;
 
-  /// Explicit clear only — never tied to Courts/Map or sport chips.
+  /// Explicit clear only — never tied to Venues/Map or sport chips.
   final VoidCallback? onClearSearch;
 
   @override

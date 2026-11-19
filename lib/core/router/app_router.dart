@@ -22,9 +22,11 @@ import '../../features/home/screen/home_screen.dart';
 import '../../features/home/screen/venue_detail_screen.dart';
 import '../../features/explore/cubit/explore_cubit.dart';
 import '../../features/explore/screen/explore_screen.dart';
-import '../../features/games/cubit/games_cubit.dart';
-import '../../features/games/screen/game_detail_screen.dart';
-import '../../features/games/screen/games_screen.dart';
+import '../../features/conversations/cubit/chat_cubit.dart';
+import '../../features/conversations/cubit/conversations_cubit.dart';
+import '../../features/conversations/cubit/conversations_repository.dart';
+import '../../features/conversations/screen/chat_screen.dart';
+import '../../features/conversations/screen/conversations_screen.dart';
 import '../../features/notifications/cubit/notifications_cubit.dart';
 import '../../features/notifications/screen/notifications_screen.dart';
 import '../../features/profile/model/legal_doc.dart';
@@ -58,9 +60,8 @@ abstract final class AppRoutes {
   static const bookings = '/bookings';
   static const bookingDetail = '/bookings/detail';
   static const explore = '/explore';
-  static const messages = '/games';
-  static const games = '/games';
-  static const gameDetail = '/games/detail';
+  static const messages = '/chats';
+  static const games = messages;
   static const chat = '/chat';
   static const notifications = '/notifications';
   static const account = '/account';
@@ -211,20 +212,18 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         },
       ),
       GoRoute(
-        path: '${AppRoutes.gameDetail}/:id',
+        path: '${AppRoutes.chat}/:id',
         pageBuilder: (context, state) {
-          final game = GameDetailScreen.resolve(state);
-          if (game == null) {
-            return _appPage(
-              state,
-              const Scaffold(body: Center(child: Text('Game not found'))),
-            );
-          }
+          final id = state.pathParameters['id'] ?? '';
           return _appPage(
             state,
             BlocProvider(
-              create: (_) => getIt<GamesCubit>()..loadDetail(game.id),
-              child: GameDetailScreen(game: game),
+              create: (_) => ChatCubit(
+                getIt<ConversationsRepository>(),
+                conversationId: id,
+                seed: ChatScreen.seedOf(state),
+              ),
+              child: ChatScreen(conversationId: id),
             ),
           );
         },
@@ -377,12 +376,12 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.games,
+                path: AppRoutes.messages,
                 pageBuilder: (context, state) {
                   return NoTransitionPage(
-                    child: BlocProvider(
-                      create: (_) => getIt<GamesCubit>(),
-                      child: const GamesScreen(),
+                    child: BlocProvider.value(
+                      value: getIt<ConversationsCubit>(),
+                      child: const ConversationsScreen(),
                     ),
                   );
                 },

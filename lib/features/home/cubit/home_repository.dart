@@ -31,6 +31,10 @@ class HomeRepository {
     double? lat,
     double? lng,
     double? radiusKm,
+    double? minLat,
+    double? maxLat,
+    double? minLng,
+    double? maxLng,
     int page = 1,
     int limit = 20,
   }) =>
@@ -46,6 +50,10 @@ class HomeRepository {
         lat: lat,
         lng: lng,
         radiusKm: radiusKm,
+        minLat: minLat,
+        maxLat: maxLat,
+        minLng: minLng,
+        maxLng: maxLng,
         page: page,
         limit: limit,
       );

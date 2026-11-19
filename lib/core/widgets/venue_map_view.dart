@@ -26,6 +26,10 @@ class VenueMapView extends StatefulWidget {
     this.showPriceMarkers = true,
     this.enableClustering = false,
     this.initialZoom,
+    this.initialCenter,
+    this.focus,
+    this.cameraFitNonce = 0,
+    this.onViewportChanged,
     this.borderRadius,
     this.controlsBottom = 16,
   });
@@ -41,10 +45,13 @@ class VenueMapView extends StatefulWidget {
   final bool openDirectionsOnTap;
   final bool showPriceMarkers;
 
-  /// When true and venue count &gt; [VenueMapClustering.clusterThreshold],
-  /// markers are clustered (zoom in spreads, zoom out merges).
+  /// Grid-cluster markers and cap at [VenueMapClustering.maxMarkers].
   final bool enableClustering;
   final double? initialZoom;
+  final LatLng? initialCenter;
+  final LatLng? focus;
+  final int cameraFitNonce;
+  final ValueChanged<MapViewport>? onViewportChanged;
   final BorderRadius? borderRadius;
   final double controlsBottom;
 
@@ -82,7 +89,7 @@ class _VenueMapViewState extends State<VenueMapView> {
     ];
   }
 
-  LatLng get _center {
+  LatLng get _venuesCenter {
     final venues = _mapped;
     if (venues.isEmpty) return _fallback;
     if (venues.length == 1) {
@@ -97,6 +104,8 @@ class _VenueMapViewState extends State<VenueMapView> {
     final n = venues.length;
     return LatLng(lat / n, lng / n);
   }
+
+  LatLng get _fitTarget => widget.focus ?? widget.initialCenter ?? _venuesCenter;
 
   static double _autoZoomFor(List<Venue> venues) {
     if (venues.length <= 1) return 14;
@@ -119,10 +128,7 @@ class _VenueMapViewState extends State<VenueMapView> {
 
   List<Venue> _viewportVenues() {
     final bounds = _visibleBounds;
-    if (bounds == null ||
-        _mapped.length <= VenueMapClustering.clusterThreshold) {
-      return _mapped;
-    }
+    if (bounds == null) return _mapped;
     // Pad bounds slightly so edge markers don't pop in/out.
     final latPad = (bounds.north - bounds.south).abs() * 0.15;
     final lngPad = (bounds.east - bounds.west).abs() * 0.15;
@@ -140,6 +146,27 @@ class _VenueMapViewState extends State<VenueMapView> {
     ];
   }
 
+  MapViewport _toViewport(LatLngBounds bounds, double zoom, LatLng center) {
+    return MapViewport(
+      minLat: bounds.south,
+      maxLat: bounds.north,
+      minLng: bounds.west,
+      maxLng: bounds.east,
+      centerLat: center.latitude,
+      centerLng: center.longitude,
+      zoom: zoom,
+    );
+  }
+
+  void _publishViewport() {
+    final bounds = _visibleBounds;
+    final callback = widget.onViewportChanged;
+    if (bounds == null || callback == null) return;
+    callback(
+      _toViewport(bounds, _zoom, _mapController.camera.center),
+    );
+  }
+
   List<VenueCluster> _clusters() {
     final inView = _viewportVenues();
     if (!widget.enableClustering) {
@@ -151,19 +178,23 @@ class _VenueMapViewState extends State<VenueMapView> {
   @override
   void didUpdateWidget(covariant VenueMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!listEquals(
+    final venuesChanged = !listEquals(
       oldWidget.venues.map((v) => v.id).toList(growable: false),
       widget.venues.map((v) => v.id).toList(growable: false),
-    )) {
+    );
+    if (venuesChanged) {
       _mappedCache = null;
       _mapped = _resolveMapped();
+    }
+    if (widget.cameraFitNonce != oldWidget.cameraFitNonce) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _mapController.move(_center, _fitZoom);
+        _mapController.move(_fitTarget, _fitZoom);
         setState(() {
           _zoom = _fitZoom;
           _visibleBounds = _mapController.camera.visibleBounds;
         });
+        _publishViewport();
       });
     }
   }
@@ -190,6 +221,7 @@ class _VenueMapViewState extends State<VenueMapView> {
         _zoom = nextZoom;
         _visibleBounds = nextBounds;
       });
+      _publishViewport();
     }
   }
 
@@ -241,8 +273,8 @@ class _VenueMapViewState extends State<VenueMapView> {
                       '${cluster.count}',
           ),
           point: cluster.center,
-          width: cluster.isSingle ? (widget.showPriceMarkers ? 112 : 36) : 44,
-          height: cluster.isSingle ? (widget.showPriceMarkers ? 44 : 36) : 44,
+          width: cluster.isSingle ? (widget.showPriceMarkers ? 86 : 36) : 40,
+          height: cluster.isSingle ? (widget.showPriceMarkers ? 40 : 36) : 40,
           alignment: .topCenter,
           child: cluster.isSingle
               ? (widget.showPriceMarkers
@@ -270,13 +302,14 @@ class _VenueMapViewState extends State<VenueMapView> {
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
-            initialCenter: _center,
-            initialZoom: _fitZoom,
+            initialCenter: widget.initialCenter ?? _fitTarget,
+            initialZoom: widget.initialZoom ?? _fitZoom,
             minZoom: 4,
             maxZoom: 18,
             onMapReady: () {
               _visibleBounds = _mapController.camera.visibleBounds;
               _zoom = _mapController.camera.zoom;
+              _publishViewport();
             },
             onMapEvent: lockGestures ? null : _onMapEvent,
             onTap: openDirections ? (_, _) => _openDirections() : null,
@@ -303,11 +336,12 @@ class _VenueMapViewState extends State<VenueMapView> {
                   icon: Icons.my_location_rounded,
                   onTap: () {
                     AppHaptics.selection();
-                    _mapController.move(_center, _fitZoom);
+                    _mapController.move(_fitTarget, _fitZoom);
                     setState(() {
                       _zoom = _fitZoom;
                       _visibleBounds = _mapController.camera.visibleBounds;
                     });
+                    _publishViewport();
                   },
                 ),
                 8.h,
@@ -467,14 +501,14 @@ class _PriceMarker extends StatelessWidget {
             shadowColor: AppColors.shadow.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(AppSizes.radiusPill),
             child: Padding(
-              padding: const .symmetric(horizontal: 10, vertical: 7),
-              child: Text(
+            padding: const .symmetric(horizontal: 8, vertical: 6),
+            child: Text(
                 label,
                 maxLines: 1,
                 overflow: .ellipsis,
                 style: context.textTheme.labelLarge?.copyWith(
                   fontWeight: .w800,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
               ),
             ),

@@ -38,10 +38,21 @@ class NotificationPayload {
 
   /// Build from a future FCM / API data map (same keys ReelStay uses).
   factory NotificationPayload.fromRemoteData(Map<String, dynamic> data) {
-    final link = data['link'] ?? data['url'] ?? data['deep_link'];
+    var link = (data['link'] ?? data['url'] ?? data['deep_link'])?.toString() ?? '';
+    if (link.isEmpty) {
+      final conversationId = data['conversationId']?.toString() ?? '';
+      if (conversationId.isNotEmpty) {
+        link = '/chat/$conversationId';
+      } else {
+        final type = data['type']?.toString() ?? '';
+        if (type.startsWith('booking') || type.startsWith('reschedule')) {
+          link = '/bookings';
+        }
+      }
+    }
     return NotificationPayload(
       type: NotificationTypeX.fromJson(data['type'] as String?),
-      link: link?.toString() ?? '',
+      link: link,
       id: data['id']?.toString() ?? data['notification_id']?.toString() ?? '',
     );
   }

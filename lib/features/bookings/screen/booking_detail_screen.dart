@@ -11,6 +11,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/utils/venue_navigation.dart';
+import '../../conversations/conversation_navigation.dart';
 import '../../../core/widgets/venue_map_view.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
 import '../cubit/bookings_cubit.dart';
@@ -210,6 +211,14 @@ class BookingDetailScreen extends StatelessWidget {
               _BottomBar(
                 booking: live,
                 managing: managing,
+                onChat: () {
+                  AppHaptics.selection();
+                  ConversationNavigation.openArenaChat(
+                    context,
+                    venueId: live.venueId,
+                    bookingId: live.id,
+                  );
+                },
                 onUpdate: () => _update(context, live),
                 onReschedule: () => _reschedule(context, live),
                 onCancel: () => _cancel(context, live),
@@ -234,6 +243,7 @@ class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.booking,
     required this.managing,
+    required this.onChat,
     required this.onUpdate,
     required this.onReschedule,
     required this.onCancel,
@@ -242,6 +252,7 @@ class _BottomBar extends StatelessWidget {
 
   final UserBooking booking;
   final bool managing;
+  final VoidCallback onChat;
   final VoidCallback onUpdate;
   final VoidCallback onReschedule;
   final VoidCallback onCancel;
@@ -249,74 +260,126 @@ class _BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chatButton = SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onChat,
+        icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+        label: const Text('Chat with arena'),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+        ),
+      ),
+    );
+
     return SafeArea(
       top: false,
       child: Padding(
         padding: const .fromLTRB(20, 8, 20, 16),
         child: booking.canModify
-            ? Row(
+            ? Column(
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: managing ? null : onReschedule,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppSizes.buttonHeight,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMd,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        'Reschedule',
-                        style: context.textTheme.labelLarge?.copyWith(
-                          fontWeight: .w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  12.w,
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: managing ? null : onCancel,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppSizes.buttonHeight,
-                        ),
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMd,
-                          ),
-                        ),
-                      ),
-                      child: managing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              'Cancel',
-                              style: context.textTheme.labelLarge?.copyWith(
-                                color: AppColors.error,
-                                fontWeight: .w800,
+                  chatButton,
+                  10.h,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: managing ? null : onReschedule,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(
+                              AppSizes.buttonHeight,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
                               ),
                             ),
-                    ),
-                  ),
-                  12.w,
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: managing ? null : onUpdate,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(
-                          AppSizes.buttonHeight,
+                          ),
+                          child: Text(
+                            'Reschedule',
+                            style: context.textTheme.labelLarge?.copyWith(
+                              fontWeight: .w800,
+                            ),
+                          ),
                         ),
+                      ),
+                      12.w,
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: managing ? null : onCancel,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(
+                              AppSizes.buttonHeight,
+                            ),
+                            foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
+                              ),
+                            ),
+                          ),
+                          child: managing
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Cancel',
+                                  style: context.textTheme.labelLarge?.copyWith(
+                                    color: AppColors.error,
+                                    fontWeight: .w800,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      12.w,
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton(
+                          onPressed: managing ? null : onUpdate,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(
+                              AppSizes.buttonHeight,
+                            ),
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMd,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Update slot',
+                            style: context.textTheme.labelLarge?.copyWith(
+                              color: AppColors.onPrimary,
+                              fontWeight: .w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  chatButton,
+                  10.h,
+                  SizedBox(
+                    width: double.infinity,
+                    height: AppSizes.buttonHeight,
+                    child: FilledButton(
+                      onPressed: onBack,
+                      style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.onPrimary,
                         shape: RoundedRectangleBorder(
@@ -326,7 +389,7 @@ class _BottomBar extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Update slot',
+                        'Back to bookings',
                         style: context.textTheme.labelLarge?.copyWith(
                           color: AppColors.onPrimary,
                           fontWeight: .w800,
@@ -335,27 +398,6 @@ class _BottomBar extends StatelessWidget {
                     ),
                   ),
                 ],
-              )
-            : SizedBox(
-                width: double.infinity,
-                height: AppSizes.buttonHeight,
-                child: FilledButton(
-                  onPressed: onBack,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                    ),
-                  ),
-                  child: Text(
-                    'Back to bookings',
-                    style: context.textTheme.labelLarge?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: .w800,
-                    ),
-                  ),
-                ),
               ),
       ),
     );

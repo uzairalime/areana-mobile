@@ -101,6 +101,10 @@ class HomeClient {
     double? lat,
     double? lng,
     double? radiusKm,
+    double? minLat,
+    double? maxLat,
+    double? minLng,
+    double? maxLng,
     int page = 1,
     int limit = 20,
   }) async {
@@ -123,6 +127,10 @@ class HomeClient {
           'type': type.trim().isEmpty ? 'all' : type.trim(),
           'minPrice': ?minPrice,
           'maxPrice': ?maxPrice,
+          'minLat': ?minLat,
+          'maxLat': ?maxLat,
+          'minLng': ?minLng,
+          'maxLng': ?maxLng,
         },
       );
       return ApiSuccess(

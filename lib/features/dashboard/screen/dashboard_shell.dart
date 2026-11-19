@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/services/locator.dart';
+import '../../conversations/cubit/conversations_cubit.dart';
 import '../../explore/cubit/explore_cubit.dart';
 import '../widgets/app_bottom_nav.dart';
 
@@ -27,6 +28,9 @@ class DashboardShell extends StatelessWidget {
             getIt<ExploreCubit>().resetAfterLeave();
           }
           navigationShell.goBranch(index);
+          if (index == AppBottomNav.chatsIndex) {
+            getIt<ConversationsCubit>().refresh();
+          }
         },
       ),
     );

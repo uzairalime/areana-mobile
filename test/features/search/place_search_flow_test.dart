@@ -1,6 +1,8 @@
 import 'package:arana360/core/services/explore_session_store.dart';
 import 'package:arana360/core/services/recent_search_store.dart';
+import 'package:arana360/core/utils/venue_map_clustering.dart';
 import 'package:arana360/features/explore/cubit/explore_cubit.dart';
+import 'package:arana360/features/explore/model/explore_models.dart';
 import 'package:arana360/features/home/cubit/home_client.dart';
 import 'package:arana360/features/home/cubit/home_repository.dart';
 import 'package:arana360/features/search/cubit/search_client.dart';
@@ -71,6 +73,78 @@ void main() {
     expect(cubit.state.search.location, 'Lahore');
     expect(cubit.state.search.location.toLowerCase(), isNot('nearby'));
     expect(cubit.state.venues.single.id, 'near');
+    expect(cubit.state.mapVenues.single.id, 'near');
+    expect(cubit.state.pageTab, ExplorePageTab.venues);
+    expect(cubit.state.pageTab.label, 'Venues');
+  });
+
+  test('map pan fetches bbox venues and keeps the Lahore list', () async {
+    final api = _Api();
+    final cubit = ExploreCubit(
+      HomeRepository(HomeClient(api.dio)),
+      ExploreSessionStore(),
+      mapDebounce: Duration.zero,
+    );
+    addTearDown(cubit.close);
+    (await api.take('venues')).respond(_venues(['seed']));
+
+    final applied = cubit.applyArea(
+      location: 'Lahore',
+      placeId: 'ChIJ-lahore',
+      lat: 31.5204,
+      lng: 74.3587,
+    );
+    (await api.take('venues')).respond(
+      _venues(['lahore'], lat: 31.5204, lng: 74.3587),
+    );
+    await applied;
+    expect(cubit.state.venues.single.id, 'lahore');
+
+    cubit.onMapViewport(
+      const MapViewport(
+        minLat: 31.4,
+        maxLat: 31.7,
+        minLng: 74.2,
+        maxLng: 74.5,
+        centerLat: 31.52,
+        centerLng: 74.35,
+        zoom: 12,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(api.pending, isEmpty);
+    expect(cubit.state.showBackToOrigin, isFalse);
+
+    cubit.onMapViewport(
+      const MapViewport(
+        minLat: 33.6,
+        maxLat: 33.8,
+        minLng: 72.9,
+        maxLng: 73.2,
+        centerLat: 33.7,
+        centerLng: 73.05,
+        zoom: 12,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    final boxed = await api.take('venues');
+    expect(boxed.options.queryParameters.containsKey('radiusKm'), isFalse);
+    expect(boxed.options.queryParameters['minLat'], closeTo(33.584, 0.01));
+    expect(boxed.options.queryParameters['maxLat'], closeTo(33.816, 0.01));
+    expect(boxed.options.queryParameters['minLng'], closeTo(72.876, 0.01));
+    expect(boxed.options.queryParameters['maxLng'], closeTo(73.224, 0.01));
+    boxed.respond(_venues(['away'], lat: 33.7, lng: 73.05));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(cubit.state.venues.single.id, 'lahore');
+    expect(cubit.state.mapVenues.single.id, 'away');
+    expect(cubit.state.showBackToOrigin, isTrue);
+    expect(cubit.state.backToOriginLabel, 'Back to Lahore');
+
+    cubit.returnToOrigin();
+    expect(cubit.state.showBackToOrigin, isFalse);
+    expect(cubit.state.mapVenues.single.id, 'lahore');
+    expect(cubit.state.venues.single.id, 'lahore');
   });
 
   test('plain recent labels round-trip without searching the idle screen', () {
@@ -82,10 +156,17 @@ void main() {
   });
 }
 
-Map<String, Object?> _venues(List<String> ids) {
+Map<String, Object?> _venues(List<String> ids, {double? lat, double? lng}) {
   return {
     'items': [
-      for (final id in ids) {'id': id, 'name': id, 'sports': ['Football']},
+      for (final id in ids)
+        {
+          'id': id,
+          'name': id,
+          'sports': ['Football'],
+          'lat': ?lat,
+          'lng': ?lng,
+        },
     ],
     'total': ids.length,
     'page': 1,

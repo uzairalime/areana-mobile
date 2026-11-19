@@ -59,6 +59,12 @@ class ApiEndpoints {
   static const String favorites = 'favorites';
   static const String favoritesCheck = 'favorites/check';
 
+  // Player ↔ arena chat.
+  static const String conversations = 'conversations';
+  static String conversation(String id) => 'conversations/$id';
+  static String conversationMessages(String id) => 'conversations/$id/messages';
+  static String conversationRead(String id) => 'conversations/$id/read';
+
   // Games board (public list, authenticated join/create).
   static const String gamePosts = 'game-posts';
   static String gamePost(String id) => 'game-posts/$id';
