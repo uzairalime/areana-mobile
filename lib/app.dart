@@ -10,6 +10,7 @@ import 'core/services/app_upgrader.dart';
 import 'core/services/locator.dart';
 import 'core/services/location/location_cubit.dart';
 import 'core/services/notification/notification_service.dart';
+import 'core/services/notification/push_messaging.dart';
 import 'core/services/session_cubit.dart';
 import 'core/services/session_state.dart';
 import 'core/theme/app_theme.dart';
@@ -41,6 +42,7 @@ class _AppState extends State<App> {
     _bootstrapped = true;
     await getIt<DeepLinkService>().attach(_router);
     await getIt<NotificationService>().initialize();
+    await getIt<PushMessagingService>().initialize();
   }
 
   @override

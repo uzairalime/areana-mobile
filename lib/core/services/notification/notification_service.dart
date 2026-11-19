@@ -59,16 +59,8 @@ class NotificationService {
     if (kIsWeb) return false;
 
     if (Platform.isIOS) {
-      final ios = _local
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >();
-      final granted = await ios?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      return granted ?? false;
+      // FCM `requestPermission` owns the iOS prompt (ReelStay).
+      return true;
     }
 
     if (Platform.isAndroid) {

@@ -19,6 +19,8 @@ import '../../features/home/cubit/home_repository.dart';
 import '../../features/conversations/cubit/conversations_client.dart';
 import '../../features/conversations/cubit/conversations_cubit.dart';
 import '../../features/conversations/cubit/conversations_repository.dart';
+import '../../features/notifications/cubit/device_token_client.dart';
+import '../../features/notifications/cubit/device_token_repository.dart';
 import '../../features/notifications/cubit/notifications_client.dart';
 import '../../features/notifications/cubit/notifications_cubit.dart';
 import '../../features/notifications/cubit/notifications_repository.dart';
@@ -34,6 +36,7 @@ import 'in_app_review_service.dart';
 import 'location/location_cubit.dart';
 import 'location/location_service.dart';
 import 'notification/notification_service.dart';
+import 'notification/push_messaging.dart';
 import 'notification/remote_notification_bridge.dart';
 import 'explore_session_store.dart';
 import 'recent_search_store.dart';
@@ -56,6 +59,19 @@ void setupLocator() {
     ..registerLazySingleton<RemoteNotificationBridge>(
       () => RemoteNotificationBridge(getIt<NotificationService>()),
     )
+    ..registerLazySingleton<DeviceTokenClient>(
+      () => DeviceTokenClient(getIt<Dio>()),
+    )
+    ..registerLazySingleton<DeviceTokenRepository>(
+      () => DeviceTokenRepository(getIt<DeviceTokenClient>()),
+    )
+    ..registerLazySingleton<PushMessagingService>(
+      () => PushMessagingService(
+        tokens: getIt<DeviceTokenRepository>(),
+        session: getIt<SessionStore>(),
+        deepLinks: getIt<DeepLinkService>(),
+      ),
+    )
     ..registerLazySingleton<LocationService>(LocationService.new)
     ..registerLazySingleton<LocationCubit>(
       () => LocationCubit(getIt<LocationService>()),
@@ -69,6 +85,7 @@ void setupLocator() {
         getIt<AuthClient>(),
         getIt<SessionCubit>(),
         getIt<SessionStore>(),
+        push: getIt<PushMessagingService>(),
       ),
     )
     ..registerLazySingleton<HomeClient>(() => HomeClient(getIt<Dio>()))

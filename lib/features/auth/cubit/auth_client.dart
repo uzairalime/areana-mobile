@@ -129,11 +129,18 @@ class AuthClient {
 
   /// Best-effort server logout (web `revokePlayerSession`): revokes the
   /// refresh session. Callers clear local tokens regardless of result.
-  Future<void> logout({required String refreshToken}) async {
+  Future<void> logout({
+    required String refreshToken,
+    String? deviceToken,
+  }) async {
     try {
       await _dio.post<dynamic>(
         ApiEndpoints.logout,
-        data: {'refreshToken': refreshToken},
+        data: {
+          'refreshToken': refreshToken,
+          if (deviceToken != null && deviceToken.isNotEmpty)
+            'deviceToken': deviceToken,
+        },
       );
     } catch (_) {
       // Best effort — local tokens are cleared regardless.

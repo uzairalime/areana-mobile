@@ -2,6 +2,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/mock/mock_auth_data.dart';
 import '../../../core/mock/mock_delay.dart';
 import '../../../core/services/api_result.dart';
+import '../../../core/services/notification/push_messaging.dart';
 import '../../../core/services/session_cubit.dart';
 import '../../../core/services/session_store.dart';
 import '../model/auth_session.dart';
@@ -11,11 +12,17 @@ import 'auth_client.dart';
 
 /// Authenticates with email OTP and saves profile details using the session.
 class AuthRepository {
-  const AuthRepository(this._client, this._session, this._store);
+  const AuthRepository(
+    this._client,
+    this._session,
+    this._store, {
+    this.push,
+  });
 
   final AuthClient _client;
   final SessionCubit _session;
   final SessionStore _store;
+  final PushMessagingService? push;
 
   UserModel? get currentUser => _store.isAuthenticated ? _store.user : null;
 
@@ -119,6 +126,7 @@ class AuthRepository {
     }
     try {
       await _session.applyUser(completion.user);
+      await push?.sync();
       return result;
     } catch (error) {
       return ApiError(message: 'Could not save your profile. Please try again.', error: error);
@@ -129,10 +137,15 @@ class AuthRepository {
   /// web `revokePlayerSession` + `clearPlayerTokens`.
   Future<void> logout() async {
     final refreshToken = _store.refreshToken;
+    final deviceToken = push?.cachedToken;
     if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _client.logout(refreshToken: refreshToken);
+      await _client.logout(
+        refreshToken: refreshToken,
+        deviceToken: deviceToken,
+      );
     }
     await _session.clear();
+    push?.reset();
   }
 
   /// Single persist step, called by the Cubit after a successful
@@ -147,6 +160,7 @@ class AuthRepository {
     }
     try {
       await _session.applySession(session);
+      await push?.sync();
       return ApiSuccess(session);
     } catch (error) {
       // Do not leave a half-persisted login in memory after storage failure.
