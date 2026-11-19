@@ -125,14 +125,14 @@ class DeviceSocialAuth implements SocialAuth {
     final ios = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final iosClientId = AppConfig.googleIosClientId.trim();
     final webClientId = AppConfig.googleServerClientId.trim();
-    final androidClientId = AppConfig.googleAndroidClientId.trim();
+    final androidAudience = AppConfig.googleIdTokenAudience;
     // No Web client yet: iOS tokens `aud` the iOS ID; Android needs
     // serverClientId to mint an ID token, so it uses the Android ID.
     await GoogleSignIn.instance.initialize(
       clientId: ios && iosClientId.isNotEmpty ? iosClientId : null,
-      serverClientId: webClientId.isNotEmpty
-          ? webClientId
-          : (!ios && androidClientId.isNotEmpty ? androidClientId : null),
+      serverClientId: ios
+          ? (webClientId.isEmpty ? null : webClientId)
+          : (androidAudience.isEmpty ? null : androidAudience),
     );
     if (!GoogleSignIn.instance.supportsAuthenticate()) {
       throw const SocialAuthException(

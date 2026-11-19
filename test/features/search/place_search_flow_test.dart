@@ -30,6 +30,7 @@ void main() {
     final pending = cubit.search('Lahore');
     final request = await api.take('places/autocomplete');
     expect(request.options.queryParameters['q'], 'Lahore');
+    expect(request.options.queryParameters['session'], isNotEmpty);
     request.respond({
       'items': [
         {

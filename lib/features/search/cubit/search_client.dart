@@ -11,11 +11,17 @@ class SearchClient {
 
   final Dio _dio;
 
-  Future<ApiResult<SearchBundle>> search(String query) async {
+  Future<ApiResult<SearchBundle>> search(
+    String query, {
+    String? session,
+  }) async {
     try {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.placesAutocomplete,
-        queryParameters: {'q': query},
+        queryParameters: {
+          'q': query,
+          if (session != null && session.isNotEmpty) 'session': session,
+        },
       );
       final page = parseOffsetPage(response.data, PlaceSuggestion.fromJson);
       return ApiSuccess(
@@ -27,11 +33,17 @@ class SearchClient {
     }
   }
 
-  Future<ApiResult<PlaceSuggestion>> details(String placeId) async {
+  Future<ApiResult<PlaceSuggestion>> details(
+    String placeId, {
+    String? session,
+  }) async {
     try {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.placesDetails,
-        queryParameters: {'placeId': placeId},
+        queryParameters: {
+          'placeId': placeId,
+          if (session != null && session.isNotEmpty) 'session': session,
+        },
       );
       final data = response.data;
       if (data is! Map) return const ApiError(message: 'Unexpected response');

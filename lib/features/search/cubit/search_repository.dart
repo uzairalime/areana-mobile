@@ -9,10 +9,11 @@ class SearchRepository {
   final SearchClient _client;
   final RecentSearchStore _recent;
 
-  Future<ApiResult<SearchBundle>> search(String query) => _client.search(query);
+  Future<ApiResult<SearchBundle>> search(String query, {String? session}) =>
+      _client.search(query, session: session);
 
-  Future<ApiResult<PlaceSuggestion>> details(String placeId) =>
-      _client.details(placeId);
+  Future<ApiResult<PlaceSuggestion>> details(String placeId, {String? session}) =>
+      _client.details(placeId, session: session);
 
   Future<ApiResult<PlaceSuggestion>> reverse({
     required double lat,

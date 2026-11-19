@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +19,7 @@ class SearchCubit extends Cubit<SearchState> {
   late final TextEditingController queryController;
   Timer? _debounce;
   int _requestId = 0;
+  String _session = _placesSession();
 
   static const debounceDuration = Duration(milliseconds: 400);
 
@@ -39,6 +41,7 @@ class SearchCubit extends Cubit<SearchState> {
       ),
     );
     _debounce?.cancel();
+    if (trimmed.isEmpty) _session = _placesSession();
     if (trimmed.length < 2) return;
     _debounce = Timer(debounceDuration, () => search(trimmed));
   }
@@ -59,7 +62,7 @@ class SearchCubit extends Cubit<SearchState> {
     }
 
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
-    final result = await _repository.search(trimmed);
+    final result = await _repository.search(trimmed, session: _session);
     if (isClosed || id != _requestId) return;
 
     result.when(
@@ -97,7 +100,9 @@ class SearchCubit extends Cubit<SearchState> {
       return place;
     }
     if (place.id.isEmpty) return null;
-    final resolved = (await _repository.details(place.id)).dataOrNull;
+    final resolved =
+        (await _repository.details(place.id, session: _session)).dataOrNull;
+    _session = _placesSession();
     if (resolved == null) return null;
     await _persistRecent(resolved.toRecent());
     return resolved;
@@ -115,13 +120,17 @@ class SearchCubit extends Cubit<SearchState> {
       );
     }
     if (recent.placeId.isNotEmpty) {
-      final resolved = (await _repository.details(recent.placeId)).dataOrNull;
+      final resolved =
+          (await _repository.details(recent.placeId, session: _session))
+              .dataOrNull;
       if (resolved != null) {
+        _session = _placesSession();
         await _persistRecent(resolved.toRecent());
         return resolved;
       }
     }
-    final bundle = (await _repository.search(recent.label)).dataOrNull;
+    final bundle =
+        (await _repository.search(recent.label, session: _session)).dataOrNull;
     if (bundle == null || bundle.places.isEmpty) return null;
     return resolvePlace(bundle.places.first);
   }
@@ -179,4 +188,16 @@ class SearchCubit extends Cubit<SearchState> {
     queryController.dispose();
     return super.close();
   }
+}
+
+String _placesSession() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  String hex(int start, int length) => bytes
+      .sublist(start, start + length)
+      .map((b) => b.toRadixString(16).padLeft(2, '0'))
+      .join();
+  return '${hex(0, 4)}-${hex(4, 2)}-${hex(6, 2)}-${hex(8, 2)}-${hex(10, 6)}';
 }
