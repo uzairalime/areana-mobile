@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
+import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/utils/venue_navigation.dart';
@@ -15,6 +17,8 @@ import '../../booking/widgets/court_hero_canvas.dart';
 import '../cubit/venue_detail_cubit.dart';
 import '../model/venue.dart';
 import '../widgets/venue_detail_sections.dart';
+import '../widgets/venue_detail_shimmer.dart';
+import '../widgets/venue_rating_line.dart';
 
 class VenueDetailScreen extends StatelessWidget {
   const VenueDetailScreen({super.key, required this.venue});
@@ -54,184 +58,178 @@ class VenueDetailScreen extends StatelessWidget {
                 SliverToBoxAdapter(child: _DetailCarousel(venue: venue)),
                 SliverPadding(
                   padding: const .fromLTRB(20, 18, 20, 28),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _Chip(
-                            label: venue.sport,
-                            background: AppColors.primarySoft,
-                            foreground: AppColors.primary,
-                          ),
-                          const _Chip(
-                            label: 'Pay at ground',
-                            background: AppColors.accentSoft,
-                            foreground: AppColors.payBadgeText,
-                          ),
-                        ],
-                      ),
-                      12.h,
-                      Text(
-                        venue.name,
-                        style: context.textTheme.headlineMedium?.copyWith(
-                          fontSize: 26,
-                          fontWeight: .w800,
-                          height: 1.15,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      8.h,
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          4.w,
-                          Text(
-                            venue.location,
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ).expand(),
-                        ],
-                      ),
-                      if (venue.rating > 0) ...[
-                        12.h,
-                        Row(
+                  sliver: SliverToBoxAdapter(
+                    child: BlocBuilder<VenueDetailCubit, VenueDetailState>(
+                      builder: (context, detailState) {
+                        final detail = detailState.detail;
+                        final live = detail?.venue;
+                        final rating = (live?.rating ?? 0) > 0
+                            ? live!.rating
+                            : venue.rating;
+                        final reviewCount = (live?.ratingCount ?? 0) > 0
+                            ? live!.ratingCount
+                            : venue.reviewCount;
+                        return Column(
+                          crossAxisAlignment: .start,
                           children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 18,
-                              color: AppColors.accent,
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                if (venue.sport.isNotEmpty)
+                                  _Chip(
+                                    label: venue.sport,
+                                    background: AppColors.primarySoft,
+                                    foreground: AppColors.primary,
+                                  ),
+                                const _Chip(
+                                  label: 'Pay at ground',
+                                  background: AppColors.accentSoft,
+                                  foreground: AppColors.payBadgeText,
+                                ),
+                              ],
                             ),
-                            4.w,
+                            12.h,
                             Text(
-                              venue.rating.toStringAsFixed(1),
-                              style: context.textTheme.titleSmall?.copyWith(
+                              venue.name,
+                              style: context.textTheme.headlineMedium?.copyWith(
+                                fontSize: 26,
                                 fontWeight: .w800,
+                                height: 1.15,
+                                letterSpacing: -0.5,
                               ),
                             ),
-                            6.w,
-                            Text(
-                              '(${venue.reviewCount} reviews)',
-                              style: context.textTheme.labelMedium?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (venue.description.isNotEmpty) ...[
-                        AppSizes.spaceLg.h,
-                        Text(
-                          'About',
-                          style: context.textTheme.titleMedium?.copyWith(
-                            fontWeight: .w800,
-                          ),
-                        ),
-                        8.h,
-                        Text(
-                          venue.description,
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textBody,
-                            height: 1.45,
-                          ),
-                        ),
-                      ],
-                      AppSizes.spaceLg.h,
-                      Text(
-                        'Details',
-                        style: context.textTheme.titleMedium?.copyWith(
-                          fontWeight: .w800,
-                        ),
-                      ),
-                      10.h,
-                      if (venue.openHours.isNotEmpty)
-                        _InfoRow(
-                          icon: Icons.schedule_rounded,
-                          label: 'Hours',
-                          value: venue.openHours,
-                        ),
-                      if (venue.courtsLabel.isNotEmpty) ...[
-                        8.h,
-                        _InfoRow(
-                          icon: Icons.grid_view_rounded,
-                          label: 'Courts',
-                          value: venue.courtsLabel,
-                        ),
-                      ],
-                      8.h,
-                      _InfoRow(
-                        icon: Icons.event_available_rounded,
-                        label: 'Next slot',
-                        value: venue.nextSlot,
-                      ),
-                      AppSizes.spaceLg.h,
-                      Text(
-                        'Amenities',
-                        style: context.textTheme.titleMedium?.copyWith(
-                          fontWeight: .w800,
-                        ),
-                      ),
-                      10.h,
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final amenity in venue.amenities)
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(
-                                  AppSizes.radiusPill,
+                            8.h,
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                  color: AppColors.textSecondary,
                                 ),
-                                border: Border.all(color: AppColors.outline),
-                              ),
-                              child: Text(
-                                amenity,
-                                style: context.textTheme.labelMedium?.copyWith(
-                                  fontWeight: .w600,
-                                  fontSize: 12,
-                                ),
-                              ).paddingSymmetric(horizontal: 12, vertical: 8),
+                                4.w,
+                                Text(
+                                  venue.location,
+                                  style: context.textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ).expand(),
+                              ],
                             ),
-                        ],
-                      ),
-                      AppSizes.spaceLg.h,
-                      VenueMapCard(
-                        title: 'Location',
-                        subtitle: venue.location,
-                        venues: [venue],
-                        height: 190,
-                      ),
-                      // Live courts + reviews from the Areana API,
-                      // loaded by VenueDetailCubit (route-provided).
-                      BlocBuilder<VenueDetailCubit, VenueDetailState>(
-                        builder: (context, detailState) {
-                          final detail = detailState.detail;
-                          if (detail == null) return const SizedBox.shrink();
-                          return Column(
-                            crossAxisAlignment: .start,
-                            children: [
+                            if (rating > 0) ...[
+                              12.h,
+                              VenueRatingLine(
+                                rating: rating,
+                                reviewCount: reviewCount,
+                              ),
+                            ],
+                            AppSizes.spaceLg.h,
+                            if (detail != null)
+                              VenueCourtsSection(detail: detail)
+                            else if (detailState.status.isLoading)
+                              const VenueCourtsShimmer()
+                            else
+                              const SizedBox.shrink(),
+                            if (venue.description.isNotEmpty) ...[
                               AppSizes.spaceLg.h,
-                              VenueCourtsSection(detail: detail),
+                              Text(
+                                'About',
+                                style: context.textTheme.titleMedium?.copyWith(
+                                  fontWeight: .w800,
+                                ),
+                              ),
+                              8.h,
+                              Text(
+                                venue.description,
+                                style: context.textTheme.bodyMedium?.copyWith(
+                                  color: AppColors.textBody,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ],
+                            if (venue.openHours.isNotEmpty) ...[
                               AppSizes.spaceLg.h,
+                              Text(
+                                'Hours',
+                                style: context.textTheme.titleMedium?.copyWith(
+                                  fontWeight: .w800,
+                                ),
+                              ),
+                              10.h,
+                              _InfoRow(
+                                icon: Icons.schedule_rounded,
+                                label: 'Open',
+                                value: venue.openHours,
+                              ),
+                            ],
+                            if (venue.amenities.isNotEmpty) ...[
+                              AppSizes.spaceLg.h,
+                              Text(
+                                'Amenities',
+                                style: context.textTheme.titleMedium?.copyWith(
+                                  fontWeight: .w800,
+                                ),
+                              ),
+                              10.h,
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final amenity in venue.amenities)
+                                    DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(
+                                          AppSizes.radiusPill,
+                                        ),
+                                        border: Border.all(
+                                          color: AppColors.outline,
+                                        ),
+                                      ),
+                                      child:
+                                          Text(
+                                            amenity,
+                                            style: context.textTheme.labelMedium
+                                                ?.copyWith(
+                                                  fontWeight: .w600,
+                                                  fontSize: 12,
+                                                ),
+                                          ).paddingSymmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                            AppSizes.spaceLg.h,
+                            VenueMapCard(
+                              title: 'Location',
+                              subtitle: venue.location,
+                              venues: [venue],
+                              height: 190,
+                            ),
+                            AppSizes.spaceLg.h,
+                            if (detailState.status.isLoading &&
+                                detailState.reviews.isEmpty)
+                              const VenueReviewsPreviewShimmer()
+                            else
                               VenueReviewsSection(
                                 reviews: detailState.reviews,
                                 hasMore: detailState.hasMoreReviews,
-                                onLoadMore: () => context
-                                    .read<VenueDetailCubit>()
-                                    .loadMoreReviews(),
+                                reviewCount: reviewCount,
+                                onSeeMore: () {
+                                  AppHaptics.selection();
+                                  context.push(
+                                    '${AppRoutes.venueDetail}/${venue.id}/reviews',
+                                    extra: venue,
+                                  );
+                                },
                               ),
-                            ],
-                          );
-                        },
-                      ),
-                    ]),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

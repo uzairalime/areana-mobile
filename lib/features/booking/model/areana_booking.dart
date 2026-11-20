@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../core/utils/json_parsing.dart';
+import '../../../core/utils/player_date_format.dart';
 
 String _str(dynamic value) => value?.toString() ?? '';
 
@@ -91,7 +92,14 @@ class BookingConfirmation extends Equatable {
 
   // Confirmed-screen compatibility (derived, never invented).
   String get code => checkInCode;
-  String get dateLabel => date;
+  String get dateLabel {
+    final parsed = DateTime.tryParse(date);
+    if (parsed == null) return date;
+    return PlayerDateFormat.card(
+      DateTime(parsed.year, parsed.month, parsed.day),
+    );
+  }
+
   String get timeLabel =>
       '${_fmtMinutes(startMinutes)} – ${_fmtMinutes(endMinutes)}';
   String get courtLabel => courtName;

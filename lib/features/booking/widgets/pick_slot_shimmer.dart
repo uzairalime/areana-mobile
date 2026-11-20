@@ -147,15 +147,6 @@ class PickSlotShimmer extends StatelessWidget {
                               ),
                             ),
                             AppSizes.spaceLg.h,
-                            // Duration
-                            const ShimmerBox(width: 86, height: 17, radius: 8),
-                            10.h,
-                            const _TileBone(
-                              width: double.infinity,
-                              height: 52,
-                              radius: AppSizes.radiusMd,
-                            ),
-                            AppSizes.spaceLg.h,
                             // Available slots header + legend
                             Row(
                               children: [

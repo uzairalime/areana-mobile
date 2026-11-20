@@ -10,7 +10,7 @@ class HomeStickySearchDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback onSearchTap;
   final VoidCallback onFilter;
 
-  static const double _top = 8;
+  static const double _top = 12;
   static const double _bottom = 12;
 
   @override

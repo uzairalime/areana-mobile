@@ -17,6 +17,8 @@ import 'core/theme/app_theme.dart';
 import 'core/widgets/app_unfocus.dart';
 import 'core/widgets/app_upgrade_alert.dart';
 import 'features/explore/cubit/explore_cubit.dart';
+import 'features/notifications/cubit/notifications_cubit.dart';
+import 'features/profile/cubit/profile_cubit.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -59,12 +61,14 @@ class _AppState extends State<App> {
         BlocProvider.value(value: getIt<SessionCubit>()),
         BlocProvider.value(value: getIt<LocationCubit>()),
         BlocProvider.value(value: getIt<ExploreCubit>()),
+        BlocProvider.value(value: getIt<NotificationsCubit>()),
       ],
       child: BlocListener<SessionCubit, SessionState>(
         listenWhen: (previous, current) =>
             !previous.isAuthenticated && current.isAuthenticated,
         listener: (context, state) {
           getIt<DeepLinkService>().flushPending();
+          getIt<ProfileCubit>().ensureLoaded();
         },
         child: MaterialApp.router(
           title: AppStrings.appName,

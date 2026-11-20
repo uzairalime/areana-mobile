@@ -4,9 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_icons.dart';
 import '../../../core/consts/app_sizes.dart';
+import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
+import '../../../core/media_slider/custom_image_carousel.dart';
 import '../../../core/utils/money_format.dart';
 import '../../home/model/areana_models.dart';
+import '../../home/model/venue.dart';
+import '../../home/widgets/venue_detail_shimmer.dart';
 import '../cubit/booking_cubit.dart';
 import '../cubit/booking_state.dart';
 import 'court_hero_canvas.dart';
@@ -19,14 +23,12 @@ import 'court_hero_canvas.dart';
 class PickSlotHeroHeader extends StatelessWidget {
   const PickSlotHeroHeader({
     super.key,
-    required this.venueId,
-    required this.color,
+    required this.venue,
     required this.onBack,
     required this.onSave,
   });
 
-  final String venueId;
-  final Color color;
+  final Venue venue;
   final VoidCallback onBack;
   final VoidCallback onSave;
 
@@ -34,9 +36,12 @@ class PickSlotHeroHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Hero(
-          tag: 'venue-hero-$venueId',
-          child: CourtHeroCanvas(color: color, height: 210),
+        CustomImageCarousel(
+          urls: venue.imageUrls,
+          height: 210,
+          showActions: false,
+          heroTagPrefix: 'venue-${venue.id}',
+          fallback: CourtHeroCanvas(color: venue.heroColor, height: 210),
         ),
         SafeArea(
           bottom: false,
@@ -498,97 +503,6 @@ class _DateCell extends StatelessWidget {
   }
 }
 
-class PickSlotCountPicker extends StatelessWidget {
-  const PickSlotCountPicker({super.key, required this.state});
-
-  final BookingState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<BookingCubit>();
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          'Slots',
-          style: context.textTheme.titleMedium?.copyWith(
-            fontSize: 17,
-            fontWeight: .w800,
-          ),
-        ),
-        4.h,
-        Text(
-          'Consecutive slots, like user-web slotCount.',
-          style: context.textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        10.h,
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.track,
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          ),
-          child: Padding(
-            padding: const .all(4),
-            child: Row(
-              children: [
-                for (var count = 1; count <= 4; count++)
-                  _CountChip(
-                    label: '$count',
-                    selected: count == state.slotCount,
-                    onTap: () => cubit.selectSlotCount(count),
-                  ).expand(),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CountChip extends StatelessWidget {
-  const _CountChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const .symmetric(horizontal: 2),
-      child: Material(
-        color: selected ? AppColors.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        elevation: selected ? 1 : 0,
-        shadowColor: const Color(0x260D1B14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            height: 44,
-            child: Text(
-              label,
-              textAlign: .center,
-              style: context.textTheme.labelLarge?.copyWith(
-                fontWeight: selected ? .w800 : .w600,
-                fontSize: 14,
-                color: selected ? AppColors.text : AppColors.textBody,
-              ),
-            ).center(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class PickSlotGrid extends StatelessWidget {
   const PickSlotGrid({super.key, required this.state});
 
@@ -617,7 +531,28 @@ class PickSlotGrid extends StatelessWidget {
           ],
         ),
         10.h,
-        if (state.slots.isEmpty)
+        if (state.slotsStatus.isLoading)
+          const SlotGridShimmer()
+        else if (state.slotsStatus.isError)
+          Column(
+            crossAxisAlignment: .start,
+            children: [
+              Text(
+                state.errorMessage.isEmpty
+                    ? 'Could not load slots for this date.'
+                    : state.errorMessage,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              8.h,
+              TextButton(
+                onPressed: cubit.reloadAvailability,
+                child: const Text('Retry'),
+              ),
+            ],
+          )
+        else if (state.slots.isEmpty)
           Text(
             'No slots for this court and date.',
             style: context.textTheme.bodyMedium?.copyWith(

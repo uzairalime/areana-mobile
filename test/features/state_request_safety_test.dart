@@ -19,6 +19,8 @@ import 'package:arana360/features/booking/cubit/booking_repository.dart';
 import 'package:arana360/features/bookings/cubit/bookings_client.dart';
 import 'package:arana360/features/bookings/cubit/bookings_cubit.dart';
 import 'package:arana360/features/bookings/cubit/bookings_repository.dart';
+import 'package:arana360/features/bookings/model/booking_filter_tab.dart';
+import 'package:arana360/features/bookings/model/user_booking.dart';
 import 'package:arana360/features/conversations/cubit/conversations_client.dart';
 import 'package:arana360/features/conversations/cubit/conversations_cubit.dart';
 import 'package:arana360/features/conversations/cubit/conversations_repository.dart';
@@ -41,6 +43,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/in_memory_secure_storage.dart';
 
 // Every request stops at the interceptor. No test can contact a real backend.
 class _Api {
@@ -305,6 +309,30 @@ void main() {
     },
   );
 
+  test('changing date keeps pick-slot ready and only reloads slots', () async {
+    final api = _Api();
+    final cubit = BookingCubit(
+      BookingRepository(BookingClient(api.dio)),
+      _Notifications(),
+    );
+    addTearDown(cubit.close);
+    await _startBooking(api, cubit);
+    expect(cubit.state.status, AppLoading.success);
+    expect(cubit.state.slotsStatus, AppLoading.success);
+    final pending = cubit.selectDate(
+      DateTime.now().add(const Duration(days: 1)),
+    );
+    expect(cubit.state.status, AppLoading.success);
+    expect(cubit.state.slotsStatus, AppLoading.loading);
+    expect(cubit.state.slots, isEmpty);
+    (await api.take('courts/one/availability'))
+        .respond(_slots('one', start: 720));
+    await pending;
+    expect(cubit.state.status, AppLoading.success);
+    expect(cubit.state.slotsStatus, AppLoading.success);
+    expect(cubit.state.slots.first.startMinutes, 720);
+  });
+
   test('clearing search invalidates in-flight results immediately', () async {
     final api = _Api();
     final cubit = SearchCubit(
@@ -317,10 +345,7 @@ void main() {
     cubit.onQueryChanged('');
     request.respond(
       _page([
-        {
-          'id': 'old',
-          'primaryText': 'Old',
-        },
+        {'id': 'old', 'primaryText': 'Old'},
       ]),
     );
     await search;
@@ -466,6 +491,83 @@ void main() {
     },
   );
 
+  test(
+    'notification badge stays off when every item is already read',
+    () async {
+      final api = _Api();
+      final cubit = NotificationsCubit(
+        NotificationsRepository(NotificationsClient(api.dio)),
+      );
+      addTearDown(cubit.close);
+      (await api.take('notifications')).respond({
+        'items': [
+          {'id': 'read', 'readAt': '2026-01-01T00:00:00.000Z'},
+        ],
+        'nextCursor': null,
+      });
+      await _flush();
+      expect(cubit.state.hasUnread, isFalse);
+      expect(cubit.state.unreadCount, 0);
+    },
+  );
+
+  test('notification badge turns on for unread inbox items', () async {
+    final api = _Api();
+    final cubit = NotificationsCubit(
+      NotificationsRepository(NotificationsClient(api.dio)),
+    );
+    addTearDown(cubit.close);
+    (await api.take('notifications')).respond({
+      'items': [
+        {'id': 'new'},
+      ],
+      'nextCursor': null,
+    });
+    await _flush();
+    expect(cubit.state.hasUnread, isTrue);
+    expect(cubit.state.unreadCount, 1);
+  });
+
+  test('unread-count endpoint can clear the app-bar badge', () async {
+    final api = _Api();
+    final cubit = NotificationsCubit(
+      NotificationsRepository(NotificationsClient(api.dio)),
+    );
+    addTearDown(cubit.close);
+    (await api.take('notifications')).respond({
+      'items': [
+        {'id': 'new'},
+      ],
+      'nextCursor': null,
+    });
+    await _flush();
+    expect(cubit.state.hasUnread, isTrue);
+    (await api.take('notifications/unread-count')).respond({'count': 0});
+    await _flush();
+    expect(cubit.state.hasUnread, isFalse);
+    expect(cubit.state.unreadCount, 0);
+  });
+
+  test('mark all read clears the notification badge', () async {
+    final api = _Api();
+    final cubit = NotificationsCubit(
+      NotificationsRepository(NotificationsClient(api.dio)),
+    );
+    addTearDown(cubit.close);
+    (await api.take('notifications')).respond({
+      'items': [
+        {'id': 'new'},
+      ],
+      'nextCursor': null,
+    });
+    await _flush();
+    final mark = cubit.markAllRead();
+    (await api.take('notifications/read-all')).respond({'ok': true});
+    await mark;
+    expect(cubit.state.hasUnread, isFalse);
+    expect(cubit.state.unreadCount, 0);
+  });
+
   test('booking list discards an appended page after refresh', () async {
     final api = _Api();
     final cubit = BookingsCubit(BookingsRepository(BookingsClient(api.dio)));
@@ -493,6 +595,45 @@ void main() {
     await append;
     expect(cubit.state.bookings.map((booking) => booking.id), ['current']);
     expect(cubit.state.isLoadingMore, isFalse);
+  });
+
+  test('ingested booking survives a stale first-page response', () async {
+    final api = _Api();
+    final cubit = BookingsCubit(BookingsRepository(BookingsClient(api.dio)));
+    addTearDown(cubit.close);
+    final initial = await api.take('bookings/me');
+    cubit.ingestUpcoming(
+      UserBooking.fromJson({
+        'id': 'just-booked',
+        'status': 'confirmed',
+        'date': '2026-11-21',
+        'startMinutes': 600,
+        'endMinutes': 660,
+        'venue': {'name': 'Arena'},
+        'court': {'name': 'Court 1', 'sport': 'Football'},
+      }),
+    );
+    expect(cubit.state.tab, BookingFilterTab.upcoming);
+    expect(cubit.state.bookings.single.id, 'just-booked');
+    initial.respond(
+      _page([
+        {'id': 'old'},
+      ]),
+    );
+    await _flush();
+    expect(cubit.state.bookings.map((booking) => booking.id), ['just-booked']);
+
+    final refresh = cubit.refresh();
+    (await api.take('bookings/me')).respond(
+      _page([
+        {'id': 'old'},
+      ]),
+    );
+    await refresh;
+    expect(cubit.state.bookings.map((booking) => booking.id), [
+      'old',
+      'just-booked',
+    ]);
   });
 
   test(
@@ -568,6 +709,46 @@ void main() {
       expect(cubit.state.savedVenueIds, isEmpty);
     },
   );
+
+  test('profile hub does not flash loading after overview is ready', () async {
+    final api = _Api();
+    final session = SessionCubit(
+      SessionStore(secureStorage: InMemorySecureStorage()),
+    );
+    await session.applySession(
+      const AuthSession(
+        accessToken: 'test-token',
+        user: UserModel(
+          id: 'player',
+          name: 'Player',
+          email: 'player@example.com',
+        ),
+      ),
+    );
+    final cubit = ProfileCubit(
+      ProfileRepository(ProfileClient(api.dio), session),
+      session,
+    );
+    addTearDown(cubit.close);
+    addTearDown(session.close);
+    final first = cubit.ensureLoaded();
+    (await api.take('users/me'))
+        .respond({'id': 'player', 'name': 'Ali', 'email': 'ali@arena.test'});
+    await first;
+    expect(cubit.state.status, AppLoading.success);
+    expect(cubit.state.overview?.user.id, 'player');
+
+    cubit.ensureLoaded();
+    expect(api.pending, isEmpty);
+    expect(cubit.state.status, AppLoading.success);
+
+    final reload = cubit.load();
+    expect(cubit.state.status, AppLoading.success);
+    (await api.take('users/me'))
+        .respond({'id': 'player', 'name': 'Ali', 'email': 'ali@arena.test'});
+    await reload;
+    expect(cubit.state.status, AppLoading.success);
+  });
 
   testWidgets(
     'OTP verification waits for persistence and reports save failures',

@@ -78,6 +78,8 @@ class Venue extends Equatable {
 
   bool get hasCover => coverUrl.isNotEmpty;
 
+  bool get hasRating => rating > 0;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,

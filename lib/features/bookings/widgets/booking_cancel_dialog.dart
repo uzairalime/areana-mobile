@@ -27,7 +27,7 @@ Future<bool> showBookingCancelDialog(
         ),
         content: Text(
           'Cancel ${booking.code} at ${booking.venueName} '
-          '(${booking.dateLabel}, ${booking.timeLabel})?',
+          '(${booking.displayDate}, ${booking.timeLabel})?',
           style: dialogContext.textTheme.bodyMedium?.copyWith(
             color: AppColors.textSecondary,
             fontWeight: .w500,

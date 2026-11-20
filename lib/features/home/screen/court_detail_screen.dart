@@ -6,6 +6,7 @@ import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../../core/utils/venue_navigation.dart';
@@ -195,9 +196,14 @@ class CourtDetailScreen extends StatelessWidget {
                           VenueReviewsSection(
                             reviews: state.reviews,
                             hasMore: state.hasMoreReviews,
-                            onLoadMore: () => context
-                                .read<CourtDetailCubit>()
-                                .loadMoreReviews(),
+                            reviewCount: detail.venueRatingCount,
+                            onSeeMore: () {
+                              AppHaptics.selection();
+                              context.push(
+                                '${AppRoutes.venueDetail}/${detail.venueId}/reviews',
+                                extra: venue,
+                              );
+                            },
                           ),
                         ]),
                       ),

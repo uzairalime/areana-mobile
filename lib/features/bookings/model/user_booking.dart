@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../core/consts/app_colors.dart';
 import '../../../core/utils/json_parsing.dart';
+import '../../../core/utils/player_date_format.dart';
+import '../../booking/model/areana_booking.dart';
 import '../../home/model/venue.dart';
 import 'booking_review_status.dart';
 
@@ -97,21 +99,8 @@ class UserBooking extends Equatable {
     final end = JsonParsing.intValue(json['endMinutes'], start);
     final count = json['_count'];
     final countMap = count is Map ? Map<String, dynamic>.from(count) : const {};
-    // Prisma DATE fields may arrive as an ISO timestamp. Keep the venue's
-    // calendar date and apply its local slot time without timezone conversion.
-    final calendarDate = DateTime.tryParse(
-      date.length >= 10 ? date.substring(0, 10) : date,
-    );
-    final occurred = calendarDate == null
-        ? DateTime.now()
-        : DateTime(
-            calendarDate.year,
-            calendarDate.month,
-            calendarDate.day,
-            start ~/ 60,
-            start % 60,
-          );
-    final hasReviewed = json['hasReviewed'] as bool? ?? false;
+    final occurred = _occurredAt(date, start);
+    final hasReviewed = json['hasReviewed'] == true;
     return UserBooking(
       id: json['id']?.toString() ?? '',
       code: json['checkInCode']?.toString() ?? '',
@@ -144,6 +133,44 @@ class UserBooking extends Equatable {
     );
   }
 
+  /// Optimistic row so Bookings can show the court immediately after
+  /// confirm, without waiting for `GET /bookings/me` to catch up.
+  factory UserBooking.fromConfirmation(
+    BookingConfirmation confirmation, {
+    Venue? venue,
+  }) {
+    final venueName = confirmation.venueName.isNotEmpty
+        ? confirmation.venueName
+        : (venue?.name ?? '');
+    final sport = confirmation.sport.isNotEmpty
+        ? confirmation.sport
+        : (venue?.sport ?? '');
+    final location = confirmation.location.isNotEmpty
+        ? confirmation.location
+        : (venue?.location ?? '');
+    return UserBooking(
+      id: confirmation.id,
+      code: confirmation.checkInCode,
+      venueId: confirmation.venueId,
+      venueName: venueName,
+      sport: sport,
+      location: location,
+      dateLabel: confirmation.date,
+      timeLabel: confirmation.timeLabel,
+      courtLabel: confirmation.courtLabel,
+      durationLabel: confirmation.durationLabel,
+      amountDue: confirmation.amountDue,
+      payAtGround: confirmation.payAtGround,
+      status: UserBookingStatusX.fromJson(confirmation.status),
+      heroColor: venue?.heroColor ?? AppColors.primary,
+      imageUrl: venue?.coverUrl ?? '',
+      occurredAt: _occurredAt(confirmation.date, confirmation.startMinutes),
+      courtId: confirmation.courtId,
+      shareCode: confirmation.shareCode.isEmpty ? null : confirmation.shareCode,
+      expiresAt: confirmation.expiresAt,
+    );
+  }
+
   final String id;
   final String code;
   final String venueId;
@@ -173,6 +200,22 @@ class UserBooking extends Equatable {
   bool get isUpcoming => status.isUpcomingTab;
   bool get isPast => status.isPastTab;
 
+  static DateTime _occurredAt(String date, int startMinutes) {
+    // Prisma DATE fields may arrive as an ISO timestamp. Keep the venue's
+    // calendar date and apply its local slot time without timezone conversion.
+    final calendarDate = DateTime.tryParse(
+      date.length >= 10 ? date.substring(0, 10) : date,
+    );
+    if (calendarDate == null) return DateTime.now();
+    return DateTime(
+      calendarDate.year,
+      calendarDate.month,
+      calendarDate.day,
+      startMinutes ~/ 60,
+      startMinutes % 60,
+    );
+  }
+
   /// Review CTA only for completed bookings, one review per booking
   /// (server enforces it with a 409 on duplicates).
   bool get canAddReview => status == .completed && !hasReviewed;
@@ -182,7 +225,9 @@ class UserBooking extends Equatable {
   /// Confirmed / pending can reschedule or cancel.
   bool get canModify => status == .confirmed || status == .pending;
 
-  String get scheduleLine => '$dateLabel · $timeLabel';
+  String get displayDate => PlayerDateFormat.card(occurredAt);
+
+  String get scheduleLine => '$displayDate · $timeLabel';
 
   int get year => occurredAt.year;
 

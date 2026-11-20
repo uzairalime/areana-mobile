@@ -51,6 +51,7 @@ class _HomeBodyState extends State<HomeBody> {
       _hydrationScheduled = false;
       if (mounted && !_profileCubit.isClosed) {
         _profileCubit.ensureSavedVenueIds();
+        _profileCubit.ensureLoaded();
       }
     });
     WidgetsBinding.instance.ensureVisualUpdate();
@@ -86,50 +87,12 @@ class _HomeBodyState extends State<HomeBody> {
               previous.filter != current.filter,
           builder: (context, state) {
             final cubit = context.read<HomeCubit>();
-            final now = DateTime.now();
-            final dateLabel =
-                '${_weekday(now.weekday)}, ${now.day} ${_month(now.month)}';
 
             return CustomScrollView(
               physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics(),
               ),
               slivers: [
-                SliverPadding(
-                  padding: const .fromLTRB(
-                    AppSizes.pagePadding,
-                    12,
-                    AppSizes.pagePadding,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text(
-                          dateLabel,
-                          style: context.textTheme.titleSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: .w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        8.h,
-                        Text(
-                          'Find a court.\nLock your slot.',
-                          style: context.textTheme.headlineLarge?.copyWith(
-                            fontSize: 30,
-                            height: 1.12,
-                            letterSpacing: -0.75,
-                            fontWeight: .w800,
-                            color: AppColors.text,
-                          ),
-                        ),
-                        AppSizes.spaceSm.h,
-                      ],
-                    ),
-                  ),
-                ),
                 SliverPersistentHeader(
                   pinned: true,
                   delegate: HomeStickySearchDelegate(
@@ -146,8 +109,8 @@ class _HomeBodyState extends State<HomeBody> {
                         initial: state.filter,
                         sports: catalog.isEmpty
                             ? SportGame.defaults
-                                .where((sport) => !sport.isAll)
-                                .toList()
+                                  .where((sport) => !sport.isAll)
+                                  .toList()
                             : catalog,
                       );
                       if (next == null || !context.mounted) return;
@@ -243,8 +206,7 @@ class _HomeBodyState extends State<HomeBody> {
                       110,
                     ),
                     sliver: SliverList.separated(
-                      itemCount:
-                          state.venues.length + (state.hasMore ? 1 : 0),
+                      itemCount: state.venues.length + (state.hasMore ? 1 : 0),
                       separatorBuilder: (_, _) => AppSizes.spaceMd.h,
                       itemBuilder: (context, index) {
                         if (index >= state.venues.length) {
@@ -282,36 +244,5 @@ class _HomeBodyState extends State<HomeBody> {
         ),
       ),
     );
-  }
-
-  static String _weekday(int day) {
-    const names = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    return names[day - 1];
-  }
-
-  static String _month(int month) {
-    const names = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return names[month - 1];
   }
 }

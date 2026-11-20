@@ -44,6 +44,7 @@ class NotificationsScreen extends StatelessWidget {
                 p.errorMessage != c.errorMessage ||
                 p.tab != c.tab ||
                 p.items != c.items ||
+                p.unreadCount != c.unreadCount ||
                 p.nextCursor != c.nextCursor ||
                 p.hasMore != c.hasMore ||
                 p.isLoadingMore != c.isLoadingMore ||

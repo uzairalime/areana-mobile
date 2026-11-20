@@ -17,10 +17,7 @@ class NotificationsClient {
     try {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.notifications,
-        queryParameters: {
-          'limit': 30,
-          'cursor': ?cursor,
-        },
+        queryParameters: {'limit': 30, 'cursor': ?cursor},
       );
       final page = parseCursorPage(
         response.data,
@@ -39,16 +36,17 @@ class NotificationsClient {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.notificationsUnreadCount,
       );
-      final map = response.data is Map
+      var map = response.data is Map
           ? Map<String, dynamic>.from(response.data as Map)
           : const <String, dynamic>{};
+      final nested = map['data'];
+      if (nested is Map) {
+        map = {...map, ...Map<String, dynamic>.from(nested)};
+      }
       for (final key in ['unreadCount', 'count', 'unread', 'total']) {
         final value = map[key];
         if (value is num) {
-          return ApiSuccess(
-            value.toInt(),
-            statusCode: response.statusCode,
-          );
+          return ApiSuccess(value.toInt(), statusCode: response.statusCode);
         }
       }
       return const ApiError(message: 'Unexpected response');

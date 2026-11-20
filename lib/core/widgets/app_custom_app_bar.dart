@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/notifications/cubit/notifications_cubit.dart';
+import '../../features/notifications/cubit/notifications_state.dart';
 import '../consts/app_colors.dart';
 import '../consts/app_sizes.dart';
 import '../extensions/extensions.dart';
@@ -15,14 +17,12 @@ class AppCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onAvatarTap,
     required this.onNotifications,
     this.onMessages,
-    this.showNotificationDot = true,
     this.backgroundColor = AppColors.background,
   });
 
   final VoidCallback onAvatarTap;
   final VoidCallback onNotifications;
   final VoidCallback? onMessages;
-  final bool showNotificationDot;
   final Color backgroundColor;
 
   static const double _toolbarHeight = 68;
@@ -104,10 +104,16 @@ class AppCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       8.w,
                     ],
-                    AppBarIconButton(
-                      icon: Icons.notifications_none_rounded,
-                      onTap: onNotifications,
-                      showDot: showNotificationDot && isAuthed,
+                    BlocBuilder<NotificationsCubit, NotificationsState>(
+                      buildWhen: (previous, current) =>
+                          previous.hasUnread != current.hasUnread,
+                      builder: (context, notifications) {
+                        return AppBarIconButton(
+                          icon: Icons.notifications_none_rounded,
+                          onTap: onNotifications,
+                          showDot: isAuthed && notifications.hasUnread,
+                        );
+                      },
                     ),
                   ],
                 );

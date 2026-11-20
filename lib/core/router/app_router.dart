@@ -17,9 +17,11 @@ import '../../features/dashboard/screen/dashboard_shell.dart';
 import '../../features/home/cubit/home_cubit.dart';
 import '../../features/home/cubit/home_repository.dart';
 import '../../features/home/cubit/venue_detail_cubit.dart';
+import '../../features/home/cubit/venue_reviews_cubit.dart';
 import '../../features/home/screen/court_detail_screen.dart';
 import '../../features/home/screen/home_screen.dart';
 import '../../features/home/screen/venue_detail_screen.dart';
+import '../../features/home/screen/venue_reviews_screen.dart';
 import '../../features/explore/cubit/explore_cubit.dart';
 import '../../features/explore/screen/explore_screen.dart';
 import '../../features/conversations/cubit/chat_cubit.dart';
@@ -143,8 +145,8 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         pageBuilder: (context, state) {
           return _appPage(
             state,
-            BlocProvider(
-              create: (_) => getIt<NotificationsCubit>(),
+            BlocProvider.value(
+              value: getIt<NotificationsCubit>()..refresh(),
               child: const NotificationsScreen(),
             ),
           );
@@ -248,6 +250,26 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         },
       ),
       GoRoute(
+        path: '${AppRoutes.venueDetail}/:id/reviews',
+        pageBuilder: (context, state) {
+          final venue = VenueReviewsScreen.resolve(state);
+          if (venue.id.isEmpty) {
+            return _appPage(
+              state,
+              const Scaffold(body: Center(child: Text('Venue not found'))),
+            );
+          }
+          return _appPage(
+            state,
+            BlocProvider(
+              create: (_) =>
+                  VenueReviewsCubit(getIt<HomeRepository>(), venue.id),
+              child: VenueReviewsScreen(venue: venue),
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '${AppRoutes.venueDetail}/:id',
         pageBuilder: (context, state) {
           final venue = VenueDetailScreen.resolve(state);
@@ -334,8 +356,8 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
                 path: AppRoutes.home,
                 pageBuilder: (context, state) {
                   return NoTransitionPage(
-                    child: BlocProvider(
-                      create: (_) => getIt<HomeCubit>(),
+                    child: BlocProvider.value(
+                      value: getIt<HomeCubit>(),
                       child: const HomeScreen(),
                     ),
                   );

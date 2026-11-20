@@ -70,6 +70,9 @@ void setupLocator() {
         tokens: getIt<DeviceTokenRepository>(),
         session: getIt<SessionStore>(),
         deepLinks: getIt<DeepLinkService>(),
+        onForegroundInbox: () {
+          getIt<NotificationsCubit>().refreshUnread();
+        },
       ),
     )
     ..registerLazySingleton<LocationService>(LocationService.new)
@@ -112,10 +115,7 @@ void setupLocator() {
       () => BookingsRepository(getIt<BookingsClient>()),
     )
     ..registerLazySingleton<BookingsCubit>(
-      () => BookingsCubit(
-        getIt<BookingsRepository>(),
-        getIt<SessionCubit>(),
-      ),
+      () => BookingsCubit(getIt<BookingsRepository>(), getIt<SessionCubit>()),
     )
     ..registerLazySingleton<NotificationsClient>(
       () => NotificationsClient(getIt<Dio>()),
@@ -123,7 +123,7 @@ void setupLocator() {
     ..registerLazySingleton<NotificationsRepository>(
       () => NotificationsRepository(getIt<NotificationsClient>()),
     )
-    ..registerFactory<NotificationsCubit>(
+    ..registerLazySingleton<NotificationsCubit>(
       () => NotificationsCubit(
         getIt<NotificationsRepository>(),
         getIt<SessionCubit>(),
@@ -150,7 +150,7 @@ void setupLocator() {
       () => AuthCubit(getIt<AuthRepository>(), socialAuth: getIt<SocialAuth>()),
     )
     ..registerFactory<SplashCubit>(() => SplashCubit(getIt<SessionCubit>()))
-    ..registerFactory<HomeCubit>(() => HomeCubit(getIt<HomeRepository>()))
+    ..registerLazySingleton<HomeCubit>(() => HomeCubit(getIt<HomeRepository>()))
     ..registerLazySingleton<ExploreSessionStore>(ExploreSessionStore.new)
     ..registerLazySingleton<ExploreCubit>(
       () => ExploreCubit(getIt<HomeRepository>(), getIt<ExploreSessionStore>()),

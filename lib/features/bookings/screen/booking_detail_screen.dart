@@ -168,7 +168,7 @@ class BookingDetailScreen extends StatelessWidget {
                           _InfoCard(
                             rows: [
                               ('Sport', live.sport),
-                              ('Date', live.dateLabel),
+                              ('Date', live.displayDate),
                               ('Time', live.timeLabel),
                               ('Court', live.courtLabel),
                               ('Duration', live.durationLabel),

@@ -1,3 +1,5 @@
+import 'package:arana360/core/consts/app_colors.dart';
+import 'package:arana360/core/utils/player_date_format.dart';
 import 'package:arana360/features/booking/model/areana_booking.dart';
 import 'package:arana360/features/auth/model/auth_session.dart';
 import 'package:arana360/features/bookings/model/user_booking.dart';
@@ -110,6 +112,22 @@ void main() {
     expect(booking.slotCount, 2);
     expect(booking.timeLabel, '18:00 – 20:00');
     expect(booking.venueName, 'Football Arena');
+    expect(
+      booking.dateLabel,
+      PlayerDateFormat.card(
+        DateTime(2026, 11, 16),
+        now: DateTime(2026, 11, 20),
+      ),
+    );
+    expect(
+      BookingConfirmation.fromJson(
+        bookingJson(date: '2026-11-19T00:00:00.000Z'),
+      ).dateLabel,
+      PlayerDateFormat.card(
+        DateTime(2026, 11, 19),
+        now: DateTime(2026, 11, 20),
+      ),
+    );
 
     final promo = PromoPreview.fromJson({
       'promo': {'code': 'PLAY', 'kind': 'flat', 'value': '500.00'},
@@ -144,6 +162,8 @@ void main() {
       expect(booking.venueLng, 74.415);
       expect(booking.timeLabel, '18:00 – 20:00');
       expect(booking.canModify, isTrue);
+      expect(booking.scheduleLine, isNot(contains('T00:00')));
+      expect(booking.displayDate.contains('Nov'), isTrue);
     }
   });
 
@@ -157,6 +177,30 @@ void main() {
     expect(booking.canModify, isFalse);
     expect(booking.canAddReview, isFalse);
   });
+
+  test(
+    'player booking from confirmation keeps venue photo and upcoming status',
+    () {
+      final confirmation = BookingConfirmation.fromJson(bookingJson());
+      final venue = Venue(
+        id: 'venue-1',
+        name: 'Football Arena',
+        sport: 'Football',
+        location: 'DHA, Lahore',
+        priceFrom: 2500,
+        amenities: const [],
+        nextSlot: '',
+        heroColor: AppColors.primary,
+        imageUrls: const ['https://example.com/arena.jpg'],
+      );
+      final booking = UserBooking.fromConfirmation(confirmation, venue: venue);
+      expect(booking.id, 'booking-1');
+      expect(booking.venueName, 'Football Arena');
+      expect(booking.imageUrl, 'https://example.com/arena.jpg');
+      expect(booking.isUpcoming, isTrue);
+      expect(booking.timeLabel, '18:00 – 20:00');
+    },
+  );
 
   test('game prices and counts accept the same numeric payload variants', () {
     final game = GamePost.fromJson({
@@ -191,5 +235,21 @@ void main() {
     expect(Venue.fromJson(venue.toJson()), venue);
     expect(ProfileStats.fromJson({'hours_played': '12.0'}).hoursPlayed, 12);
     expect(UserReview.fromJson({'rating': '5'}).displayRating, 5);
+  });
+
+  test('player dates show today/tomorrow and a short weekday label', () {
+    final today = DateTime(2026, 11, 20);
+    expect(
+      PlayerDateFormat.card(DateTime(2026, 11, 20, 18), now: today),
+      'Today',
+    );
+    expect(
+      PlayerDateFormat.card(DateTime(2026, 11, 21, 10), now: today),
+      'Tomorrow',
+    );
+    expect(
+      PlayerDateFormat.card(DateTime(2026, 11, 16, 18), now: today),
+      'Mon, 16 Nov',
+    );
   });
 }

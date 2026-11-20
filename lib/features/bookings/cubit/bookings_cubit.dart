@@ -4,6 +4,7 @@ import '../../../core/enums/app_loading.dart';
 import '../../../core/services/session_aware_cubit.dart';
 import '../../../core/services/session_cubit.dart';
 import '../model/booking_filter_tab.dart';
+import '../model/user_booking.dart';
 import 'bookings_repository.dart';
 import 'bookings_state.dart';
 
@@ -11,7 +12,12 @@ class BookingsCubit extends Cubit<BookingsState>
     with SessionAwareCubit<BookingsState> {
   BookingsCubit(this._repository, [this.authSession])
     : super(const BookingsState()) {
-    bindAuth(onSignedIn: () { load(); }, onSignedOut: reset);
+    bindAuth(
+      onSignedIn: () {
+        load();
+      },
+      onSignedOut: reset,
+    );
   }
 
   final BookingsRepository _repository;
@@ -19,6 +25,7 @@ class BookingsCubit extends Cubit<BookingsState>
   final SessionCubit? authSession;
   var _requestId = 0;
   bool _isRefreshing = false;
+  final _pendingIds = <String>{};
 
   String get _filter => state.tab == .upcoming ? 'upcoming' : 'past';
 
@@ -26,9 +33,35 @@ class BookingsCubit extends Cubit<BookingsState>
 
   Future<void> refresh() => _loadFirstPage(showLoading: false);
 
+  /// Show the just-confirmed court on Upcoming immediately. In-flight
+  /// list requests are dropped so a slower `GET /bookings/me` cannot
+  /// wipe the new row.
+  void ingestUpcoming(UserBooking booking) {
+    if (!booking.isUpcoming || isClosed) return;
+    _requestId++;
+    _isRefreshing = false;
+    _pendingIds.add(booking.id);
+    final rest = [
+      for (final item in state.bookings)
+        if (item.id != booking.id) item,
+    ];
+    emit(
+      state.copyWith(
+        status: AppLoading.success,
+        tab: BookingFilterTab.upcoming,
+        bookings: [booking, ...rest],
+        errorMessage: '',
+        page: 1,
+        hasMore: true,
+        isLoadingMore: false,
+      ),
+    );
+  }
+
   void reset() {
     _requestId++;
     _isRefreshing = false;
+    _pendingIds.clear();
     if (!isClosed) emit(const BookingsState());
   }
 
@@ -57,7 +90,7 @@ class BookingsCubit extends Cubit<BookingsState>
         emit(
           state.copyWith(
             status: AppLoading.success,
-            bookings: page.items,
+            bookings: _mergeFetched(page.items),
             page: page.page,
             hasMore: page.hasMore,
             errorMessage: '',
@@ -73,6 +106,20 @@ class BookingsCubit extends Cubit<BookingsState>
         );
       },
     );
+  }
+
+  List<UserBooking> _mergeFetched(List<UserBooking> fetched) {
+    for (final booking in fetched) {
+      _pendingIds.remove(booking.id);
+    }
+    if (_pendingIds.isEmpty) return fetched;
+    final seen = {for (final booking in fetched) booking.id};
+    return [
+      ...fetched,
+      for (final booking in state.bookings)
+        if (_pendingIds.contains(booking.id) && !seen.contains(booking.id))
+          booking,
+    ];
   }
 
   Future<void> loadMore() async {

@@ -86,6 +86,9 @@ class _Profile extends ProfileCubit {
     hydrationCalls++;
     emit(state.copyWith(savedVenueIds: ['saved-$hydrationCalls']));
   }
+
+  @override
+  Future<void> ensureLoaded() async {}
 }
 
 void main() {

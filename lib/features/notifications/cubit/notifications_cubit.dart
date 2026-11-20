@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
 import '../../../core/services/session_aware_cubit.dart';
 import '../../../core/services/session_cubit.dart';
+import '../model/app_notification.dart';
 import '../model/notification_filter_tab.dart';
 import 'notifications_repository.dart';
 import 'notifications_state.dart';
@@ -11,7 +14,13 @@ class NotificationsCubit extends Cubit<NotificationsState>
     with SessionAwareCubit<NotificationsState> {
   NotificationsCubit(this._repository, [this.authSession])
     : super(const NotificationsState()) {
-    bindAuth(onSignedIn: () { load(); }, onSignedOut: reset);
+    bindAuth(
+      onSignedIn: () {
+        unawaited(refreshUnread());
+        load();
+      },
+      onSignedOut: reset,
+    );
   }
 
   final NotificationsRepository _repository;
@@ -56,12 +65,14 @@ class NotificationsCubit extends Cubit<NotificationsState>
           state.copyWith(
             status: AppLoading.success,
             items: page.items,
+            unreadCount: _unreadIn(page.items),
             nextCursor: page.nextCursor,
             clearCursor: page.nextCursor == null,
             hasMore: page.hasMore,
             errorMessage: '',
           ),
         );
+        unawaited(refreshUnread());
       },
       failure: (error) {
         emit(
@@ -112,6 +123,26 @@ class NotificationsCubit extends Cubit<NotificationsState>
     return super.close();
   }
 
+  /// Inbox badge on the home/bookings app bar. Cheap GET; ignores failures.
+  Future<void> refreshUnread() async {
+    if (!canUseAuthedApi) {
+      if (!isClosed && state.unreadCount != 0) {
+        emit(state.copyWith(unreadCount: 0));
+      }
+      return;
+    }
+    final result = await _repository.fetchUnreadCount();
+    if (isClosed) return;
+    result.when(
+      success: (count) {
+        final next = count < 0 ? 0 : count;
+        if (state.unreadCount == next) return;
+        emit(state.copyWith(unreadCount: next));
+      },
+      failure: (_) {},
+    );
+  }
+
   /// Optimistic read — list updates immediately; API/mock sync in background.
   Future<void> markRead(String id) async {
     if (!canUseAuthedApi) return;
@@ -120,7 +151,12 @@ class NotificationsCubit extends Cubit<NotificationsState>
 
     final next = [...state.items];
     next[index] = next[index].copyWith(isRead: true);
-    emit(state.copyWith(items: next));
+    emit(
+      state.copyWith(
+        items: next,
+        unreadCount: state.unreadCount > 0 ? state.unreadCount - 1 : 0,
+      ),
+    );
 
     final result = await _repository.markRead(id);
     if (isClosed) return;
@@ -137,9 +173,11 @@ class NotificationsCubit extends Cubit<NotificationsState>
     if (!state.hasUnread || state.markingAllRead) return;
 
     final snapshot = state.items;
+    final previousUnread = state.unreadCount;
     emit(
       state.copyWith(
         markingAllRead: true,
+        unreadCount: 0,
         items: [
           for (final item in snapshot)
             item.isRead ? item : item.copyWith(isRead: true),
@@ -151,17 +189,21 @@ class NotificationsCubit extends Cubit<NotificationsState>
     if (isClosed) return;
     result.when(
       success: (_) {
-        emit(state.copyWith(markingAllRead: false));
+        emit(state.copyWith(markingAllRead: false, unreadCount: 0));
       },
       failure: (error) {
         emit(
           state.copyWith(
             markingAllRead: false,
             items: snapshot,
+            unreadCount: previousUnread,
             errorMessage: error.message,
           ),
         );
       },
     );
   }
+
+  int _unreadIn(List<AppNotification> items) =>
+      items.where((item) => item.isUnread).length;
 }

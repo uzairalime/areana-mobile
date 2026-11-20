@@ -9,6 +9,7 @@ import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/money_format.dart';
 import '../../booking/widgets/court_hero_canvas.dart';
 import '../model/venue.dart';
+import 'venue_rating_line.dart';
 
 class VenueCard extends StatelessWidget {
   const VenueCard({
@@ -57,7 +58,13 @@ class VenueCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: .start,
                   children: [
-                    Text(venue.name, style: context.textTheme.titleMedium),
+                    Text(
+                      venue.name,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        fontWeight: .w800,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                     6.h,
                     Row(
                       children: [
@@ -76,33 +83,16 @@ class VenueCard extends StatelessWidget {
                         ).expand(),
                       ],
                     ),
-                    12.h,
-                    Row(
-                      crossAxisAlignment: .end,
-                      children: [
-                        Text(
-                          'from',
-                          style: context.textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                        6.w,
-                        Text(
-                          MoneyFormat.pkr(venue.priceFrom),
-                          style: context.textTheme.titleMedium,
-                        ),
-                        4.w,
-                        Text(
-                          '/hr',
-                          style: context.textTheme.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    12.h,
+                    if (venue.hasRating) ...[
+                      8.h,
+                      VenueRatingLine(
+                        rating: venue.rating,
+                        reviewCount: venue.reviewCount,
+                        iconSize: 16,
+                        compact: true,
+                      ),
+                    ],
+                    if (venue.amenities.isNotEmpty) 12.h,
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -135,28 +125,32 @@ class VenueCard extends StatelessWidget {
                           crossAxisAlignment: .start,
                           children: [
                             Text(
-                              'Next free slot',
+                              'From',
                               style: context.textTheme.labelSmall?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
+                                fontWeight: .w600,
                               ),
                             ),
                             2.h,
                             Text(
-                              venue.nextSlot,
-                              style: context.textTheme.labelLarge?.copyWith(
-                                fontWeight: .w700,
+                              '${MoneyFormat.pkr(venue.priceFrom)}/hr',
+                              style: context.textTheme.titleSmall?.copyWith(
+                                fontWeight: .w800,
                               ),
                             ),
                           ],
                         ).expand(),
                         FilledButton.icon(
-                          onPressed: onBook,
+                          onPressed: () {
+                            AppHaptics.selection();
+                            onBook();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: AppColors.onPrimary,
                             minimumSize: const Size(0, 44),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -217,6 +211,15 @@ class _VenueHero extends StatelessWidget {
                 color: venue.heroColor,
                 height: 170,
                 showGradient: false,
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: .topCenter,
+                  end: .bottomCenter,
+                  colors: [Color(0x330D1B14), Color(0x000D1B14)],
+                ),
               ),
             ),
             Positioned(

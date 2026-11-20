@@ -27,6 +27,7 @@ class PushMessagingService {
     required this.session,
     required this.deepLinks,
     this.messaging,
+    this.onForegroundInbox,
   });
 
   static const _tag = 'PushMessaging';
@@ -37,6 +38,7 @@ class PushMessagingService {
   final SessionStore session;
   final DeepLinkService deepLinks;
   final FirebaseMessaging? messaging;
+  final void Function()? onForegroundInbox;
 
   var _initialized = false;
   String? _token;
@@ -93,6 +95,7 @@ class PushMessagingService {
   /// Test seam: FCM `onMessage` while the app is open.
   @visibleForTesting
   bool handleForegroundPush(Map<String, dynamic> data) {
+    onForegroundInbox?.call();
     if (!shouldPresentPushBanner(appOpen: true)) {
       debugPrint('[$_tag] Foreground push suppressed type=${data['type']}');
       return false;

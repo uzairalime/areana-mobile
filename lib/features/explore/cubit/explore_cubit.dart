@@ -39,9 +39,13 @@ class ExploreCubit extends Cubit<ExploreState> {
   String? _fetchedBoxKey;
   bool _mapPrimed = false;
 
-  Future<void> load() async {
+  Future<void> refresh() => load(showLoading: false);
+
+  Future<void> load({bool showLoading = true}) async {
     final requestId = ++_requestId;
-    emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
+    if (showLoading) {
+      emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
+    }
     final result = await _listVenues(
       lat: state.search.lat,
       lng: state.search.lng,
@@ -72,7 +76,7 @@ class ExploreCubit extends Cubit<ExploreState> {
       failure: (error) {
         emit(
           state.copyWith(
-            status: AppLoading.error,
+            status: showLoading ? AppLoading.error : state.status,
             errorMessage: error.message,
             search: _session.search,
           ),

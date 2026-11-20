@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/consts/app_colors.dart';
+import '../../../core/enums/app_loading.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/services/in_app_review_service.dart';
@@ -34,7 +35,7 @@ class AccountScreen extends StatelessWidget {
       child: BlocBuilder<SessionCubit, SessionState>(
         buildWhen: (p, c) => p.user?.id != c.user?.id,
         builder: (context, session) {
-          final cubit = getIt<ProfileCubit>()..load();
+          final cubit = getIt<ProfileCubit>()..ensureLoaded();
           return BlocProvider.value(
             key: ValueKey('profile-${session.user?.id}'),
             value: cubit,
@@ -93,7 +94,7 @@ class _ProfileHub extends StatelessWidget {
               overview?.user ?? context.read<SessionCubit>().state.user;
 
           return AppLoadingHandler(
-            status: state.status,
+            status: overview != null ? AppLoading.success : state.status,
             errorMessage: state.errorMessage,
             onRetry: cubit.load,
             loading: const ProfileHubShimmer(),

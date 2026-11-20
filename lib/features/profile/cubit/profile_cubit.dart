@@ -19,20 +19,56 @@ class ProfileCubit extends Cubit<ProfileState> {
   String? _savedIdsUserId;
   String? _savedIdsLoadingFor;
   int _savedIdsRequestId = 0;
+  int _overviewRequestId = 0;
+  String? _overviewLoadingFor;
 
   final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final cityController = TextEditingController();
+
+  /// Start the hub fetch as soon as the dashboard is up, without a
+  /// second shimmer when the profile tab opens.
+  Future<void> ensureLoaded() async {
+    if (!_session.state.isAuthenticated) {
+      _overviewRequestId++;
+      _overviewLoadingFor = null;
+      if (!isClosed &&
+          (state.overview != null || state.status != AppLoading.initial)) {
+        emit(const ProfileState());
+      }
+      return;
+    }
+    final userId = _session.state.user?.id;
+    if (state.overview?.user.id == userId && state.status.isSuccess) {
+      return;
+    }
+    if (_overviewLoadingFor == userId) return;
+    return load();
+  }
+
   Future<void> load() async {
     if (!_session.state.isAuthenticated) {
+      _overviewRequestId++;
+      _overviewLoadingFor = null;
       if (!isClosed) emit(const ProfileState());
       return;
     }
-    emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
+    final userId = _session.state.user?.id;
+    final id = ++_overviewRequestId;
+    _overviewLoadingFor = userId;
+    final showLoading =
+        state.overview == null || state.overview!.user.id != userId;
+    emit(
+      state.copyWith(
+        status: showLoading ? AppLoading.loading : state.status,
+        errorMessage: '',
+      ),
+    );
     final result = await _repository.fetchOverview();
-    if (isClosed) return;
+    if (isClosed || id != _overviewRequestId) return;
+    _overviewLoadingFor = null;
     result.when(
       success: (overview) {
         _syncControllers(overview.user);

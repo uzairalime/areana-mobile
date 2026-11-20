@@ -92,7 +92,7 @@ class HomeCubit extends Cubit<HomeState> {
     await _loadPage(page: state.page + 1, showLoading: false, append: true);
   }
 
-  Future<void> refresh() => _loadPage(page: 1);
+  Future<void> refresh() => _loadPage(page: 1, showLoading: false);
 
   Future<void> _loadPage({
     required int page,

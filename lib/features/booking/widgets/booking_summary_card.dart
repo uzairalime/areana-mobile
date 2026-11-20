@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
+import '../../../core/media_slider/cache_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money_format.dart';
 import '../cubit/booking_state.dart';
@@ -31,13 +32,22 @@ class BookingSummaryCard extends StatelessWidget {
           Row(
             crossAxisAlignment: .start,
             children: [
-              SizedBox(
-                width: 84,
-                child: CourtHeroCanvas(
-                  color: venue.heroColor,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                child: SizedBox(
+                  width: 84,
                   height: 84,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  showGradient: false,
+                  child: CacheImage(
+                    url: venue.coverUrl,
+                    width: 84,
+                    height: 84,
+                    memCacheWidth: 240,
+                    errorWidget: CourtHeroCanvas(
+                      color: venue.heroColor,
+                      height: 84,
+                      showGradient: false,
+                    ),
+                  ),
                 ),
               ),
               12.w,

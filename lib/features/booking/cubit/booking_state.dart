@@ -25,6 +25,7 @@ String formatDate(DateTime date) {
 class BookingState extends Equatable {
   const BookingState({
     this.status = AppLoading.initial,
+    this.slotsStatus = AppLoading.initial,
     this.confirmStatus = AppLoading.initial,
     this.errorMessage = '',
     this.venue,
@@ -44,6 +45,10 @@ class BookingState extends Equatable {
   });
 
   final AppLoading status;
+
+  /// Availability for the selected court/date. Date and court changes
+  /// shimmer only the slot grid, not the whole pick-slot page.
+  final AppLoading slotsStatus;
   final AppLoading confirmStatus;
   final String errorMessage;
   final Venue? venue;
@@ -135,6 +140,7 @@ class BookingState extends Equatable {
 
   BookingState copyWith({
     AppLoading? status,
+    AppLoading? slotsStatus,
     AppLoading? confirmStatus,
     String? errorMessage,
     Venue? venue,
@@ -157,6 +163,7 @@ class BookingState extends Equatable {
   }) {
     return BookingState(
       status: status ?? this.status,
+      slotsStatus: slotsStatus ?? this.slotsStatus,
       confirmStatus: confirmStatus ?? this.confirmStatus,
       errorMessage: errorMessage ?? this.errorMessage,
       venue: venue ?? this.venue,
@@ -183,6 +190,7 @@ class BookingState extends Equatable {
   @override
   List<Object?> get props => [
     status,
+    slotsStatus,
     confirmStatus,
     errorMessage,
     venue,

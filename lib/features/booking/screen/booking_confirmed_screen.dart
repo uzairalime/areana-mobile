@@ -154,11 +154,22 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
                             ),
                             if (confirmation != null) ...[
                               10.h,
-                              AppButton(
+                              AppButton.outlined(
                                 label: 'Chat with arena',
-                                showArrow: false,
-                                backgroundColor: AppColors.surface,
-                                foregroundColor: AppColors.primary,
+                                icon: Icons.chat_bubble_outline_rounded,
+                                backgroundColor: const Color(0x00000000),
+                                foregroundColor: AppColors.onPrimary,
+                                side: BorderSide(
+                                  color: AppColors.onPrimary.withValues(
+                                    alpha: 0.55,
+                                  ),
+                                  width: 1.5,
+                                ),
+                                textStyle: const TextStyle(
+                                  color: AppColors.onPrimary,
+                                  fontWeight: .w800,
+                                  fontSize: 16,
+                                ),
                                 onPressed: () {
                                   AppHaptics.selection();
                                   ConversationNavigation.openArenaChat(
@@ -212,11 +223,12 @@ class _GhostAction extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.onPrimary,
+        backgroundColor: const Color(0x00000000),
         // Size(0, 52), not Size.fromHeight (which is infinite width —
         // the same trap fixed in AppButton).
         minimumSize: const Size(0, 52),
         side: BorderSide(
-          color: AppColors.onPrimary.withValues(alpha: 0.4),
+          color: AppColors.onPrimary.withValues(alpha: 0.55),
           width: 1.5,
         ),
         shape: RoundedRectangleBorder(

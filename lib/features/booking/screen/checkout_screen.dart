@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,10 +9,14 @@ import '../../../core/consts/app_icons.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/locator.dart';
 import '../../../core/services/session_cubit.dart';
 import '../../../core/services/session_state.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/widgets/app_form_listener.dart';
+import '../../bookings/cubit/bookings_cubit.dart';
+import '../../bookings/model/user_booking.dart';
+import '../../conversations/cubit/conversations_cubit.dart';
 import '../cubit/booking_cubit.dart';
 import '../cubit/booking_state.dart';
 import '../widgets/booking_auth_sheet.dart';
@@ -23,6 +29,20 @@ import '../widgets/checkout_sections.dart';
 /// `checkout_sections.dart` so this file stays under 500 lines.
 class CheckoutScreen extends StatelessWidget {
   const CheckoutScreen({super.key});
+
+  static void _syncListsAfterConfirm(BookingState state) {
+    final confirmation = state.confirmation;
+    if (confirmation != null && getIt.isRegistered<BookingsCubit>()) {
+      final bookings = getIt<BookingsCubit>();
+      bookings.ingestUpcoming(
+        UserBooking.fromConfirmation(confirmation, venue: state.venue),
+      );
+      unawaited(bookings.refresh());
+    }
+    if (getIt.isRegistered<ConversationsCubit>()) {
+      unawaited(getIt<ConversationsCubit>().refresh());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +59,10 @@ class CheckoutScreen extends StatelessWidget {
                 errorMessage: state.errorMessage,
                 loadingTitle: 'Confirming',
                 errorTitle: 'Booking failed',
-                onSuccess: () => context.push(AppRoutes.bookingConfirmed),
+                onSuccess: () {
+                  _syncListsAfterConfirm(cubit.state);
+                  context.push(AppRoutes.bookingConfirmed);
+                },
                 onErrorDismissed: cubit.clearConfirmError,
                 child: Column(
                   children: [

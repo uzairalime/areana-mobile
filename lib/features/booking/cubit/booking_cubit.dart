@@ -52,6 +52,9 @@ class BookingCubit extends Cubit<BookingState> {
             status: AppLoading.success,
             courts: courts,
             selectedCourtId: selectedId,
+            slotsStatus: selectedId != null
+                ? AppLoading.loading
+                : AppLoading.initial,
             errorMessage: '',
             clearSlot: true,
             clearConfirmation: true,
@@ -75,7 +78,7 @@ class BookingCubit extends Cubit<BookingState> {
     emit(
       _withoutPromo(
         state.copyWith(
-          status: AppLoading.loading,
+          slotsStatus: AppLoading.loading,
           errorMessage: '',
           slots: const [],
           clearSlot: true,
@@ -91,7 +94,7 @@ class BookingCubit extends Cubit<BookingState> {
       success: (availability) {
         emit(
           state.copyWith(
-            status: AppLoading.success,
+            slotsStatus: AppLoading.success,
             slots: availability.slots,
             errorMessage: '',
             clearSlot: true,
@@ -100,11 +103,16 @@ class BookingCubit extends Cubit<BookingState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(status: AppLoading.error, errorMessage: error.message),
+          state.copyWith(
+            slotsStatus: AppLoading.error,
+            errorMessage: error.message,
+          ),
         );
       },
     );
   }
+
+  Future<void> reloadAvailability() => _loadAvailability();
 
   Future<void> selectCourt(String id) async {
     if (state.confirmStatus.isLoading ||
@@ -113,7 +121,14 @@ class BookingCubit extends Cubit<BookingState> {
       return;
     }
     AppHaptics.selection();
-    emit(state.copyWith(selectedCourtId: id, clearSlot: true));
+    emit(
+      state.copyWith(
+        selectedCourtId: id,
+        slotsStatus: AppLoading.loading,
+        slots: const [],
+        clearSlot: true,
+      ),
+    );
     await _loadAvailability();
   }
 
@@ -122,7 +137,14 @@ class BookingCubit extends Cubit<BookingState> {
     final value = formatDate(date);
     if (value == state.selectedDate) return;
     AppHaptics.selection();
-    emit(state.copyWith(selectedDate: value, clearSlot: true));
+    emit(
+      state.copyWith(
+        selectedDate: value,
+        slotsStatus: AppLoading.loading,
+        slots: const [],
+        clearSlot: true,
+      ),
+    );
     await _loadAvailability();
   }
 
@@ -138,7 +160,9 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void selectSlotCount(int count) {
-    if (state.confirmStatus.isLoading || count < 1 || count == state.slotCount) {
+    if (state.confirmStatus.isLoading ||
+        count < 1 ||
+        count == state.slotCount) {
       return;
     }
     AppHaptics.selection();
@@ -240,7 +264,7 @@ class BookingCubit extends Cubit<BookingState> {
             title: 'Booking confirmed',
             body:
                 '${confirmation.courtName} at ${confirmation.venueName}, '
-                '${confirmation.date} ${confirmation.timeLabel}.',
+                '${confirmation.dateLabel} ${confirmation.timeLabel}.',
             link: '/bookings',
             id: confirmation.code,
           ),

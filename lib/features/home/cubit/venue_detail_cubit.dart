@@ -37,18 +37,23 @@ class VenueDetailState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, errorMessage, detail, reviews];
+  List<Object?> get props => [
+    status,
+    errorMessage,
+    detail,
+    reviews,
+    hasMoreReviews,
+  ];
 }
 
 class VenueDetailCubit extends Cubit<VenueDetailState> {
   VenueDetailCubit(this._repository, this.venueId)
-      : super(const VenueDetailState()) {
+    : super(const VenueDetailState()) {
     load();
   }
 
   final HomeRepository _repository;
   final String venueId;
-  String? _reviewCursor;
 
   Future<void> load() async {
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
@@ -58,32 +63,25 @@ class VenueDetailCubit extends Cubit<VenueDetailState> {
       success: (detail) async {
         emit(state.copyWith(status: AppLoading.success, detail: detail));
         await _repository.postVenueEvent(venueId: venueId, type: 'view');
-        await loadMoreReviews();
+        await loadPreviewReviews();
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );
   }
 
-  Future<void> loadMoreReviews() async {
-    final result = await _repository.fetchVenueReviews(
-      venueId,
-      cursor: _reviewCursor,
-    );
+  Future<void> loadPreviewReviews() async {
+    final result = await _repository.fetchVenueReviews(venueId, limit: 4);
     if (isClosed) return;
     result.when(
       success: (page) {
-        _reviewCursor = page.nextCursor;
         emit(
           state.copyWith(
-            reviews: [...state.reviews, ...page.items],
-            hasMoreReviews: page.hasMore,
+            reviews: page.items,
+            hasMoreReviews: page.hasMore || page.items.length >= 4,
           ),
         );
       },
@@ -129,7 +127,7 @@ class CourtDetailState extends Equatable {
 
 class CourtDetailCubit extends Cubit<CourtDetailState> {
   CourtDetailCubit(this._repository, this.courtId)
-      : super(const CourtDetailState()) {
+    : super(const CourtDetailState()) {
     load();
   }
 
@@ -153,10 +151,7 @@ class CourtDetailCubit extends Cubit<CourtDetailState> {
       },
       failure: (error) {
         emit(
-          state.copyWith(
-            status: AppLoading.error,
-            errorMessage: error.message,
-          ),
+          state.copyWith(status: AppLoading.error, errorMessage: error.message),
         );
       },
     );

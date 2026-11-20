@@ -112,7 +112,7 @@ class PastBookingTile extends StatelessWidget {
                           ),
                           4.h,
                           Text(
-                            '${booking.dateLabel} · ${booking.durationLabel}',
+                            '${booking.displayDate} · ${booking.durationLabel}',
                             maxLines: 1,
                             overflow: .ellipsis,
                             style: context.textTheme.labelMedium?.copyWith(

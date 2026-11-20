@@ -15,6 +15,7 @@ import '../../../core/widgets/profile_avatar.dart';
 import '../cubit/conversations_cubit.dart';
 import '../cubit/conversations_state.dart';
 import '../model/conversation_models.dart';
+import '../widgets/conversation_thread_shimmer.dart';
 
 class ConversationsScreen extends StatelessWidget {
   const ConversationsScreen({super.key});
@@ -47,13 +48,10 @@ class ConversationsScreen extends StatelessWidget {
                 ),
               ),
               14.h,
-              const _SearchField().paddingSymmetric(
-                horizontal: AppSizes.pagePadding,
-              ),
-              14.h,
               BlocBuilder<ConversationsCubit, ConversationsState>(
                 buildWhen: (p, c) =>
-                    p.filter != c.filter || p.unreadThreadCount != c.unreadThreadCount,
+                    p.filter != c.filter ||
+                    p.unreadThreadCount != c.unreadThreadCount,
                 builder: (context, state) {
                   return Padding(
                     padding: const .symmetric(horizontal: AppSizes.pagePadding),
@@ -61,7 +59,8 @@ class ConversationsScreen extends StatelessWidget {
                       expanded: true,
                       labels: ConversationInboxFilter.values,
                       label: state.filter,
-                      textOf: (value) => value == .unread && state.unreadThreadCount > 0
+                      textOf: (value) =>
+                          value == .unread && state.unreadThreadCount > 0
                           ? 'Unread  ${state.unreadThreadCount}'
                           : value.label,
                       onChange: (value) {
@@ -82,37 +81,6 @@ class ConversationsScreen extends StatelessWidget {
   }
 }
 
-class _SearchField extends StatelessWidget {
-  const _SearchField();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-        border: Border.all(color: AppColors.outline),
-      ),
-      child: TextField(
-        onChanged: context.read<ConversationsCubit>().search,
-        textInputAction: .search,
-        decoration: InputDecoration(
-          hintText: 'Search chats',
-          hintStyle: context.textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
-          prefixIcon: const Icon(
-            Icons.search_rounded,
-            color: AppColors.textSecondary,
-          ),
-          border: .none,
-          contentPadding: const .symmetric(horizontal: 12, vertical: 14),
-        ),
-      ),
-    );
-  }
-}
-
 class _ThreadList extends StatelessWidget {
   const _ThreadList();
 
@@ -125,7 +93,7 @@ class _ThreadList extends StatelessWidget {
           status: state.status,
           errorMessage: state.errorMessage,
           onRetry: cubit.load,
-          loading: const _ThreadShimmer(),
+          loading: const ConversationThreadShimmer(),
           child: RefreshIndicator(
             color: AppColors.primary,
             onRefresh: cubit.refresh,
@@ -166,7 +134,8 @@ class _ThreadList extends StatelessWidget {
                       AppSizes.pagePadding,
                       110,
                     ),
-                    itemCount: state.visibleThreads.length + (state.hasMore ? 1 : 0),
+                    itemCount:
+                        state.visibleThreads.length + (state.hasMore ? 1 : 0),
                     separatorBuilder: (_, _) => 10.h,
                     itemBuilder: (context, index) {
                       if (index >= state.visibleThreads.length) {
@@ -289,28 +258,6 @@ class _ThreadTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ThreadShimmer extends StatelessWidget {
-  const _ThreadShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const .fromLTRB(
-        AppSizes.pagePadding,
-        8,
-        AppSizes.pagePadding,
-        110,
-      ),
-      itemCount: 4,
-      separatorBuilder: (_, _) => 10.h,
-      itemBuilder: (_, _) => const ColoredBox(
-        color: AppColors.surface,
-        child: SizedBox(height: 76),
       ),
     );
   }
