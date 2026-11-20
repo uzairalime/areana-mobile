@@ -1,16 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
+import '../../../core/services/session_aware_cubit.dart';
+import '../../../core/services/session_cubit.dart';
 import '../model/booking_filter_tab.dart';
 import 'bookings_repository.dart';
 import 'bookings_state.dart';
 
-class BookingsCubit extends Cubit<BookingsState> {
-  BookingsCubit(this._repository) : super(const BookingsState()) {
-    load();
+class BookingsCubit extends Cubit<BookingsState>
+    with SessionAwareCubit<BookingsState> {
+  BookingsCubit(this._repository, [this.authSession])
+    : super(const BookingsState()) {
+    bindAuth(onSignedIn: () { load(); }, onSignedOut: reset);
   }
 
   final BookingsRepository _repository;
+  @override
+  final SessionCubit? authSession;
   var _requestId = 0;
   bool _isRefreshing = false;
 
@@ -20,7 +26,17 @@ class BookingsCubit extends Cubit<BookingsState> {
 
   Future<void> refresh() => _loadFirstPage(showLoading: false);
 
+  void reset() {
+    _requestId++;
+    _isRefreshing = false;
+    if (!isClosed) emit(const BookingsState());
+  }
+
   Future<void> _loadFirstPage({required bool showLoading}) async {
+    if (!canUseAuthedApi) {
+      reset();
+      return;
+    }
     final id = ++_requestId;
     _isRefreshing = true;
     emit(
@@ -60,6 +76,7 @@ class BookingsCubit extends Cubit<BookingsState> {
   }
 
   Future<void> loadMore() async {
+    if (!canUseAuthedApi) return;
     if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
     final requestId = _requestId;
     final nextPage = state.page + 1;
@@ -90,6 +107,12 @@ class BookingsCubit extends Cubit<BookingsState> {
     if (tab == state.tab) return;
     emit(state.copyWith(tab: tab));
     load();
+  }
+
+  @override
+  Future<void> close() async {
+    await unbindAuth();
+    return super.close();
   }
 
   Future<bool> submitReview({

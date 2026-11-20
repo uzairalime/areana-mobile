@@ -10,7 +10,7 @@ import '../utils/app_haptics.dart';
 /// Pitchside guest gate — forest card, lime CTA. More refined than a flat promo tile.
 class AccountRequiredCard extends StatelessWidget {
   const AccountRequiredCard({
-    super.key,
+    super.key = const Key('account-required-card'),
     this.title = 'Account required',
     this.message = 'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
     this.primaryLabel = 'Create account',

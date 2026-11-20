@@ -56,7 +56,7 @@ class _ProfileHub extends StatelessWidget {
     // AuthRepository.logout clears locally even if the revoke fails.
     await getIt<AuthRepository>().logout();
     if (!context.mounted) return;
-    context.go(AppRoutes.splash);
+    context.go(AppRoutes.home);
   }
 
   Future<void> _deleteAccount(BuildContext context) async {

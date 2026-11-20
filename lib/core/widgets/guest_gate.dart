@@ -33,6 +33,7 @@ class GuestGate extends StatelessWidget {
           return guest!;
         }
         return GuestGateScreen(
+          key: const Key('guest-gate'),
           title: title ?? 'Account required',
           message: message ?? 'Sign in to unlock bookings, offers, and a profile that stays with you across devices.',
         );

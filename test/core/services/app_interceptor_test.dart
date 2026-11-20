@@ -216,6 +216,30 @@ void main() {
     expect(store.isAuthenticated, isTrue);
   });
 
+  test('signed-out player APIs never leave the device', () async {
+    await store.clear();
+    final adapter = FakeHttpAdapter((request) {
+      if (request.path.contains('bookings')) {
+        throw StateError('token API must not run while signed out');
+      }
+      return jsonResponse({});
+    });
+    mainDio.httpClientAdapter = adapter;
+    await expectLater(
+      mainDio.get<dynamic>('bookings/me'),
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.type,
+          'type',
+          DioExceptionType.cancel,
+        ),
+      ),
+    );
+    expect(adapter.requests, isEmpty);
+    await expectLater(mainDio.get<dynamic>('venues'), completes);
+    expect(adapter.requests.single.path, 'venues');
+  });
+
   test('a retried 401 is returned without refreshing a second time', () async {
     final refreshAdapter = FakeHttpAdapter(
       (_) =>

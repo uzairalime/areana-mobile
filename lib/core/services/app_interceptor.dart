@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../features/auth/model/auth_session.dart';
+import '../consts/api_auth.dart';
 import '../consts/api_endpoints.dart';
 import 'api_dio.dart';
 import 'locator.dart';
@@ -46,11 +47,25 @@ class AppInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    String? token;
     if (getIt.isRegistered<TokenStore>()) {
-      final token = getIt<TokenStore>().accessToken;
+      token = getIt<TokenStore>().accessToken;
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
+    }
+    final signedOut = token == null || token.isEmpty;
+    if (signedOut &&
+        ApiAuth.requiresAccessToken(options.path, options.method)) {
+      handler.reject(
+        DioException(
+          requestOptions: options,
+          type: DioExceptionType.cancel,
+          error: 'signed-out',
+          message: 'This request needs an account.',
+        ),
+      );
+      return;
     }
     handler.next(options);
   }

@@ -1,16 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
+import '../../../core/services/session_aware_cubit.dart';
+import '../../../core/services/session_cubit.dart';
 import '../model/notification_filter_tab.dart';
 import 'notifications_repository.dart';
 import 'notifications_state.dart';
 
-class NotificationsCubit extends Cubit<NotificationsState> {
-  NotificationsCubit(this._repository) : super(const NotificationsState()) {
-    load();
+class NotificationsCubit extends Cubit<NotificationsState>
+    with SessionAwareCubit<NotificationsState> {
+  NotificationsCubit(this._repository, [this.authSession])
+    : super(const NotificationsState()) {
+    bindAuth(onSignedIn: () { load(); }, onSignedOut: reset);
   }
 
   final NotificationsRepository _repository;
+  @override
+  final SessionCubit? authSession;
   var _requestId = 0;
   bool _isRefreshing = false;
 
@@ -18,7 +24,17 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> refresh() => _loadFirstPage(showLoading: false);
 
+  void reset() {
+    _requestId++;
+    _isRefreshing = false;
+    if (!isClosed) emit(const NotificationsState());
+  }
+
   Future<void> _loadFirstPage({required bool showLoading}) async {
+    if (!canUseAuthedApi) {
+      reset();
+      return;
+    }
     final id = ++_requestId;
     _isRefreshing = true;
     emit(
@@ -59,6 +75,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> loadMore() async {
+    if (!canUseAuthedApi) return;
     if (_isRefreshing || state.isLoadingMore || !state.hasMore) return;
     final requestId = _requestId;
     emit(state.copyWith(isLoadingMore: true, errorMessage: ''));
@@ -89,8 +106,15 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     emit(state.copyWith(tab: tab));
   }
 
+  @override
+  Future<void> close() async {
+    await unbindAuth();
+    return super.close();
+  }
+
   /// Optimistic read — list updates immediately; API/mock sync in background.
   Future<void> markRead(String id) async {
+    if (!canUseAuthedApi) return;
     final index = state.items.indexWhere((e) => e.id == id);
     if (index < 0 || state.items[index].isRead) return;
 
@@ -109,6 +133,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> markAllRead() async {
+    if (!canUseAuthedApi) return;
     if (!state.hasUnread || state.markingAllRead) return;
 
     final snapshot = state.items;

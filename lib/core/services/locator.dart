@@ -112,7 +112,10 @@ void setupLocator() {
       () => BookingsRepository(getIt<BookingsClient>()),
     )
     ..registerLazySingleton<BookingsCubit>(
-      () => BookingsCubit(getIt<BookingsRepository>()),
+      () => BookingsCubit(
+        getIt<BookingsRepository>(),
+        getIt<SessionCubit>(),
+      ),
     )
     ..registerLazySingleton<NotificationsClient>(
       () => NotificationsClient(getIt<Dio>()),
@@ -121,7 +124,10 @@ void setupLocator() {
       () => NotificationsRepository(getIt<NotificationsClient>()),
     )
     ..registerFactory<NotificationsCubit>(
-      () => NotificationsCubit(getIt<NotificationsRepository>()),
+      () => NotificationsCubit(
+        getIt<NotificationsRepository>(),
+        getIt<SessionCubit>(),
+      ),
     )
     ..registerLazySingleton<ConversationsClient>(
       () => ConversationsClient(getIt<Dio>()),
@@ -130,7 +136,10 @@ void setupLocator() {
       () => ConversationsRepository(getIt<ConversationsClient>()),
     )
     ..registerLazySingleton<ConversationsCubit>(
-      () => ConversationsCubit(getIt<ConversationsRepository>()),
+      () => ConversationsCubit(
+        getIt<ConversationsRepository>(),
+        getIt<SessionCubit>(),
+      ),
     )
     ..registerLazySingleton<ProfileClient>(() => ProfileClient(getIt<Dio>()))
     ..registerLazySingleton<ProfileRepository>(

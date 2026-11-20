@@ -3,16 +3,22 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/enums/app_loading.dart';
+import '../../../core/services/session_aware_cubit.dart';
+import '../../../core/services/session_cubit.dart';
 import '../model/conversation_models.dart';
 import 'conversations_repository.dart';
 import 'conversations_state.dart';
 
-class ConversationsCubit extends Cubit<ConversationsState> {
-  ConversationsCubit(this._repository) : super(const ConversationsState()) {
-    load();
+class ConversationsCubit extends Cubit<ConversationsState>
+    with SessionAwareCubit<ConversationsState> {
+  ConversationsCubit(this._repository, [this.authSession])
+    : super(const ConversationsState()) {
+    bindAuth(onSignedIn: () { load(); }, onSignedOut: reset);
   }
 
   final ConversationsRepository _repository;
+  @override
+  final SessionCubit? authSession;
   var _requestId = 0;
   Timer? _searchDebounce;
 
@@ -33,7 +39,17 @@ class ConversationsCubit extends Cubit<ConversationsState> {
     });
   }
 
+  void reset() {
+    _requestId++;
+    _searchDebounce?.cancel();
+    if (!isClosed) emit(const ConversationsState());
+  }
+
   Future<void> _loadFirst({required bool showLoading}) async {
+    if (!canUseAuthedApi) {
+      reset();
+      return;
+    }
     final id = ++_requestId;
     emit(
       state.copyWith(
@@ -70,6 +86,7 @@ class ConversationsCubit extends Cubit<ConversationsState> {
   }
 
   Future<void> loadMore() async {
+    if (!canUseAuthedApi) return;
     if (state.isLoadingMore || !state.hasMore) return;
     final requestId = _requestId;
     emit(state.copyWith(isLoadingMore: true, errorMessage: ''));
@@ -99,6 +116,7 @@ class ConversationsCubit extends Cubit<ConversationsState> {
     required String venueId,
     String? bookingId,
   }) async {
+    if (!canUseAuthedApi) return null;
     final result = await _repository.openThread(
       venueId: venueId,
       bookingId: bookingId,
@@ -110,8 +128,9 @@ class ConversationsCubit extends Cubit<ConversationsState> {
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _searchDebounce?.cancel();
+    await unbindAuth();
     return super.close();
   }
 }

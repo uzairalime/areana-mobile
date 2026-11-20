@@ -26,6 +26,10 @@ class ProfileCubit extends Cubit<ProfileState> {
   final emailController = TextEditingController();
   final cityController = TextEditingController();
   Future<void> load() async {
+    if (!_session.state.isAuthenticated) {
+      if (!isClosed) emit(const ProfileState());
+      return;
+    }
     emit(state.copyWith(status: AppLoading.loading, errorMessage: ''));
     final result = await _repository.fetchOverview();
     if (isClosed) return;
