@@ -88,18 +88,42 @@ class ExploreCubit extends Cubit<ExploreState> {
   void setPageTab(ExplorePageTab tab) {
     if (tab == state.pageTab) return;
     _session.savePageTab(tab);
+    if (tab == .map) {
+      _clearMapTracking();
+      emit(
+        state.copyWith(
+          pageTab: tab,
+          mapVenues: state.venues,
+          showBackToOrigin: false,
+          clearMapViewport: true,
+          cameraFitNonce: state.cameraFitNonce + 1,
+        ),
+      );
+      return;
+    }
+    if (state.pageTab == .map) {
+      _clearMapTracking();
+      emit(
+        state.copyWith(
+          pageTab: tab,
+          mapVenues: state.venues,
+          showBackToOrigin: false,
+          clearMapViewport: true,
+        ),
+      );
+      return;
+    }
     emit(state.copyWith(pageTab: tab));
   }
 
   void resetAfterLeave() {
-    if (!state.search.hasLocation &&
-        state.selectedSportId == null &&
-        state.pageTab == .venues) {
+    final hadSearch = state.search.hasLocation;
+    final hadSport = state.selectedSportId != null;
+    final onMap = state.pageTab == .map;
+    if (!hadSearch && !hadSport && !onMap && !state.showBackToOrigin) {
       return;
     }
-    _mapDebounce?.cancel();
-    _mapPrimed = false;
-    _fetchedBoxKey = null;
+    _clearMapTracking();
     _session
       ..clearSearch()
       ..savePageTab(.venues)
@@ -109,11 +133,24 @@ class ExploreCubit extends Cubit<ExploreState> {
         search: const ExploreSearchCriteria(),
         pageTab: .venues,
         clearSport: true,
+        filter: hadSport
+            ? state.filter.copyWith(clearSport: true)
+            : state.filter,
         showBackToOrigin: false,
-        mapVenues: const [],
+        mapVenues: state.venues,
         clearMapViewport: true,
+        cameraFitNonce: state.cameraFitNonce + 1,
       ),
     );
+    if (hadSearch || hadSport) {
+      unawaited(load(showLoading: false));
+    }
+  }
+
+  void _clearMapTracking() {
+    _mapDebounce?.cancel();
+    _mapPrimed = false;
+    _fetchedBoxKey = null;
   }
 
   Future<void> selectSport(String? sportId) async {
@@ -151,9 +188,7 @@ class ExploreCubit extends Cubit<ExploreState> {
       lng: lng,
       radiusKm: radiusKm,
     );
-    _mapDebounce?.cancel();
-    _mapPrimed = false;
-    _fetchedBoxKey = null;
+    _clearMapTracking();
     _session
       ..saveSearch(search)
       ..savePageTab(.venues);
@@ -170,9 +205,7 @@ class ExploreCubit extends Cubit<ExploreState> {
   }
 
   void clearPlace() {
-    _mapDebounce?.cancel();
-    _mapPrimed = false;
-    _fetchedBoxKey = null;
+    _clearMapTracking();
     _session.clearSearch();
     emit(
       state.copyWith(
@@ -232,9 +265,7 @@ class ExploreCubit extends Cubit<ExploreState> {
   }
 
   void returnToOrigin() {
-    _mapDebounce?.cancel();
-    _mapPrimed = false;
-    _fetchedBoxKey = null;
+    _clearMapTracking();
     emit(
       state.copyWith(
         mapVenues: state.venues,

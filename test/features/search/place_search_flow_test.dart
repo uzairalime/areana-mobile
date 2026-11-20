@@ -1,3 +1,4 @@
+import 'package:arana360/core/enums/app_loading.dart';
 import 'package:arana360/core/services/explore_session_store.dart';
 import 'package:arana360/core/services/recent_search_store.dart';
 import 'package:arana360/core/utils/venue_map_clustering.dart';
@@ -95,9 +96,8 @@ void main() {
       lat: 31.5204,
       lng: 74.3587,
     );
-    (await api.take('venues')).respond(
-      _venues(['lahore'], lat: 31.5204, lng: 74.3587),
-    );
+    (await api.take('venues'))
+        .respond(_venues(['lahore'], lat: 31.5204, lng: 74.3587));
     await applied;
     expect(cubit.state.venues.single.id, 'lahore');
 
@@ -154,6 +154,76 @@ void main() {
     expect(cubit.state.venues.single.id, 'lahore');
     expect(cubit.state.showBackToOrigin, isFalse);
   });
+
+  test('map then venues then map resets camera to the origin fit', () async {
+    final api = _Api();
+    final cubit = ExploreCubit(
+      HomeRepository(HomeClient(api.dio)),
+      ExploreSessionStore(),
+      mapDebounce: Duration.zero,
+    );
+    addTearDown(cubit.close);
+    final loaded = cubit.stream.firstWhere(
+      (s) => s.status == AppLoading.success,
+    );
+    (await api.take('venues')).respond(
+      _venues(['seed'], lat: 24.86, lng: 67.00),
+    );
+    await loaded;
+
+    cubit.setPageTab(ExplorePageTab.map);
+    cubit.onMapViewport(
+      const MapViewport(
+        minLat: 33.6,
+        maxLat: 33.8,
+        minLng: 72.9,
+        maxLng: 73.2,
+        centerLat: 33.7,
+        centerLng: 73.05,
+        zoom: 12,
+      ),
+    );
+    expect(cubit.state.mapViewport?.centerLat, 33.7);
+
+    cubit.setPageTab(ExplorePageTab.venues);
+    expect(cubit.state.pageTab, ExplorePageTab.venues);
+    expect(cubit.state.mapViewport, isNull);
+    expect(cubit.state.mapVenues.single.id, 'seed');
+
+    final nonce = cubit.state.cameraFitNonce;
+    cubit.setPageTab(ExplorePageTab.map);
+    expect(cubit.state.pageTab, ExplorePageTab.map);
+    expect(cubit.state.mapViewport, isNull);
+    expect(cubit.state.cameraFitNonce, nonce + 1);
+    expect(cubit.state.mapVenues.single.id, 'seed');
+  });
+
+  test(
+    'leaving explore from map keeps the venues list on venues tab',
+    () async {
+      final api = _Api();
+      final cubit = ExploreCubit(
+        HomeRepository(HomeClient(api.dio)),
+        ExploreSessionStore(),
+      );
+      addTearDown(cubit.close);
+      final loaded = cubit.stream.firstWhere(
+        (s) => s.status == AppLoading.success,
+      );
+      (await api.take('venues'))
+          .respond(_venues(['seed'], lat: 24.86, lng: 67.00));
+      await loaded;
+
+      cubit.setPageTab(ExplorePageTab.map);
+      expect(cubit.state.pageTab, ExplorePageTab.map);
+
+      cubit.resetAfterLeave();
+      expect(cubit.state.pageTab, ExplorePageTab.venues);
+      expect(cubit.state.venues, isNotEmpty);
+      expect(cubit.state.mapVenues.single.id, 'seed');
+      expect(cubit.state.status, AppLoading.success);
+    },
+  );
 
   test('plain recent labels round-trip without searching the idle screen', () {
     const stored = RecentPlace(label: 'DHA');

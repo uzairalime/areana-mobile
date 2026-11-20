@@ -33,6 +33,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   late final PageController _pageController;
+  var _ignoreTabSync = false;
 
   @override
   void initState() {
@@ -65,25 +66,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void _onPageTab(ExploreCubit cubit, ExplorePageTab tab) {
     if (tab == cubit.state.pageTab) return;
     BottomNavVisibilityScope.maybeOf(context)?.show();
+    _ignoreTabSync = true;
     cubit.setPageTab(tab);
-    _goToPage(tab.index);
+    _ignoreTabSync = false;
+    _goToPage(tab.index, animate: true);
   }
 
-  void _goToPage(int index) {
-    void animate() {
+  void _goToPage(int index, {required bool animate}) {
+    void move() {
       if (!mounted || !_pageController.hasClients) return;
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeInOut,
-      );
+      if (_pageController.page?.round() == index) return;
+      if (animate) {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _pageController.jumpToPage(index);
+      }
     }
 
     if (_pageController.hasClients) {
-      animate();
+      move();
     } else {
-      // PageView mounts after load success — sync once it's attached.
-      WidgetsBinding.instance.addPostFrameCallback((_) => animate());
+      WidgetsBinding.instance.addPostFrameCallback((_) => move());
     }
   }
 
@@ -93,97 +100,105 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            BlocBuilder<ExploreCubit, ExploreState>(
-              buildWhen: (p, c) =>
-                  p.search != c.search || p.pageTab != c.pageTab,
-              builder: (context, state) {
-                final cubit = context.read<ExploreCubit>();
-                return ExploreHeader(
-                  search: state.search,
-                  pageTab: state.pageTab,
-                  onSearchTap: _openSearch,
-                  onFilterTap: () => _openFilter(cubit),
-                  onPageTabChanged: (tab) => _onPageTab(cubit, tab),
-                  onClearSearch: state.search.hasLocation
-                      ? cubit.clearPlace
-                      : null,
-                ).paddingSymmetric(
-                  horizontal: AppSizes.pagePadding,
-                  vertical: 10,
-                );
-              },
-            ),
-            Expanded(
-              child: BlocBuilder<ExploreCubit, ExploreState>(
+    return BlocListener<ExploreCubit, ExploreState>(
+      listenWhen: (p, c) => p.pageTab != c.pageTab,
+      listener: (context, state) {
+        if (_ignoreTabSync) return;
+        _goToPage(state.pageTab.index, animate: false);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              BlocBuilder<ExploreCubit, ExploreState>(
                 buildWhen: (p, c) =>
-                    p.status != c.status ||
-                    p.errorMessage != c.errorMessage ||
-                    p.venues != c.venues ||
-                    p.mapVenues != c.mapVenues ||
-                    p.search != c.search ||
-                    p.selectedSportId != c.selectedSportId ||
-                    p.filter != c.filter ||
-                    p.pageTab != c.pageTab ||
-                    p.showBackToOrigin != c.showBackToOrigin ||
-                    p.cameraFitNonce != c.cameraFitNonce,
+                    p.search != c.search || p.pageTab != c.pageTab,
                 builder: (context, state) {
                   final cubit = context.read<ExploreCubit>();
-                  final venues = state.visibleVenues;
-
-                  // Keep PageView mounted so PageController stays attached
-                  // (Venues/Map taps during load must not crash).
-                  return PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (index) {
-                      cubit.setPageTab(ExplorePageTab.values[index]);
-                    },
-                    children: [
-                      AppLoadingHandler(
-                        status: state.status,
-                        errorMessage: state.errorMessage,
-                        onRetry: cubit.load,
-                        loading: const ExploreVenueTileShimmerList()
-                            .paddingSymmetric(horizontal: AppSizes.pagePadding),
-                        child: _VenuesList(
-                          venues: venues,
-                          onTap: (venue) => _openDetail(context, venue),
-                        ),
-                      ),
-                      // Map mounts once, then stays offstage on Venues so the camera is kept.
-                      _LazyMapPage(
-                        active: state.pageTab == .map,
-                        status: state.status,
-                        venues: state.visibleMapVenues,
-                        focus: state.originFocus,
-                        viewport: state.mapViewport,
-                        cameraFitNonce: state.cameraFitNonce,
-                        showBackToOrigin: state.showBackToOrigin,
-                        backToOriginLabel: state.backToOriginLabel,
-                        onViewportChanged: cubit.onMapViewport,
-                        onBackToOrigin: cubit.returnToOrigin,
-                        onViewVenue: (venue) => _openDetail(context, venue),
-                      ),
-                    ],
+                  return ExploreHeader(
+                    search: state.search,
+                    pageTab: state.pageTab,
+                    onSearchTap: _openSearch,
+                    onFilterTap: () => _openFilter(cubit),
+                    onPageTabChanged: (tab) => _onPageTab(cubit, tab),
+                    onClearSearch: state.search.hasLocation
+                        ? cubit.clearPlace
+                        : null,
+                  ).paddingSymmetric(
+                    horizontal: AppSizes.pagePadding,
+                    vertical: 10,
                   );
                 },
               ),
-            ),
-          ],
+              Expanded(
+                child: BlocBuilder<ExploreCubit, ExploreState>(
+                  buildWhen: (p, c) =>
+                      p.status != c.status ||
+                      p.errorMessage != c.errorMessage ||
+                      p.venues != c.venues ||
+                      p.mapVenues != c.mapVenues ||
+                      p.search != c.search ||
+                      p.selectedSportId != c.selectedSportId ||
+                      p.filter != c.filter ||
+                      p.pageTab != c.pageTab ||
+                      p.showBackToOrigin != c.showBackToOrigin ||
+                      p.cameraFitNonce != c.cameraFitNonce,
+                  builder: (context, state) {
+                    final cubit = context.read<ExploreCubit>();
+                    final venues = state.visibleVenues;
+
+                    // Keep PageView mounted so PageController stays attached
+                    // (Venues/Map taps during load must not crash).
+                    return PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (index) {
+                        cubit.setPageTab(ExplorePageTab.values[index]);
+                      },
+                      children: [
+                        AppLoadingHandler(
+                          status: state.status,
+                          errorMessage: state.errorMessage,
+                          onRetry: cubit.load,
+                          loading: const ExploreVenueTileShimmerList()
+                              .paddingSymmetric(
+                                horizontal: AppSizes.pagePadding,
+                              ),
+                          child: _VenuesList(
+                            venues: venues,
+                            onTap: (venue) => _openDetail(context, venue),
+                          ),
+                        ),
+                        _LazyMapPage(
+                          active: state.pageTab == .map,
+                          status: state.status,
+                          venues: state.visibleMapVenues,
+                          focus: state.originFocus,
+                          viewport: state.mapViewport,
+                          cameraFitNonce: state.cameraFitNonce,
+                          showBackToOrigin: state.showBackToOrigin,
+                          backToOriginLabel: state.backToOriginLabel,
+                          onViewportChanged: cubit.onMapViewport,
+                          onBackToOrigin: cubit.returnToOrigin,
+                          onViewVenue: (venue) => _openDetail(context, venue),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Mounts the map on first Map-tab visit, then keeps it alive so a
-/// Venues ↔ Map switch does not reset the searched camera.
+/// Mounts the map on first Map-tab visit and keeps it offstage on Venues.
+/// Camera resets to the origin fit when Map is opened again.
 class _LazyMapPage extends StatefulWidget {
   const _LazyMapPage({
     required this.active,
