@@ -35,18 +35,7 @@ Future<void> _pumpButton(WidgetTester tester, Widget child) async {
   );
 }
 
-class _ControllableSplashCubit extends SplashCubit {
-  _ControllableSplashCubit(super.session);
-
-  @override
-  Future<void> bootstrap() async {}
-
-  void show(SplashDestination destination) {
-    emit(SplashState(destination: destination));
-  }
-}
-
-Future<(_ControllableSplashCubit, GoRouter)> _pumpSplash(
+Future<(SplashCubit, GoRouter)> _pumpSplash(
   WidgetTester tester, {
   Size size = const Size(800, 700),
   double textScale = 1,
@@ -56,7 +45,7 @@ Future<(_ControllableSplashCubit, GoRouter)> _pumpSplash(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final session = SessionCubit(SessionStore());
-  final splash = _ControllableSplashCubit(session);
+  final splash = SplashCubit.idle(session);
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -84,8 +73,10 @@ Future<(_ControllableSplashCubit, GoRouter)> _pumpSplash(
       theme: _theme,
       routerConfig: router,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(textScale),
+          disableAnimations: true,
+        ),
         child: child!,
       ),
     ),
@@ -235,13 +226,13 @@ void main() {
     );
   });
 
-  testWidgets('splash replaces loading with reusable actions', (tester) async {
+  testWidgets('splash replaces launch with reusable actions', (tester) async {
     final (splash, _) = await _pumpSplash(tester);
-    expect(find.byType(material_ui.CircularProgressIndicator), findsOneWidget);
+    expect(find.byKey(const Key('splash-launch')), findsOneWidget);
     expect(find.byType(PrimaryButton), findsNothing);
-    splash.show(SplashDestination.welcome);
-    await tester.pumpAndSettle();
-    expect(find.byType(material_ui.CircularProgressIndicator), findsNothing);
+    splash.debugSetDestination(SplashDestination.welcome);
+    await tester.pump();
+    expect(find.byKey(const Key('splash-launch')), findsNothing);
     expect(find.byType(PrimaryButton), findsOneWidget);
     expect(find.byType(PrimaryOutlineButton), findsOneWidget);
     expect(
@@ -258,7 +249,7 @@ void main() {
   ]) {
     testWidgets('splash $label keeps its navigation', (tester) async {
       final (splash, _) = await _pumpSplash(tester);
-      splash.show(SplashDestination.welcome);
+      splash.debugSetDestination(SplashDestination.welcome);
       await tester.pumpAndSettle();
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
@@ -269,7 +260,7 @@ void main() {
 
   testWidgets('splash home state still redirects to home', (tester) async {
     final (splash, _) = await _pumpSplash(tester);
-    splash.show(SplashDestination.home);
+    splash.debugSetDestination(SplashDestination.home);
     await tester.pumpAndSettle();
     expect(find.text('Home route'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -283,7 +274,7 @@ void main() {
         size: const Size(320, 480),
         textScale: 1.3,
       );
-      splash.show(SplashDestination.welcome);
+      splash.debugSetDestination(SplashDestination.welcome);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('Padel'), findsOneWidget);
