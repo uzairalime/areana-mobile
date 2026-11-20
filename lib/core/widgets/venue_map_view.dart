@@ -32,7 +32,7 @@ class VenueMapView extends StatefulWidget {
     this.cameraFitNonce = 0,
     this.onViewportChanged,
     this.borderRadius,
-    this.controlsBottom = 16,
+    this.controlsTop = 12,
     this.selectedVenueId,
     this.onBackgroundTap,
     this.resolveMyLocation,
@@ -57,7 +57,7 @@ class VenueMapView extends StatefulWidget {
   final int cameraFitNonce;
   final ValueChanged<MapViewport>? onViewportChanged;
   final BorderRadius? borderRadius;
-  final double controlsBottom;
+  final double controlsTop;
   final String? selectedVenueId;
   final VoidCallback? onBackgroundTap;
   final Future<LatLng?> Function()? resolveMyLocation;
@@ -367,8 +367,8 @@ class _VenueMapViewState extends State<VenueMapView> {
         ),
         if (widget.showControls && widget.interactive)
           Positioned(
+            top: widget.controlsTop,
             right: 12,
-            bottom: widget.controlsBottom,
             child: Column(
               children: [
                 _MapFab(

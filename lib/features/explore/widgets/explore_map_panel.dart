@@ -101,7 +101,6 @@ class _ExploreMapPanelState extends State<ExploreMapPanel> {
           initialZoom: widget.initialZoom,
           cameraFitNonce: widget.cameraFitNonce,
           onViewportChanged: widget.onViewportChanged,
-          controlsBottom: selected == null ? 100 : 188,
           selectedVenueId: selected?.id,
           onBackgroundTap: _clear,
           resolveMyLocation: _myLocation,
@@ -123,7 +122,7 @@ class _ExploreMapPanelState extends State<ExploreMapPanel> {
         if (selected != null)
           Positioned(
             left: 12,
-            right: 64,
+            right: 12,
             bottom: 108,
             child: _VenuePreviewCard(
               venue: selected,
