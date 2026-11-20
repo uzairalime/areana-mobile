@@ -8,10 +8,10 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/venue_navigation.dart';
-import '../../../core/widgets/app_custom_app_bar.dart';
 import '../../../core/widgets/app_loading_handler.dart';
 import '../../../core/widgets/guest_gate.dart';
 import '../../../core/widgets/labels_builder.dart';
+import '../../../core/widgets/scroll_hide_bottom_nav.dart';
 import '../cubit/bookings_cubit.dart';
 import '../cubit/bookings_state.dart';
 import '../model/booking_filter_tab.dart';
@@ -24,20 +24,6 @@ import '../widgets/upcoming_timeline_tile.dart';
 
 class BookingsScreen extends StatelessWidget {
   const BookingsScreen({super.key});
-
-  void _onAvatarTap(BuildContext context) {
-    context.go(AppRoutes.account);
-  }
-
-  void _onMessages(BuildContext context) {
-    AppHaptics.selection();
-    context.go(AppRoutes.messages);
-  }
-
-  void _onNotifications(BuildContext context) {
-    AppHaptics.selection();
-    context.push(AppRoutes.notifications);
-  }
 
   void _openBooking(BuildContext context, UserBooking booking) {
     AppHaptics.selection();
@@ -82,10 +68,12 @@ class BookingsScreen extends StatelessWidget {
       child: _BookingsTabDeepLinkListener(
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppCustomAppBar(
-            onAvatarTap: () => _onAvatarTap(context),
-            onMessages: () => _onMessages(context),
-            onNotifications: () => _onNotifications(context),
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: Text(
+              'Bookings',
+              style: context.textTheme.titleLarge?.copyWith(fontWeight: .w800),
+            ),
           ),
           body: BlocBuilder<BookingsCubit, BookingsState>(
             buildWhen: (p, c) =>
@@ -189,31 +177,33 @@ class _BookingsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      color: AppColors.primary,
-      backgroundColor: AppColors.surface,
-      onRefresh: onRefresh,
-      child: state.isEmptyForTab
-          ? _BookingsEmpty(tab: state.tab)
-          : switch (state.tab) {
-              .upcoming => _UpcomingList(
-                featured: state.featuredUpcoming!,
-                alsoComingUp: state.alsoComingUp,
-                onOpen: onOpen,
-              ),
-              .past => _PastList(
-                groups: state.pastByYear,
-                onOpen: onOpen,
-                onRebook: onRebook,
-                onAddReview: onAddReview,
-              ),
-              .reviews => _ReviewsList(
-                bookings: state.reviewBookings,
-                onOpen: onOpen,
-                onRebook: onRebook,
-                onAddReview: onAddReview,
-              ),
-            },
+    return ScrollHideBottomNav(
+      child: RefreshIndicator(
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface,
+        onRefresh: onRefresh,
+        child: state.isEmptyForTab
+            ? _BookingsEmpty(tab: state.tab)
+            : switch (state.tab) {
+                .upcoming => _UpcomingList(
+                  featured: state.featuredUpcoming!,
+                  alsoComingUp: state.alsoComingUp,
+                  onOpen: onOpen,
+                ),
+                .past => _PastList(
+                  groups: state.pastByYear,
+                  onOpen: onOpen,
+                  onRebook: onRebook,
+                  onAddReview: onAddReview,
+                ),
+                .reviews => _ReviewsList(
+                  bookings: state.reviewBookings,
+                  onOpen: onOpen,
+                  onRebook: onRebook,
+                  onAddReview: onAddReview,
+                ),
+              },
+      ),
     );
   }
 }

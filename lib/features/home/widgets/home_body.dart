@@ -17,12 +17,12 @@ import '../../profile/cubit/profile_state.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../../../core/widgets/pagination_loader.dart';
+import '../../../core/widgets/scroll_hide_bottom_nav.dart';
 import '../model/sport_game.dart';
 import '../model/venue.dart';
 import 'court_filter_sheet.dart';
 import 'home_near_me_section.dart';
 import 'home_sticky_search.dart';
-import 'sport_game_grid.dart';
 import 'venue_card.dart';
 import 'venue_card_shimmer.dart';
 
@@ -88,157 +88,148 @@ class _HomeBodyState extends State<HomeBody> {
           builder: (context, state) {
             final cubit = context.read<HomeCubit>();
 
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: HomeStickySearchDelegate(
-                    onSearchTap: () {
-                      AppHaptics.selection();
-                      context.push(AppRoutes.search);
-                    },
-                    onFilter: () async {
-                      final catalog = state.sports
-                          .where((sport) => !sport.isAll)
-                          .toList();
-                      final next = await showCourtFilterSheet(
-                        context,
-                        initial: state.filter,
-                        sports: catalog.isEmpty
-                            ? SportGame.defaults
-                                  .where((sport) => !sport.isAll)
-                                  .toList()
-                            : catalog,
-                      );
-                      if (next == null || !context.mounted) return;
-                      await cubit.applyFilter(next);
-                    },
-                  ),
+            return ScrollHideBottomNav(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
-                SliverPadding(
-                  padding: const .fromLTRB(
-                    AppSizes.pagePadding,
-                    AppSizes.spaceSm,
-                    AppSizes.pagePadding,
-                    0,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: SportGameGrid(
-                      sports: state.sports,
-                      selectedId: state.selectedSportId,
-                      onSelected: (sport) => cubit.selectSport(sport.id),
-                    ),
-                  ),
-                ),
-                if (state.status.isLoading)
-                  const SliverPadding(
-                    padding: .fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.spaceLg,
-                      AppSizes.pagePadding,
-                      110,
-                    ),
-                    sliver: SliverToBoxAdapter(child: VenueCardShimmerList()),
-                  )
-                else if (state.status.isError)
-                  SliverPadding(
-                    padding: const .fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.spaceLg,
-                      AppSizes.pagePadding,
-                      110,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          Text(
-                            state.errorMessage,
-                            textAlign: .center,
-                            style: context.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.error,
-                            ),
-                          ),
-                          12.h,
-                          TextButton(
-                            onPressed: cubit.load,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else ...[
-                  SliverPadding(
-                    padding: const .fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.spaceLg,
-                      AppSizes.pagePadding,
-                      0,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: HomeNearMeSection(venues: state.venues),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const .fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.spaceLg,
-                      AppSizes.pagePadding,
-                      10,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: Text(
-                        'Popular venues',
-                        style: context.textTheme.titleMedium?.copyWith(
-                          fontWeight: .w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const .fromLTRB(
-                      AppSizes.pagePadding,
-                      0,
-                      AppSizes.pagePadding,
-                      110,
-                    ),
-                    sliver: SliverList.separated(
-                      itemCount: state.venues.length + (state.hasMore ? 1 : 0),
-                      separatorBuilder: (_, _) => AppSizes.spaceMd.h,
-                      itemBuilder: (context, index) {
-                        if (index >= state.venues.length) {
-                          return PaginationLoader(
-                            pageKey: state.page,
-                            enabled: !state.isLoadingMore,
-                            errorMessage: state.errorMessage,
-                            onLoadMore: cubit.loadMore,
-                          );
-                        }
-                        final venue = state.venues[index];
-                        return BlocBuilder<ProfileCubit, ProfileState>(
-                          buildWhen: (p, c) =>
-                              p.isVenueSaved(venue.id) !=
-                              c.isVenueSaved(venue.id),
-                          builder: (context, profile) {
-                            return VenueCard(
-                              venue: venue,
-                              isFavorite: profile.isVenueSaved(venue.id),
-                              onFavoriteTap: () => _onFavorite(context, venue),
-                              onOpen: () =>
-                                  VenueNavigation.openDetail(context, venue),
-                              onBook: () =>
-                                  VenueNavigation.openBookSlot(context, venue),
-                            );
-                          },
+                slivers: [
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: HomeStickySearchDelegate(
+                      onSearchTap: () {
+                        AppHaptics.selection();
+                        context.push(AppRoutes.search);
+                      },
+                      onFilter: () async {
+                        final catalog = state.sports
+                            .where((sport) => !sport.isAll)
+                            .toList();
+                        final next = await showCourtFilterSheet(
+                          context,
+                          initial: state.filter,
+                          sports: catalog.isEmpty
+                              ? SportGame.defaults
+                                    .where((sport) => !sport.isAll)
+                                    .toList()
+                              : catalog,
                         );
+                        if (next == null || !context.mounted) return;
+                        await cubit.applyFilter(next);
                       },
                     ),
                   ),
+                  if (state.status.isLoading)
+                    const SliverPadding(
+                      padding: .fromLTRB(
+                        AppSizes.pagePadding,
+                        AppSizes.spaceLg,
+                        AppSizes.pagePadding,
+                        110,
+                      ),
+                      sliver: SliverToBoxAdapter(child: VenueCardShimmerList()),
+                    )
+                  else if (state.status.isError)
+                    SliverPadding(
+                      padding: const .fromLTRB(
+                        AppSizes.pagePadding,
+                        AppSizes.spaceLg,
+                        AppSizes.pagePadding,
+                        110,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            Text(
+                              state.errorMessage,
+                              textAlign: .center,
+                              style: context.textTheme.bodyMedium?.copyWith(
+                                color: AppColors.error,
+                              ),
+                            ),
+                            12.h,
+                            TextButton(
+                              onPressed: cubit.load,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    SliverPadding(
+                      padding: const .fromLTRB(
+                        AppSizes.pagePadding,
+                        AppSizes.spaceLg,
+                        AppSizes.pagePadding,
+                        0,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: HomeNearMeSection(venues: state.venues),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const .fromLTRB(
+                        AppSizes.pagePadding,
+                        AppSizes.spaceLg,
+                        AppSizes.pagePadding,
+                        10,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Text(
+                          'Popular venues',
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: .w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const .fromLTRB(
+                        AppSizes.pagePadding,
+                        0,
+                        AppSizes.pagePadding,
+                        110,
+                      ),
+                      sliver: SliverList.separated(
+                        itemCount:
+                            state.venues.length + (state.hasMore ? 1 : 0),
+                        separatorBuilder: (_, _) => AppSizes.spaceMd.h,
+                        itemBuilder: (context, index) {
+                          if (index >= state.venues.length) {
+                            return PaginationLoader(
+                              pageKey: state.page,
+                              enabled: !state.isLoadingMore,
+                              errorMessage: state.errorMessage,
+                              onLoadMore: cubit.loadMore,
+                            );
+                          }
+                          final venue = state.venues[index];
+                          return BlocBuilder<ProfileCubit, ProfileState>(
+                            buildWhen: (p, c) =>
+                                p.isVenueSaved(venue.id) !=
+                                c.isVenueSaved(venue.id),
+                            builder: (context, profile) {
+                              return VenueCard(
+                                venue: venue,
+                                isFavorite: profile.isVenueSaved(venue.id),
+                                onFavoriteTap: () =>
+                                    _onFavorite(context, venue),
+                                onOpen: () =>
+                                    VenueNavigation.openDetail(context, venue),
+                                onBook: () => VenueNavigation.openBookSlot(
+                                  context,
+                                  venue,
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             );
           },
         ),

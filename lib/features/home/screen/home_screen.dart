@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
 
   void _onNotifications(BuildContext context) {
     AppHaptics.selection();
-    context.push(AppRoutes.notifications);
+    context.push(AppRoutes.notificationsSegment);
   }
 
   @override

@@ -4,8 +4,6 @@ import '../../../core/consts/app_colors.dart';
 import '../../../core/consts/app_sizes.dart';
 import '../../../core/extensions/extensions.dart';
 import '../../../core/widgets/labels_builder.dart';
-import '../../../core/widgets/sport_filter_chip.dart';
-import '../../home/model/sport_game.dart';
 import '../model/explore_models.dart';
 
 class ExploreHeader extends StatelessWidget {
@@ -13,23 +11,19 @@ class ExploreHeader extends StatelessWidget {
     super.key,
     required this.search,
     required this.pageTab,
-    required this.selectedSportId,
     required this.onSearchTap,
     required this.onFilterTap,
     required this.onPageTabChanged,
-    required this.onSportSelected,
     this.onClearSearch,
   });
 
   final ExploreSearchCriteria search;
   final ExplorePageTab pageTab;
-  final String? selectedSportId;
   final VoidCallback onSearchTap;
   final VoidCallback onFilterTap;
   final ValueChanged<ExplorePageTab> onPageTabChanged;
-  final ValueChanged<String?> onSportSelected;
 
-  /// Explicit clear only — never tied to Venues/Map or sport chips.
+  /// Explicit clear only — never tied to Venues/Map.
   final VoidCallback? onClearSearch;
 
   @override
@@ -125,28 +119,6 @@ class ExploreHeader extends StatelessWidget {
               ),
             ).onTap(onFilterTap),
           ],
-        ),
-        12.h,
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: .horizontal,
-            itemCount: SportGame.defaults.length,
-            separatorBuilder: (_, _) => 8.w,
-            itemBuilder: (context, index) {
-              final sport = SportGame.defaults[index];
-              final selected = sport.isAll
-                  ? selectedSportId == null
-                  : selectedSportId == sport.id;
-              return SportFilterChip(
-                sport: sport,
-                selected: selected,
-                dense: true,
-                selectedForeground: AppColors.accent,
-                onTap: () => onSportSelected(sport.isAll ? null : sport.id),
-              );
-            },
-          ),
         ),
         12.h,
         BuildLabels<ExplorePageTab>(

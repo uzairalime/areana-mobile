@@ -12,6 +12,7 @@ import '../../../core/utils/app_haptics.dart';
 import '../../../core/utils/venue_map_clustering.dart';
 import '../../../core/utils/venue_navigation.dart';
 import '../../../core/widgets/app_loading_handler.dart';
+import '../../../core/widgets/scroll_hide_bottom_nav.dart';
 import '../../home/model/sport_game.dart';
 import '../../home/model/venue.dart';
 import '../../home/widgets/court_filter_sheet.dart';
@@ -63,6 +64,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   void _onPageTab(ExploreCubit cubit, ExplorePageTab tab) {
     if (tab == cubit.state.pageTab) return;
+    BottomNavVisibilityScope.maybeOf(context)?.show();
     cubit.setPageTab(tab);
     _goToPage(tab.index);
   }
@@ -99,19 +101,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
           children: [
             BlocBuilder<ExploreCubit, ExploreState>(
               buildWhen: (p, c) =>
-                  p.search != c.search ||
-                  p.pageTab != c.pageTab ||
-                  p.selectedSportId != c.selectedSportId,
+                  p.search != c.search || p.pageTab != c.pageTab,
               builder: (context, state) {
                 final cubit = context.read<ExploreCubit>();
                 return ExploreHeader(
                   search: state.search,
                   pageTab: state.pageTab,
-                  selectedSportId: state.selectedSportId,
                   onSearchTap: _openSearch,
                   onFilterTap: () => _openFilter(cubit),
                   onPageTabChanged: (tab) => _onPageTab(cubit, tab),
-                  onSportSelected: cubit.selectSport,
                   onClearSearch: state.search.hasLocation
                       ? cubit.clearPlace
                       : null,
@@ -236,7 +234,6 @@ class _LazyMapPageState extends State<_LazyMapPage> {
 
   @override
   Widget build(BuildContext context) {
-
     if (!_mountedOnce) {
       return const ColoredBox(color: AppColors.background);
     }
@@ -323,31 +320,33 @@ class _VenuesList extends StatelessWidget {
       ).center();
     }
 
-    return ListView.builder(
-      padding: const .fromLTRB(
-        AppSizes.pagePadding,
-        4,
-        AppSizes.pagePadding,
-        110,
-      ),
-      itemCount: venues.length,
-      itemExtent: 130, // 118 tile + 12 gap — enables list recycling
-      itemBuilder: (context, index) {
-        final venue = venues[index];
-        return Padding(
-          padding: const .only(bottom: 12),
-          child: SizedBox(
-            height: 118,
-            child: RepaintBoundary(
-              child: ExploreVenueTile(
-                key: ValueKey(venue.id),
-                venue: venue,
-                onTap: () => onTap(venue),
+    return ScrollHideBottomNav(
+      child: ListView.builder(
+        padding: const .fromLTRB(
+          AppSizes.pagePadding,
+          4,
+          AppSizes.pagePadding,
+          110,
+        ),
+        itemCount: venues.length,
+        itemExtent: 130, // 118 tile + 12 gap — enables list recycling
+        itemBuilder: (context, index) {
+          final venue = venues[index];
+          return Padding(
+            padding: const .only(bottom: 12),
+            child: SizedBox(
+              height: 118,
+              child: RepaintBoundary(
+                child: ExploreVenueTile(
+                  key: ValueKey(venue.id),
+                  venue: venue,
+                  onTap: () => onTap(venue),
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

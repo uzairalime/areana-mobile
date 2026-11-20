@@ -65,7 +65,8 @@ abstract final class AppRoutes {
   static const messages = '/chats';
   static const games = messages;
   static const chat = '/chat';
-  static const notifications = '/notifications';
+  static const notificationsSegment = 'notifications';
+  static const notifications = '/$notificationsSegment';
   static const account = '/account';
   static const editProfile = '/account/edit';
   static const accountControls = '/account/controls';
@@ -142,15 +143,8 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        pageBuilder: (context, state) {
-          return _appPage(
-            state,
-            BlocProvider.value(
-              value: getIt<NotificationsCubit>()..refresh(),
-              child: const NotificationsScreen(),
-            ),
-          );
-        },
+        redirect: (context, state) =>
+            '${AppRoutes.home}/${AppRoutes.notificationsSegment}',
       ),
       GoRoute(
         path: AppRoutes.editProfile,
@@ -362,6 +356,7 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
                     ),
                   );
                 },
+                routes: [_shellNotificationsRoute()],
               ),
             ],
           ),
@@ -377,6 +372,7 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
                     ),
                   );
                 },
+                routes: [_shellNotificationsRoute()],
               ),
             ],
           ),
@@ -423,6 +419,21 @@ GoRouter createAppRouter({GlobalKey<NavigatorState>? navigatorKey}) {
         ],
       ),
     ],
+  );
+}
+
+GoRoute _shellNotificationsRoute() {
+  return GoRoute(
+    path: AppRoutes.notificationsSegment,
+    pageBuilder: (context, state) {
+      return _appPage(
+        state,
+        BlocProvider.value(
+          value: getIt<NotificationsCubit>()..refresh(),
+          child: const NotificationsScreen(),
+        ),
+      );
+    },
   );
 }
 

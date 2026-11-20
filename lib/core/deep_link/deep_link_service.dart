@@ -110,9 +110,7 @@ class DeepLinkService {
         await Future<void>.delayed(const Duration(milliseconds: 120));
         router.push('${AppRoutes.chat}/$threadId');
       case NotificationsIntent():
-        router.go(AppRoutes.home);
-        await Future<void>.delayed(const Duration(milliseconds: 120));
-        router.push(AppRoutes.notifications);
+        router.go('${AppRoutes.home}/${AppRoutes.notificationsSegment}');
       case BookingsIntent(:final tab):
         final location = (tab == null || tab.isEmpty)
             ? AppRoutes.bookings

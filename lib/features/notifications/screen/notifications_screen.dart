@@ -13,6 +13,7 @@ import '../../../core/widgets/app_loading_handler.dart';
 import '../../../core/widgets/guest_gate.dart';
 import '../../../core/widgets/labels_builder.dart';
 import '../../../core/widgets/pagination_loader.dart';
+import '../../../core/widgets/scroll_hide_bottom_nav.dart';
 import '../cubit/notifications_cubit.dart';
 import '../cubit/notifications_state.dart';
 import '../model/app_notification.dart';
@@ -38,6 +39,7 @@ class NotificationsScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
+          bottom: false,
           child: BlocBuilder<NotificationsCubit, NotificationsState>(
             buildWhen: (p, c) =>
                 p.status != c.status ||
@@ -196,57 +198,59 @@ class _NotificationsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      color: AppColors.primary,
-      backgroundColor: AppColors.surface,
-      onRefresh: onRefresh,
-      child: entries.isEmpty && !hasMore
-          ? _NotificationsEmpty(tab: tab)
-          : ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const .fromLTRB(
-                AppSizes.pagePadding,
-                4,
-                AppSizes.pagePadding,
-                32,
-              ),
-              itemCount: entries.length + (hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index >= entries.length) {
-                  return PaginationLoader(
-                    pageKey: nextCursor,
-                    enabled: !isLoadingMore,
-                    errorMessage: errorMessage,
-                    onLoadMore: onLoadMore,
-                  );
-                }
-                final entry = entries[index];
-                return switch (entry) {
-                  NotificationGroupHeader(:final title) => Padding(
-                    padding: EdgeInsets.only(
-                      top: index == 0 ? 0 : 14,
-                      bottom: 8,
-                    ),
-                    child: Text(
-                      title,
-                      style: context.textTheme.labelLarge?.copyWith(
-                        fontSize: 13,
-                        fontWeight: .w700,
-                        color: AppColors.textSecondary,
+    return ScrollHideBottomNav(
+      child: RefreshIndicator(
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface,
+        onRefresh: onRefresh,
+        child: entries.isEmpty && !hasMore
+            ? _NotificationsEmpty(tab: tab)
+            : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const .fromLTRB(
+                  AppSizes.pagePadding,
+                  4,
+                  AppSizes.pagePadding,
+                  110,
+                ),
+                itemCount: entries.length + (hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index >= entries.length) {
+                    return PaginationLoader(
+                      pageKey: nextCursor,
+                      enabled: !isLoadingMore,
+                      errorMessage: errorMessage,
+                      onLoadMore: onLoadMore,
+                    );
+                  }
+                  final entry = entries[index];
+                  return switch (entry) {
+                    NotificationGroupHeader(:final title) => Padding(
+                      padding: EdgeInsets.only(
+                        top: index == 0 ? 0 : 14,
+                        bottom: 8,
+                      ),
+                      child: Text(
+                        title,
+                        style: context.textTheme.labelLarge?.copyWith(
+                          fontSize: 13,
+                          fontWeight: .w700,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                  ),
-                  NotificationRowEntry(:final notification) => Padding(
-                    padding: const .only(bottom: 10),
-                    child: NotificationListTile(
-                      key: ValueKey(notification.id),
-                      notification: notification,
-                      onTap: () => onOpen(notification),
+                    NotificationRowEntry(:final notification) => Padding(
+                      padding: const .only(bottom: 10),
+                      child: NotificationListTile(
+                        key: ValueKey(notification.id),
+                        notification: notification,
+                        onTap: () => onOpen(notification),
+                      ),
                     ),
-                  ),
-                };
-              },
-            ),
+                  };
+                },
+              ),
+      ),
     );
   }
 }
