@@ -60,4 +60,12 @@ class AppConfig {
   static bool get isDevelopment => flavor == 'development';
 
   static bool get isProduction => flavor == 'production';
+
+  /// Microsoft Clarity project used for session replay / heatmaps.
+  static const String clarityProjectId = String.fromEnvironment(
+    'CLARITY_PROJECT_ID',
+    defaultValue: 'zgjyrvq7up',
+  );
+
+  static bool get isClarityEnabled => clarityProjectId.trim().isNotEmpty;
 }

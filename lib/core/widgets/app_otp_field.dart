@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../consts/app_colors.dart';
 import '../consts/app_sizes.dart';
 import '../extensions/extensions.dart';
+import 'capture_mask.dart';
 
 class AppOtpField extends StatefulWidget {
   const AppOtpField({
@@ -115,85 +116,89 @@ class _AppOtpFieldState extends State<AppOtpField> {
 
   @override
   Widget build(BuildContext context) {
-    return FormField<String>(
-      validator: (_) => widget.validator?.call(widget.controller.text),
-      autovalidateMode: widget.autovalidateMode,
-      builder: (field) {
-        return Column(
-          crossAxisAlignment: .start,
-          children: [
-            Text(
-              'Verification code',
-              style: context.textTheme.labelMedium?.copyWith(
-                color: AppColors.textBody,
-              ),
-            ),
-            6.h,
-            Row(
-              children: [
-                for (var i = 0; i < widget.length; i++) ...[
-                  if (i > 0) 8.w,
-                  Expanded(
-                    child: TextField(
-                      controller: _digits[i],
-                      focusNode: _nodes[i],
-                      keyboardType: TextInputType.number,
-                      textAlign: .center,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: .w800,
-                        fontSize: 20,
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        counterText: '',
-                        contentPadding: const .symmetric(vertical: 14),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMd,
-                          ),
-                          borderSide: BorderSide(
-                            color: field.hasError
-                                ? AppColors.error
-                                : AppColors.border,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusMd,
-                          ),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        _applyAt(i, value);
-                        field.didChange(widget.controller.text);
-                      },
-                      onTap: () {
-                        _digits[i].selection = TextSelection(
-                          baseOffset: 0,
-                          extentOffset: _digits[i].text.length,
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            if (field.hasError) ...[
-              6.h,
+    return CaptureMask(
+      child: FormField<String>(
+        validator: (_) => widget.validator?.call(widget.controller.text),
+        autovalidateMode: widget.autovalidateMode,
+        builder: (field) {
+          return Column(
+            crossAxisAlignment: .start,
+            children: [
               Text(
-                field.errorText!,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: AppColors.error,
+                'Verification code',
+                style: context.textTheme.labelMedium?.copyWith(
+                  color: AppColors.textBody,
                 ),
               ),
+              6.h,
+              Row(
+                children: [
+                  for (var i = 0; i < widget.length; i++) ...[
+                    if (i > 0) 8.w,
+                    Expanded(
+                      child: TextField(
+                        controller: _digits[i],
+                        focusNode: _nodes[i],
+                        keyboardType: TextInputType.number,
+                        textAlign: .center,
+                        style: context.textTheme.titleMedium?.copyWith(
+                          fontWeight: .w800,
+                          fontSize: 20,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: InputDecoration(
+                          counterText: '',
+                          contentPadding: const .symmetric(vertical: 14),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMd,
+                            ),
+                            borderSide: BorderSide(
+                              color: field.hasError
+                                  ? AppColors.error
+                                  : AppColors.border,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppSizes.radiusMd,
+                            ),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          _applyAt(i, value);
+                          field.didChange(widget.controller.text);
+                        },
+                        onTap: () {
+                          _digits[i].selection = TextSelection(
+                            baseOffset: 0,
+                            extentOffset: _digits[i].text.length,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (field.hasError) ...[
+                6.h,
+                Text(
+                  field.errorText!,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ],
             ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

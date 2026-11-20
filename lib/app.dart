@@ -7,6 +7,7 @@ import 'core/consts/app_strings.dart';
 import 'core/deep_link/deep_link_service.dart';
 import 'core/router/app_router.dart';
 import 'core/services/app_upgrader.dart';
+import 'core/services/clarity_service.dart';
 import 'core/services/locator.dart';
 import 'core/services/location/location_cubit.dart';
 import 'core/services/notification/notification_service.dart';
@@ -45,11 +46,16 @@ class _AppState extends State<App> {
     await getIt<DeepLinkService>().attach(_router);
     await getIt<NotificationService>().initialize();
     await getIt<PushMessagingService>().initialize();
+    final clarity = getIt<ClarityService>();
+    clarity.bind();
+    clarity.attachRouter(_router);
+    clarity.syncSession(getIt<SessionCubit>().state);
   }
 
   @override
   void dispose() {
     getIt<DeepLinkService>().dispose();
+    getIt<ClarityService>().dispose();
     _router.dispose();
     super.dispose();
   }
@@ -65,10 +71,14 @@ class _AppState extends State<App> {
       ],
       child: BlocListener<SessionCubit, SessionState>(
         listenWhen: (previous, current) =>
-            !previous.isAuthenticated && current.isAuthenticated,
+            previous.user?.id != current.user?.id ||
+            previous.isAuthenticated != current.isAuthenticated,
         listener: (context, state) {
-          getIt<DeepLinkService>().flushPending();
-          getIt<ProfileCubit>().ensureLoaded();
+          getIt<ClarityService>().syncSession(state);
+          if (state.isAuthenticated) {
+            getIt<DeepLinkService>().flushPending();
+            getIt<ProfileCubit>().ensureLoaded();
+          }
         },
         child: MaterialApp.router(
           title: AppStrings.appName,

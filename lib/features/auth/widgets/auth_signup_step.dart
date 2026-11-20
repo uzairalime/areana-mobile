@@ -7,6 +7,7 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/capture_mask.dart';
 import '../cubit/auth_cubit.dart';
 
 /// Profile details are saved with the verified session; no OTP is replayed.
@@ -44,29 +45,31 @@ class AuthSignupStep extends StatelessWidget {
             ),
           ),
           AppSizes.spaceMd.h,
-          AppTextField(
-            label: 'Phone number',
-            controller: cubit.phoneController,
-            icon: Icons.phone_outlined,
-            hint: '03xx xxxxxxx',
-            keyboardType: .phone,
-            onChanged: (_) => cubit.clearError(),
-            // Web rule: at least 7 digits. AppValidators.phone needs
-            // 10+, which would reject numbers the web accepts.
-            validator: (value) {
-              final requiredError = AppValidators.requiredField(
-                value,
-                message: 'Enter your phone number',
-              );
-              if (requiredError != null) {
-                return requiredError;
-              }
-              final digits = value!.replaceAll(RegExp(r'\D'), '');
-              if (digits.length < 7) {
-                return 'Please enter a valid phone number.';
-              }
-              return null;
-            },
+          CaptureMask(
+            child: AppTextField(
+              label: 'Phone number',
+              controller: cubit.phoneController,
+              icon: Icons.phone_outlined,
+              hint: '03xx xxxxxxx',
+              keyboardType: .phone,
+              onChanged: (_) => cubit.clearError(),
+              // Web rule: at least 7 digits. AppValidators.phone needs
+              // 10+, which would reject numbers the web accepts.
+              validator: (value) {
+                final requiredError = AppValidators.requiredField(
+                  value,
+                  message: 'Enter your phone number',
+                );
+                if (requiredError != null) {
+                  return requiredError;
+                }
+                final digits = value!.replaceAll(RegExp(r'\D'), '');
+                if (digits.length < 7) {
+                  return 'Please enter a valid phone number.';
+                }
+                return null;
+              },
+            ),
           ),
           AppSizes.spaceMd.h,
           AppTextField(

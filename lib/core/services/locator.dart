@@ -38,6 +38,7 @@ import 'location/location_service.dart';
 import 'notification/notification_service.dart';
 import 'notification/push_messaging.dart';
 import 'notification/remote_notification_bridge.dart';
+import 'clarity_service.dart';
 import 'explore_session_store.dart';
 import 'recent_search_store.dart';
 import 'session_cubit.dart';
@@ -79,6 +80,7 @@ void setupLocator() {
     ..registerLazySingleton<LocationCubit>(
       () => LocationCubit(getIt<LocationService>()),
     )
+    ..registerLazySingleton<ClarityService>(ClarityService.new)
     ..registerLazySingleton<InAppReviewService>(InAppReviewService.new)
     ..registerLazySingleton<TokenStore>(() => TokenStore(getIt<SessionStore>()))
     ..registerLazySingleton<Dio>(DioService.create)

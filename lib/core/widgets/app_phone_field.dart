@@ -5,6 +5,7 @@ import '../consts/app_sizes.dart';
 import '../extensions/extensions.dart';
 import '../models/country_dial_code.dart';
 import '../utils/app_haptics.dart';
+import 'capture_mask.dart';
 
 class AppPhoneField extends StatelessWidget {
   const AppPhoneField({
@@ -99,57 +100,59 @@ class AppPhoneField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Text(
-          label,
-          style: context.textTheme.labelMedium?.copyWith(
-            color: AppColors.textBody,
-            fontWeight: .w700,
+    return CaptureMask(
+      child: Column(
+        crossAxisAlignment: .start,
+        children: [
+          Text(
+            label,
+            style: context.textTheme.labelMedium?.copyWith(
+              color: AppColors.textBody,
+              fontWeight: .w700,
+            ),
           ),
-        ),
-        6.h,
-        TextFormField(
-          controller: controller,
-          keyboardType: TextInputType.phone,
-          validator: validator,
-          autovalidateMode: .onUserInteraction,
-          style: context.textTheme.titleSmall,
-          decoration: InputDecoration(
-            hintText: hint,
-            errorMaxLines: 2,
-            prefixIcon: InkWell(
-              onTap: () => _pickCountry(context),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const .only(left: 12, right: 6),
-                child: Row(
-                  mainAxisSize: .min,
-                  children: [
-                    Text(country.flag, style: const TextStyle(fontSize: 18)),
-                    4.w,
-                    Text(
-                      country.dialCode,
-                      style: context.textTheme.labelLarge?.copyWith(
-                        fontWeight: .w800,
-                        color: AppColors.text,
+          6.h,
+          TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.phone,
+            validator: validator,
+            autovalidateMode: .onUserInteraction,
+            style: context.textTheme.titleSmall,
+            decoration: InputDecoration(
+              hintText: hint,
+              errorMaxLines: 2,
+              prefixIcon: InkWell(
+                onTap: () => _pickCountry(context),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const .only(left: 12, right: 6),
+                  child: Row(
+                    mainAxisSize: .min,
+                    children: [
+                      Text(country.flag, style: const TextStyle(fontSize: 18)),
+                      4.w,
+                      Text(
+                        country.dialCode,
+                        style: context.textTheme.labelLarge?.copyWith(
+                          fontWeight: .w800,
+                          color: AppColors.text,
+                        ),
                       ),
-                    ),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 18,
-                      color: AppColors.textSecondary,
-                    ),
-                    6.w,
-                    Container(width: 1, height: 22, color: AppColors.outline),
-                  ],
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                      6.w,
+                      Container(width: 1, height: 22, color: AppColors.outline),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

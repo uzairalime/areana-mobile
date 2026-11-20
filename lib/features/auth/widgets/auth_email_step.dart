@@ -7,6 +7,7 @@ import '../../../core/extensions/extensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/capture_mask.dart';
 import '../cubit/auth_cubit.dart';
 import 'auth_widgets.dart';
 
@@ -66,14 +67,16 @@ class AuthEmailStep extends StatelessWidget {
             const AuthOrDivider(),
             AppSizes.spaceMd.h,
           ],
-          AppTextField(
-            label: 'Email',
-            controller: cubit.emailController,
-            icon: Icons.mail_outline,
-            hint: 'you@example.com',
-            keyboardType: .emailAddress,
-            onChanged: (_) => cubit.clearError(),
-            validator: AppValidators.email,
+          CaptureMask(
+            child: AppTextField(
+              label: 'Email',
+              controller: cubit.emailController,
+              icon: Icons.mail_outline,
+              hint: 'you@example.com',
+              keyboardType: .emailAddress,
+              onChanged: (_) => cubit.clearError(),
+              validator: AppValidators.email,
+            ),
           ),
           AppSizes.spaceLg.h,
           AppButton(
