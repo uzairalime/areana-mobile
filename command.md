@@ -101,6 +101,8 @@ Outputs:
 
 ## Android — Play Store (AAB)
 
+Release builds are signed with the upload keystore in `android/app/upload-keystore.jks` (`android/key.properties`). Both files are gitignored. Back them up: Play ties later updates to this upload key. A release build fails if `android/key.properties` is missing, so a debug-signed bundle cannot be uploaded by accident.
+
 ```bash
 flutter build appbundle --flavor production --release -t lib/main.dart \
   --dart-define-from-file=config.production.json

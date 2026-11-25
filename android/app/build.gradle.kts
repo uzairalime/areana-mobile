@@ -1,9 +1,18 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -33,12 +42,47 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storePassword = keystoreProperties.getProperty("storePassword")
+                val storePath = keystoreProperties.getProperty("storeFile")
+                    ?: throw GradleException("android/key.properties is missing storeFile")
+                val resolvedStore = file(storePath)
+                if (!resolvedStore.exists()) {
+                    throw GradleException(
+                        "Upload keystore not found at ${resolvedStore.absolutePath}. " +
+                            "Release builds cannot be signed with the debug key.",
+                    )
+                }
+                storeFile = resolvedStore
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Play Console rejects debug-signed bundles. Release uses the upload
+            // keystore from android/key.properties. Debug builds are unchanged.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val buildingRelease = allTasks.any { it.name.contains("Release") }
+    if (buildingRelease && !keystorePropertiesFile.exists()) {
+        throw GradleException(
+            "Release builds must be signed with the upload keystore. " +
+                "Add android/key.properties and android/app/upload-keystore.jks. " +
+                "This project will not sign a Play upload with the debug key.",
+        )
     }
 }
 
