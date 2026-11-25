@@ -64,23 +64,44 @@ Future<_AuthHarness> _pumpAuth(
         return jsonResponse({'message': 'Code sent', 'ttlSeconds': 600});
       case 'auth/verify-otp':
         final body = Map<String, dynamic>.from(request.data as Map);
-        if (newAccount && body['name'] == null) {
-          return jsonResponse({
-            'message': 'name and phone are required for new accounts',
-          }, statusCode: 400);
-        }
         user = {
-          ...user,
+          'id': 'player-1',
           'email': body['email'],
-          if (body['name'] != null) 'name': body['name'],
-          if (body['phone'] != null) 'phone': body['phone'],
-          if (body['city'] != null) 'city': body['city'],
+          if (newAccount) ...{
+            'name': '',
+            'phone': '',
+            'city': '',
+            'isComplete': false,
+          } else ...{
+            'name': user['name'],
+            'phone': user['phone'],
+            'city': user['city'],
+            'isComplete': true,
+          },
         };
         return jsonResponse({
           'accessToken': 'verified-access-token',
           'refreshToken': 'verified-refresh-token',
+          'isComplete': user['isComplete'],
           'user': user,
           'referralStatus': 'none',
+        });
+      case 'auth/complete-profile':
+        final body = Map<String, dynamic>.from(request.data as Map);
+        user = {
+          ...user,
+          'name': body['name'],
+          'phone': body['phone'],
+          'city': body['city'],
+          'isComplete': true,
+        };
+        return jsonResponse({
+          'success': true,
+          'data': {
+            'isComplete': true,
+            'user': user,
+            'referralStatus': 'none',
+          },
         });
       case 'users/me':
         return jsonResponse(user);
@@ -251,12 +272,12 @@ void main() {
       final harness = await _pumpAuth(tester, newAccount: true);
       await _sendCode(tester, email: 'new@example.com');
       await _verifyCode(tester);
-      expect(find.text('Create your account'), findsOneWidget);
+      expect(find.text('Complete your profile'), findsOneWidget);
       expect(harness.auth.state.step, AuthStep.signup);
-      expect(harness.auth.otpController.text, '123456');
+      expect(harness.auth.otpController.text, isEmpty);
       expect(harness.verifyRequests, hasLength(1));
-      await tester.ensureVisible(find.text('Create account'));
-      await tester.tap(find.text('Create account'));
+      await tester.ensureVisible(find.text('Complete profile'));
+      await tester.tap(find.text('Complete profile'));
       await tester.pump();
       expect(find.text('Please tell us your name.'), findsOneWidget);
       expect(find.text('Enter your phone number'), findsOneWidget);
@@ -264,18 +285,22 @@ void main() {
       await _enterField(tester, 'Full name', 'New Player');
       await _enterField(tester, 'Phone number', '03001234567');
       await _enterField(tester, 'City (optional)', 'Lahore');
-      await tester.ensureVisible(find.text('Create account'));
-      await tester.tap(find.text('Create account'));
+      await tester.ensureVisible(find.text('Complete profile'));
+      await tester.tap(find.text('Complete profile'));
       await tester.pumpAndSettle();
       expect(find.text('Home page'), findsOneWidget);
-      expect(harness.verifyRequests, hasLength(2));
-      expect(harness.verifyRequests.last.data, {
-        'email': 'new@example.com',
-        'code': '123456',
-        'name': 'New Player',
-        'phone': '03001234567',
-        'city': 'Lahore',
-      });
+      expect(harness.verifyRequests, hasLength(1));
+      expect(
+        harness.adapter.requests
+            .where((request) => request.path == 'auth/complete-profile')
+            .single
+            .data,
+        {
+          'name': 'New Player',
+          'phone': '03001234567',
+          'city': 'Lahore',
+        },
+      );
       expect(harness.store.user!.name, 'New Player');
       expect(harness.store.user!.phone, '03001234567');
       expect(tester.takeException(), isNull);

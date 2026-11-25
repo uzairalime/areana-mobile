@@ -114,19 +114,13 @@ void main() {
     expect(booking.venueName, 'Football Arena');
     expect(
       booking.dateLabel,
-      PlayerDateFormat.card(
-        DateTime(2026, 11, 16),
-        now: DateTime(2026, 11, 20),
-      ),
+      PlayerDateFormat.card(DateTime(2026, 11, 16)),
     );
     expect(
       BookingConfirmation.fromJson(
         bookingJson(date: '2026-11-19T00:00:00.000Z'),
       ).dateLabel,
-      PlayerDateFormat.card(
-        DateTime(2026, 11, 19),
-        now: DateTime(2026, 11, 20),
-      ),
+      PlayerDateFormat.card(DateTime(2026, 11, 19)),
     );
 
     final promo = PromoPreview.fromJson({

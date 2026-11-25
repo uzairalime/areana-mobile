@@ -34,7 +34,7 @@ class _Host implements ClarityHost {
 
 void main() {
   test('Clarity project id is the Arena mobile project', () {
-    expect(AppConfig.clarityProjectId, 'zgjyrvq7up');
+    expect(AppConfig.clarityProjectId, 'zj4sw76dfz');
     expect(AppConfig.isClarityEnabled, isTrue);
   });
 

@@ -64,7 +64,7 @@ class AppConfig {
   /// Microsoft Clarity project used for session replay / heatmaps.
   static const String clarityProjectId = String.fromEnvironment(
     'CLARITY_PROJECT_ID',
-    defaultValue: 'zgjyrvq7up',
+    defaultValue: 'zj4sw76dfz',
   );
 
   static bool get isClarityEnabled => clarityProjectId.trim().isNotEmpty;
