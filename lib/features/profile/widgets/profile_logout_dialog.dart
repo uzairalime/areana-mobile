@@ -158,7 +158,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           mainAxisSize: .min,
           children: [
             Text(
-              'This permanently removes your profile, saved venues, and upcoming bookings. Tell us why you’re leaving — it helps us improve Pitchside.',
+              'This permanently removes your profile, saved venues, and upcoming bookings. Tell us why you’re leaving — it helps us improve Sportivo.',
               textAlign: .center,
               style: context.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,

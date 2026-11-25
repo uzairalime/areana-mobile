@@ -101,7 +101,7 @@ class _NotificationSettingsScreenState
                     ),
                     _Toggle(
                       title: 'Product updates',
-                      subtitle: 'What’s new from Pitchside',
+                      subtitle: 'What’s new from Sportivo',
                       value: prefs.emailUpdates,
                       onChanged: (v) => cubit.updateNotificationPrefs(
                         prefs.copyWith(emailUpdates: v),

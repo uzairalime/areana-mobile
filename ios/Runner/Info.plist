@@ -98,15 +98,15 @@
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Pitchside uses your location to show courts near you.</string>
+    <string>Sportivo uses your location to show courts near you.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Pitchside uses your location to show courts near you.</string>
+    <string>Sportivo uses your location to show courts near you.</string>
     <key>NSCameraUsageDescription</key>
-    <string>Pitchside needs camera access so you can take a profile photo.</string>
+    <string>Sportivo needs camera access so you can take a profile photo.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Pitchside needs photo library access so you can choose a profile photo.</string>
+    <string>Sportivo needs photo library access so you can choose a profile photo.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Pitchside may save photos you take for your profile.</string>
+    <string>Sportivo may save photos you take for your profile.</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
   </dict>

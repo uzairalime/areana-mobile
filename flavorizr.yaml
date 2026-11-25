@@ -5,7 +5,7 @@ app:
 flavors:
   development:
     app:
-      name: "Pitchside Dev"
+      name: "Sportivo Dev"
     android:
       applicationId: "com.zorixsolutions.arana.dev"
       firebase:
@@ -17,7 +17,7 @@ flavors:
 
   production:
     app:
-      name: "Pitchside"
+      name: "Sportivo"
     android:
       applicationId: "com.zorixsolutions.arana"
       firebase:

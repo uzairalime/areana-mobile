@@ -31,7 +31,7 @@ class LegalScreen extends StatelessWidget {
           ),
           18.h,
           Text(
-            'Pitchside is operated for players booking sports courts across Pakistan.',
+            'Sportivo is operated for players booking sports courts across Pakistan.',
             style: context.textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
               height: 1.4,

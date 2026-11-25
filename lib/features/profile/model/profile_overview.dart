@@ -31,7 +31,7 @@ class ProfileOverview extends Equatable {
   final String appVersion;
   final String buildNumber;
 
-  String get versionFooter => 'Pitchside v$appVersion (build $buildNumber)';
+  String get versionFooter => 'Sportivo v$appVersion (build $buildNumber)';
 
   ProfileOverview copyWith({
     UserModel? user,

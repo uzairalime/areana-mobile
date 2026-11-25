@@ -86,7 +86,7 @@ class LegalDoc extends Equatable {
       updatedLabel: 'Last updated Oct 2026',
       sections: [
         LegalSection(
-          heading: '1. Using Pitchside',
+          heading: '1. Using Sportivo',
           body:
               'You must be 16 or older to book. Keep your login details safe and provide accurate information.',
         ),
@@ -134,7 +134,7 @@ class LegalDoc extends Equatable {
       title: 'About us',
       sections: [
         LegalSection(
-          heading: 'Pitchside',
+          heading: 'Sportivo',
           body:
               'We make it simple to find a court, lock a slot and get on with the game.',
         ),

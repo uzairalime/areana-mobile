@@ -1,9 +1,8 @@
 # Commands — Areana mobile
 
 Run from the project root. The app is the Areana player app (same API
-and flows as user-web); the display name / package ids are still the
-legacy Pitchside ones — renaming them is a separate, still-open
-decision, not part of the API migration.
+and flows as user-web). The display name is Sportivo. Package ids stay
+`com.zorixsolutions.arana`.
 
 ## Environment matrix
 
@@ -13,7 +12,7 @@ decision, not part of the API migration.
 | Config file | `config.development.json` | `config.production.json` |
 | Android applicationId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
 | iOS bundleId | `com.zorixsolutions.arana.dev` | `com.zorixsolutions.arana` |
-| App name | Pitchside Dev | Pitchside |
+| App name | Sportivo Dev | Sportivo |
 | API | `http://<Mac LAN IP>:3000/api/` | placeholder, mock on — not for live testing |
 | Mock | off | on |
 | Cursor / VS Code | **[Dev] Debug** / Profile / Release | **[Prod] Debug** / Profile / Release |

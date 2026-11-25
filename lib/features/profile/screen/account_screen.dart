@@ -253,7 +253,7 @@ class _ProfileMenus extends StatelessWidget {
         ),
         16.h,
         Text(
-          overview?.versionFooter ?? 'Pitchside v1.4.0 (build 214)',
+          overview?.versionFooter ?? 'Sportivo v1.4.0 (build 214)',
           textAlign: .center,
           style: context.textTheme.labelMedium?.copyWith(
             color: AppColors.textSecondary,

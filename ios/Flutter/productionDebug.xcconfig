@@ -3,5 +3,5 @@
 #include "GoogleSignIn.xcconfig"
 
 ASSET_PREFIX=production
-BUNDLE_NAME=Pitchside
-BUNDLE_DISPLAY_NAME=Pitchside
+BUNDLE_NAME=Sportivo
+BUNDLE_DISPLAY_NAME=Sportivo

@@ -9,12 +9,12 @@ android.apply {
         create("development") {
             dimension = "flavor-type"
             applicationId = "com.zorixsolutions.arana.dev"
-            resValue(type = "string", name = "app_name", value = "Pitchside Dev")
+            resValue(type = "string", name = "app_name", value = "Sportivo Dev")
         }
         create("production") {
             dimension = "flavor-type"
             applicationId = "com.zorixsolutions.arana"
-            resValue(type = "string", name = "app_name", value = "Pitchside")
+            resValue(type = "string", name = "app_name", value = "Sportivo")
         }
     }
 

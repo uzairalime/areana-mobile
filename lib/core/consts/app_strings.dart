@@ -1,7 +1,7 @@
 class AppStrings {
   const AppStrings._();
 
-  static const String appName = 'Pitchside';
+  static const String appName = 'Sportivo';
   static const String gameOn = 'Game on.';
   static const String gettingCourtsReady = 'Getting your courts ready';
   static const String bookYourCourt = 'Book your court. Pay at the ground.';
