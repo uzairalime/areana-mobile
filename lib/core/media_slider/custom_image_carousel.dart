@@ -4,12 +4,21 @@ import 'package:material_ui/material_ui.dart';
 import '../extensions/extensions.dart';
 import '../utils/app_haptics.dart';
 import 'cache_image.dart';
+import 'muted_loop_video.dart';
+
+class MediaSlide {
+  const MediaSlide({required this.url, required this.isVideo});
+
+  final String url;
+  final bool isVideo;
+}
 
 /// ReelStay-style image carousel: preload, index badge, fullscreen on tap.
 class CustomImageCarousel extends StatefulWidget {
   const CustomImageCarousel({
     super.key,
     required this.urls,
+    this.videoUrls = const [],
     this.height = 320,
     this.radius,
     this.showActions = true,
@@ -19,6 +28,8 @@ class CustomImageCarousel extends StatefulWidget {
   });
 
   final List<String> urls;
+  /// Played before [urls]. Never passed to the image cache.
+  final List<String> videoUrls;
   final double height;
   final BorderRadius? radius;
   final bool showActions;
@@ -34,11 +45,18 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
   final _currentIndex = ValueNotifier<int>(0);
   static const _preloadCount = 3;
 
-  List<String> get _urls =>
-      widget.urls.where((u) => u.trim().isNotEmpty).toList();
+  List<MediaSlide> get _slides {
+    final videos = widget.videoUrls
+        .where((u) => u.trim().isNotEmpty)
+        .map((u) => MediaSlide(url: u.trim(), isVideo: true));
+    final images = widget.urls
+        .where((u) => u.trim().isNotEmpty)
+        .map((u) => MediaSlide(url: u.trim(), isVideo: false));
+    return [...videos, ...images];
+  }
 
   int get _total {
-    if (_urls.isNotEmpty) return _urls.length;
+    if (_slides.isNotEmpty) return _slides.length;
     return widget.fallback == null ? 0 : 1;
   }
 
@@ -58,12 +76,13 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
   }
 
   void _preloadImages(int fromIndex) {
-    final items = _urls;
+    final items = _slides;
     if (items.isEmpty) return;
     final end = (fromIndex + _preloadCount).clamp(0, items.length);
     for (var i = fromIndex; i < end; i++) {
+      if (items[i].isVideo) continue;
       precacheImage(
-        CachedNetworkImageProvider(items[i]),
+        CachedNetworkImageProvider(items[i].url),
         context,
         onError: (_, _) {},
       );
@@ -71,16 +90,17 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
   }
 
   void _openFullscreen(int index) {
-    if (_urls.isEmpty) return;
+    if (_slides.isEmpty) return;
     AppHaptics.selection();
     Navigator.of(context).push(
       PageRouteBuilder<void>(
         opaque: false,
         barrierDismissible: true,
         pageBuilder: (_, _, _) => MediaSlideView(
-          urls: _urls,
+          slides: _slides,
           initialIndex: index,
           heroTagPrefix: widget.heroTagPrefix,
+          fallback: widget.fallback,
         ),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
@@ -96,6 +116,10 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
 
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final cacheWidth = (context.screenSize.width * dpr).round();
+    final posterUrl = widget.urls.cast<String?>().firstWhere(
+      (url) => url != null && url.trim().isNotEmpty,
+      orElse: () => '',
+    );
 
     Widget body = SizedBox(
       height: widget.height,
@@ -103,24 +127,38 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
       child: Stack(
         fit: .expand,
         children: [
-          if (_urls.isEmpty)
+          if (_slides.isEmpty)
             widget.fallback!
           else
             PageView.builder(
-              itemCount: _urls.length,
+              itemCount: _slides.length,
               onPageChanged: (index) {
                 _currentIndex.value = index;
                 _preloadImages(index + 1);
+                setState(() {});
               },
               itemBuilder: (context, index) {
-                final url = _urls[index];
+                final slide = _slides[index];
+                if (slide.isVideo) {
+                  return ActiveSlideVideo(
+                    url: slide.url,
+                    active: _currentIndex.value == index,
+                    fallback: CacheImage(
+                      url: posterUrl ?? '',
+                      height: widget.height,
+                      width: double.infinity,
+                      memCacheWidth: cacheWidth,
+                      errorWidget: widget.fallback,
+                    ),
+                  );
+                }
                 final tag = '${widget.heroTagPrefix}-$index';
                 return Hero(
                   tag: tag,
                   child: Material(
                     type: .transparency,
                     child: CacheImage(
-                      url: url,
+                      url: slide.url,
                       height: widget.height,
                       width: double.infinity,
                       memCacheWidth: cacheWidth,
@@ -203,14 +241,16 @@ class _CustomImageCarouselState extends State<CustomImageCarousel> {
 class MediaSlideView extends StatefulWidget {
   const MediaSlideView({
     super.key,
-    required this.urls,
+    required this.slides,
     required this.initialIndex,
     this.heroTagPrefix = 'media',
+    this.fallback,
   });
 
-  final List<String> urls;
+  final List<MediaSlide> slides;
   final int initialIndex;
   final String heroTagPrefix;
+  final Widget? fallback;
 
   @override
   State<MediaSlideView> createState() => _MediaSlideViewState();
@@ -236,7 +276,7 @@ class _MediaSlideViewState extends State<MediaSlideView> {
 
   @override
   Widget build(BuildContext context) {
-    final total = widget.urls.length;
+    final total = widget.slides.length;
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: 0.92),
       body: Stack(
@@ -245,8 +285,20 @@ class _MediaSlideViewState extends State<MediaSlideView> {
           PageView.builder(
             controller: _pageController,
             itemCount: total,
-            onPageChanged: (i) => _currentIndex.value = i,
+            onPageChanged: (i) {
+              _currentIndex.value = i;
+              setState(() {});
+            },
             itemBuilder: (context, index) {
+              final slide = widget.slides[index];
+              if (slide.isVideo) {
+                return ActiveSlideVideo(
+                  url: slide.url,
+                  active: _currentIndex.value == index,
+                  fallback: widget.fallback ??
+                      const ColoredBox(color: Colors.black),
+                );
+              }
               final tag = '${widget.heroTagPrefix}-$index';
               return InteractiveViewer(
                 minScale: 1,
@@ -254,7 +306,7 @@ class _MediaSlideViewState extends State<MediaSlideView> {
                 child: Hero(
                   tag: tag,
                   child: CacheImage(
-                    url: widget.urls[index],
+                    url: slide.url,
                     height: double.infinity,
                     width: double.infinity,
                     fit: .contain,
